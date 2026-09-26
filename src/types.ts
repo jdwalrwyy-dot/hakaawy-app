@@ -94,6 +94,7 @@ export interface PublicUserProfile {
   username: string;
   avatar: string;
   gender?: 'male' | 'female';
+  email?: string;
   bio?: string;
   level: number;
   exp?: number;

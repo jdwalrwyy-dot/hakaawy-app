@@ -115,10 +115,11 @@ export function decodeGoogleJwt(token: string): GoogleUserProfile | null {
         .join('')
     );
     const data = JSON.parse(jsonPayload);
+    const resolvedName = data.name || [data.given_name, data.family_name].filter(Boolean).join(' ') || (data.email ? data.email.split('@')[0] : 'مستخدم Google');
     return {
       googleId: data.sub || data.user_id || `g_${Date.now()}`,
       email: data.email || '',
-      name: data.name || data.given_name || (data.email ? data.email.split('@')[0] : 'مستخدم Google'),
+      name: resolvedName,
       avatar: data.picture || ''
     };
   } catch (err) {
@@ -243,10 +244,11 @@ export async function triggerGoogleSignIn(): Promise<GoogleUserProfile> {
                   } catch (e) {
                     // non-critical Firebase session sync error
                   }
+                  const resolvedName = userInfo.name || [userInfo.given_name, userInfo.family_name].filter(Boolean).join(' ') || (userInfo.email ? userInfo.email.split('@')[0] : 'مستخدم Google');
                   resolve({
                     googleId: userInfo.sub || userInfo.id,
                     email: userInfo.email,
-                    name: userInfo.name || (userInfo.email ? userInfo.email.split('@')[0] : 'مستخدم Google'),
+                    name: resolvedName,
                     avatar: userInfo.picture || userInfo.avatar || ''
                   });
                   return;

@@ -1891,8 +1891,10 @@ class Database {
         if (user.isBanned && !this.isOwner(user.id)) {
           throw new Error(`حسابك محظور: ${user.banReason || 'مخالفة معايير المجتمع'}`);
         }
-        // Link Google ID to existing account
+        // Link Google ID to existing account and update profile details
         user.googleId = googleId;
+        if (email) user.email = email;
+        if (name && name.trim()) user.name = name.trim();
         if (avatar && (!user.avatar || user.avatar.includes('dicebear'))) {
           user.avatar = avatar;
         }
@@ -1906,7 +1908,9 @@ class Database {
       if (user.isBanned && !this.isOwner(user.id)) {
         throw new Error(`حسابك محظور: ${user.banReason || 'مخالفة معايير المجتمع'}`);
       }
-      // Existing Google user - update avatar or name if changed
+      // Existing Google user - update email, name, avatar to match selected Google account
+      if (email) user.email = email;
+      if (name && name.trim()) user.name = name.trim();
       if (avatar && (!user.avatar || user.avatar.includes('dicebear'))) {
         user.avatar = avatar;
       }
@@ -2281,6 +2285,7 @@ class Database {
       username: user.username,
       avatar: user.avatar,
       gender: user.gender,
+      email: user.email,
       bio: user.bio || 'عضو في مجتمع حكاوي',
       level: user.level || 1,
       exp: user.exp || 0,
