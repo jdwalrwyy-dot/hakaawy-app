@@ -1,0 +1,6 @@
+{
+  "name": "حكاوي - غرف صوتية وبث مباشر",
+  "description": "منصة حكاوي الحقيقية للغرف الصوتية والبث المباشر، 8 مايكات تفاعلية، هدايا لحظية، دردشة ومحادثات خاصة، ومحفظة متكاملة.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

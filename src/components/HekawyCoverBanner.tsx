@@ -1,0 +1,339 @@
+import React, { useState } from 'react';
+
+interface HekawyCoverBannerProps {
+  className?: string;
+}
+
+export const HekawyCoverBanner: React.FC<HekawyCoverBannerProps> = ({ className = '' }) => {
+  const [srcIndex, setSrcIndex] = useState(0);
+  const [imgFailed, setImgFailed] = useState(false);
+  const sources = ['/hekawy_cover.png', '/hekawy_cover.svg'];
+
+  const handleImgError = () => {
+    if (srcIndex < sources.length - 1) {
+      setSrcIndex(srcIndex + 1);
+    } else {
+      setImgFailed(true);
+    }
+  };
+
+  return (
+    <div
+      id="hekawy-app-cover-banner"
+      className={`relative w-full rounded-3xl overflow-hidden bg-gradient-to-b from-[#0e0722] via-[#090417] to-[#05020c] border border-amber-500/25 shadow-2xl shadow-purple-950/40 p-2 sm:p-4 flex flex-col items-center justify-center transition-all ${className}`}
+    >
+      {/* Ambient background glow layers matching Hekawy palette */}
+      <div className="absolute -top-12 left-1/4 w-72 h-72 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-12 right-1/4 w-72 h-72 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+
+      {/* Main Cover Container: 
+          Keeps exact 1:1 aspect ratio without stretching, cropping, or distortion 
+          Fits mobile screens automatically with responsive max-width and max-height
+      */}
+      <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg aspect-square mx-auto flex items-center justify-center">
+        {!imgFailed ? (
+          <img
+            src={sources[srcIndex]}
+            alt="غلاف تطبيق حكاوي الرسمي"
+            onError={handleImgError}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-contain drop-shadow-[0_10px_35px_rgba(245,158,11,0.25)] rounded-2xl"
+          />
+        ) : (
+          /* High-resolution vector representation of the exact Hekawy cover */
+          <div className="w-full h-full relative flex items-center justify-center select-none">
+            <svg
+              viewBox="0 0 1024 1024"
+              className="w-full h-full drop-shadow-[0_15px_40px_rgba(192,38,211,0.3)]"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                {/* Outer frame neon gradient: Gold to Neon Magenta */}
+                <linearGradient id="frameBorderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fbbf24" />
+                  <stop offset="30%" stopColor="#d97706" />
+                  <stop offset="70%" stopColor="#c026d3" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+
+                <linearGradient id="innerBorderGrad" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
+                  <stop offset="50%" stopColor="#9333ea" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.7" />
+                </linearGradient>
+
+                {/* Background cosmic gradient */}
+                <radialGradient id="bgCosmic" cx="50%" cy="45%" r="65%">
+                  <stop offset="0%" stopColor="#1a0836" />
+                  <stop offset="45%" stopColor="#0f0521" />
+                  <stop offset="80%" stopColor="#070210" />
+                  <stop offset="100%" stopColor="#030107" />
+                </radialGradient>
+
+                {/* Glowing crescent moon gradient: Golden core to Purple fringe */}
+                <linearGradient id="crescentGrad" x1="10%" y1="10%" x2="90%" y2="90%">
+                  <stop offset="0%" stopColor="#fbbf24" />
+                  <stop offset="35%" stopColor="#f59e0b" />
+                  <stop offset="65%" stopColor="#d946ef" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+
+                {/* Sound wave equalizer gradient */}
+                <linearGradient id="soundwaveGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#c026d3" />
+                  <stop offset="60%" stopColor="#f472b6" />
+                  <stop offset="100%" stopColor="#ffffff" />
+                </linearGradient>
+
+                {/* 3D Gold Typography Gradient */}
+                <linearGradient id="titleGoldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#fffbeb" />
+                  <stop offset="25%" stopColor="#fef08a" />
+                  <stop offset="55%" stopColor="#f59e0b" />
+                  <stop offset="85%" stopColor="#d97706" />
+                  <stop offset="100%" stopColor="#92400e" />
+                </linearGradient>
+
+                <linearGradient id="titleBevelGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#581c87" />
+                  <stop offset="50%" stopColor="#7e22ce" />
+                  <stop offset="100%" stopColor="#c026d3" />
+                </linearGradient>
+
+                {/* Glow Filter */}
+                <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="8" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="16" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              {/* Main Tile / Canvas */}
+              <rect
+                x="32"
+                y="32"
+                width="960"
+                height="960"
+                rx="220"
+                fill="url(#bgCosmic)"
+                stroke="url(#frameBorderGrad)"
+                strokeWidth="16"
+              />
+
+              {/* Inner Decorative Neon Rim */}
+              <rect
+                x="48"
+                y="48"
+                width="928"
+                height="928"
+                rx="205"
+                fill="none"
+                stroke="url(#innerBorderGrad)"
+                strokeWidth="4"
+                strokeOpacity="0.85"
+              />
+
+              {/* Cosmic Stardust & Sparkle Stars */}
+              <g opacity="0.8">
+                {/* 4-point stars */}
+                <path d="M200 130 Q200 150 220 150 Q200 150 200 170 Q200 150 180 150 Q200 150 200 130 Z" fill="#fbbf24" opacity="0.9" />
+                <path d="M820 140 Q820 155 835 155 Q820 155 820 170 Q820 155 805 155 Q820 155 820 140 Z" fill="#f472b6" opacity="0.85" />
+                <path d="M120 480 Q120 492 132 492 Q120 492 120 504 Q120 492 108 492 Q120 492 120 480 Z" fill="#fbbf24" opacity="0.8" />
+                <path d="M890 510 Q890 522 902 522 Q890 522 890 534 Q890 522 878 522 Q890 522 890 510 Z" fill="#fbbf24" opacity="0.85" />
+                <path d="M780 340 Q780 350 790 350 Q780 350 780 360 Q780 350 770 350 Q780 350 780 340 Z" fill="#e879f9" opacity="0.75" />
+                {/* Stardust dots */}
+                <circle cx="150" cy="210" r="3" fill="#ffffff" opacity="0.9" />
+                <circle cx="280" cy="110" r="2.5" fill="#fde047" opacity="0.7" />
+                <circle cx="740" cy="160" r="3" fill="#ffffff" opacity="0.9" />
+                <circle cx="870" cy="220" r="2.5" fill="#fde047" opacity="0.8" />
+                <circle cx="830" cy="460" r="3" fill="#f472b6" opacity="0.8" />
+                <circle cx="170" cy="560" r="3" fill="#fbbf24" opacity="0.8" />
+              </g>
+
+              {/* Floating Chat Bubble (Left) */}
+              <g transform="translate(90, 260)" filter="url(#neonGlow)">
+                <rect x="0" y="0" width="84" height="64" rx="24" fill="#6b21a8" fillOpacity="0.4" stroke="#c026d3" strokeWidth="4" />
+                <path d="M16 60 L8 76 L32 62 Z" fill="#6b21a8" fillOpacity="0.5" stroke="#c026d3" strokeWidth="3" />
+                <circle cx="26" cy="32" r="5" fill="#f5d0fe" />
+                <circle cx="42" cy="32" r="5" fill="#f5d0fe" />
+                <circle cx="58" cy="32" r="5" fill="#f5d0fe" />
+              </g>
+
+              {/* Floating Hearts */}
+              <g transform="translate(160, 400)" filter="url(#neonGlow)">
+                <path
+                  d="M24 8 C14 -4 0 4 0 18 C0 32 24 48 24 48 C24 48 48 32 48 18 C48 4 34 -4 24 8 Z"
+                  fill="#701a75"
+                  fillOpacity="0.5"
+                  stroke="#d946ef"
+                  strokeWidth="3.5"
+                />
+              </g>
+              <g transform="translate(810, 420)" filter="url(#neonGlow)">
+                <path
+                  d="M28 9 C16 -5 0 5 0 21 C0 37 28 56 28 56 C28 56 56 37 56 21 C56 5 40 -5 28 9 Z"
+                  fill="#78350f"
+                  fillOpacity="0.6"
+                  stroke="#f59e0b"
+                  strokeWidth="4"
+                />
+              </g>
+
+              {/* Community Users Icon (Right) */}
+              <g transform="translate(820, 280)" filter="url(#neonGlow)">
+                <circle cx="24" cy="18" r="14" fill="#581c87" fillOpacity="0.6" stroke="#c026d3" strokeWidth="3.5" />
+                <path d="M6 56 C6 42 16 34 24 34 C32 34 42 42 42 56 Z" fill="#581c87" fillOpacity="0.6" stroke="#c026d3" strokeWidth="3.5" />
+                <circle cx="56" cy="22" r="12" fill="#3b0764" fillOpacity="0.6" stroke="#a855f7" strokeWidth="3.5" />
+                <path d="M40 56 C40 44 48 38 56 38 C64 38 72 44 72 56 Z" fill="#3b0764" fillOpacity="0.6" stroke="#a855f7" strokeWidth="3.5" />
+              </g>
+
+              {/* Center Ambient Light Halo */}
+              <circle cx="512" cy="290" r="220" fill="#9333ea" fillOpacity="0.18" filter="url(#softGlow)" />
+
+              {/* Glowing Crescent Moon / Speech Frame */}
+              <g filter="url(#neonGlow)">
+                <path
+                  d="M512 80 C630 80 726 174 726 290 C726 350 700 404 658 442 C652 448 642 458 648 466 C656 478 676 500 686 512 C640 496 592 486 548 488 C388 498 260 376 260 220 C260 150 294 88 348 48 C310 90 286 148 286 210 C286 340 392 446 522 446 C624 446 710 380 736 288 C738 278 726 270 716 274 C676 290 630 298 584 294 C464 284 372 186 372 68 C372 58 384 52 392 58 C428 82 470 80 512 80 Z"
+                  fill="url(#crescentGrad)"
+                  stroke="#fbbf24"
+                  strokeWidth="4"
+                />
+              </g>
+
+              {/* Inside Crescent: Soundwave Equalizer Bars */}
+              <g transform="translate(512, 290)" filter="url(#neonGlow)">
+                {/* Centered symmetrical vertical bars */}
+                <rect x="-10" y="-85" width="20" height="170" rx="10" fill="url(#soundwaveGrad)" />
+                <rect x="-36" y="-68" width="18" height="136" rx="9" fill="url(#soundwaveGrad)" />
+                <rect x="18" y="-68" width="18" height="136" rx="9" fill="url(#soundwaveGrad)" />
+                <rect x="-62" y="-48" width="16" height="96" rx="8" fill="url(#soundwaveGrad)" />
+                <rect x="46" y="-48" width="16" height="96" rx="8" fill="url(#soundwaveGrad)" />
+                <rect x="-86" y="-32" width="14" height="64" rx="7" fill="url(#soundwaveGrad)" />
+                <rect x="72" y="-32" width="14" height="64" rx="7" fill="url(#soundwaveGrad)" />
+                <rect x="-108" y="-18" width="12" height="36" rx="6" fill="url(#soundwaveGrad)" />
+                <rect x="96" y="-18" width="12" height="36" rx="6" fill="url(#soundwaveGrad)" />
+                <circle cx="-124" cy="0" r="5" fill="#f472b6" />
+                <circle cx="124" cy="0" r="5" fill="#f472b6" />
+              </g>
+
+              {/* 3D Golden Video Camera attached to Crescent */}
+              <g transform="translate(620, 160)" filter="url(#neonGlow)">
+                {/* Camera Body */}
+                <rect x="0" y="8" width="96" height="68" rx="20" fill="#f59e0b" stroke="#fef08a" strokeWidth="4" />
+                {/* Inner Camera Highlights */}
+                <rect x="8" y="16" width="80" height="24" rx="8" fill="#fef08a" fillOpacity="0.45" />
+                {/* Camera Lens Cone */}
+                <path d="M96 26 L134 10 L134 74 L96 58 Z" fill="#d97706" stroke="#fbbf24" strokeWidth="4" strokeLinejoin="round" />
+              </g>
+
+              {/* Main Typography Backlight & Shadow Layer */}
+              <g filter="url(#softGlow)" opacity="0.8">
+                <text
+                  x="512"
+                  y="730"
+                  textAnchor="middle"
+                  fill="#c026d3"
+                  fontSize="220"
+                  fontWeight="900"
+                  fontFamily="system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
+                  letterSpacing="4"
+                >
+                  حكاوي
+                </text>
+              </g>
+
+              {/* 3D Extrusion Shadow Layer */}
+              <text
+                x="512"
+                y="736"
+                textAnchor="middle"
+                fill="url(#titleBevelGrad)"
+                fontSize="220"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
+                letterSpacing="4"
+              >
+                حكاوي
+              </text>
+              <text
+                x="512"
+                y="730"
+                textAnchor="middle"
+                fill="#78350f"
+                fontSize="220"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
+                letterSpacing="4"
+              >
+                حكاوي
+              </text>
+
+              {/* Front Face: 3D Golden Gradient Typography */}
+              <text
+                x="512"
+                y="722"
+                textAnchor="middle"
+                fill="url(#titleGoldGrad)"
+                stroke="#fffbeb"
+                strokeWidth="3.5"
+                strokeLinejoin="round"
+                fontSize="220"
+                fontWeight="900"
+                fontFamily="system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
+                letterSpacing="4"
+              >
+                حكاوي
+              </text>
+
+              {/* Dual 3D Diamond Dots beneath 'ح' */}
+              <g transform="translate(230, 810)">
+                {/* Dot 1 */}
+                <polygon points="20,0 40,20 20,40 0,20" fill="url(#titleGoldGrad)" stroke="#fef08a" strokeWidth="3" />
+                <polygon points="20,40 40,20 40,30 20,50 0,30 0,20" fill="#78350f" />
+                {/* Dot 2 */}
+                <polygon points="65,0 85,20 65,40 45,20" fill="url(#titleGoldGrad)" stroke="#fef08a" strokeWidth="3" />
+                <polygon points="65,40 85,20 85,30 65,50 45,30 45,20" fill="#78350f" />
+              </g>
+
+              {/* Subtitle at Bottom: ||• غرف صوتية ومرئية •|| */}
+              <g transform="translate(512, 880)">
+                {/* Left Soundwave Bars & Dot */}
+                <g transform="translate(-230, -12)">
+                  <rect x="0" y="0" width="4" height="24" rx="2" fill="#f59e0b" />
+                  <rect x="8" y="-4" width="4" height="32" rx="2" fill="#f59e0b" />
+                  <circle cx="22" cy="12" r="3.5" fill="#fef08a" />
+                </g>
+
+                {/* Subtitle Arabic Text */}
+                <text
+                  x="0"
+                  y="6"
+                  textAnchor="middle"
+                  fill="#fae8ff"
+                  fontSize="44"
+                  fontWeight="bold"
+                  fontFamily="system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif"
+                  letterSpacing="1"
+                  filter="url(#neonGlow)"
+                >
+                  غرف صوتية ومرئية
+                </text>
+
+                {/* Right Soundwave Bars & Dot */}
+                <g transform="translate(205, -12)">
+                  <circle cx="4" cy="12" r="3.5" fill="#fef08a" />
+                  <rect x="14" y="-4" width="4" height="32" rx="2" fill="#f59e0b" />
+                  <rect x="22" y="0" width="4" height="24" rx="2" fill="#f59e0b" />
+                </g>
+              </g>
+            </svg>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
