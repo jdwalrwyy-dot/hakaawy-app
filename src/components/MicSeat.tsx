@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RoomSeat, User } from '../types';
+import { RoomSeat, User, isUserOwner } from '../types';
 import { Mic, MicOff, Lock, Crown, Plus, Video, Volume2, ShieldAlert, VolumeX, Ban, UserX, Sparkles, Star } from 'lucide-react';
 import { Avatar4DFrame } from './Avatar4DFrame';
 import { UserRoleBadges } from './RoleBadge';
@@ -35,6 +35,13 @@ export const MicSeat: React.FC<MicSeatProps> = ({
   const [showHostMenu, setShowHostMenu] = useState(false);
   const isOccupied = Boolean(seat.userId);
   const isVip = variant === 'vip' || seat.isVipSeat || seat.isHostSeat;
+  const isSeatOwner = Boolean(
+    (seat as any).isOwner ||
+    (seat as any).role === 'OWNER' ||
+    seat.userId === 'user_owner_waled' ||
+    seat.userId === 'user_admin' ||
+    (seat.userId === currentUser?.id && isUserOwner(currentUser))
+  );
 
   // Responsive circle dimension classes (Uniform & Compact for 17 seats layout)
   const circleSizeClass =
@@ -68,33 +75,53 @@ export const MicSeat: React.FC<MicSeatProps> = ({
         className={`relative ${circleSizeClass} rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 select-none ${
           isOccupied
             ? isCelebrating
-              ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-slate-950 scale-105 shadow-[0_0_15px_rgba(250,204,21,0.8)] animate-pulse z-10'
+              ? 'ring-2 ring-amber-500 ring-offset-1 ring-offset-amber-100 scale-105 shadow-md z-10'
               : isSelectedRecipient
-              ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-slate-950 scale-105 shadow-[0_0_12px_rgba(251,191,36,0.8)] z-10'
+              ? 'ring-2 ring-emerald-600 ring-offset-1 ring-offset-amber-100 scale-105 shadow-md z-10'
               : seat.isSpeaking && !seat.isMuted
-              ? 'ring-2 ring-amber-400 ring-offset-1 ring-offset-slate-950 scale-105 shadow-[0_0_10px_rgba(251,191,36,0.6)] z-10'
+              ? 'ring-2 ring-emerald-600 ring-offset-1 ring-offset-amber-100 scale-105 shadow-md z-10'
               : isVip
-              ? 'ring-2 ring-amber-500/80 hover:ring-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
-              : 'ring-1.5 ring-slate-700/80 hover:ring-amber-400/60'
+              ? 'ring-2 ring-amber-600 hover:ring-amber-500'
+              : 'ring-1.5 ring-amber-500/80 hover:ring-emerald-700'
             : seat.isLocked
-            ? 'bg-slate-900/60 border border-slate-800 border-dashed text-slate-600'
+            ? 'bg-amber-200/60 border-2 border-amber-600/50 border-dashed text-amber-900'
             : isVip
-            ? 'bg-gradient-to-b from-slate-900/90 to-amber-950/40 hover:bg-slate-800 border border-amber-500/40 hover:border-amber-400 text-amber-400/70 hover:text-amber-300'
-            : 'bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-400 text-slate-400 hover:text-amber-300'
+            ? 'bg-gradient-to-b from-amber-300 via-amber-200 to-amber-400 hover:from-amber-200 border-2 border-amber-700 text-amber-950 shadow-md'
+            : 'bg-gradient-to-b from-[#fffbeb] to-[#fef3c7] hover:bg-[#fef3c7] border-2 border-amber-600/70 text-amber-950 shadow'
         }`}
       >
         {isOccupied ? (
           <>
             {/* Camera Video Stream or User Avatar */}
-            {seat.isCameraOn && isCurrentUserSeatedHere && localVideoElement ? (
-              <div className="w-full h-full rounded-full overflow-hidden">
-                {localVideoElement}
-              </div>
+            {seat.isCameraOn ? (
+              isCurrentUserSeatedHere && localVideoElement ? (
+                <div className="w-full h-full rounded-full overflow-hidden border-2 border-cyan-400 shadow-lg shadow-cyan-500/30">
+                  {localVideoElement}
+                </div>
+              ) : (
+                <div className="relative w-full h-full rounded-full border-2 border-cyan-400 bg-slate-900 flex items-center justify-center">
+                  <Avatar4DFrame
+                    avatarUrl={seat.userAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${seat.userId}`}
+                    frameId={isSeatOwner ? 'frame_owner_king' : seat.userFrameId || null}
+                    customFrameUrl={(seat as any).customFrameUrl || (seat.userFrameId?.startsWith('data:') ? seat.userFrameId : null) || (seat.userId === currentUser?.id ? (localStorage.getItem('user_custom_mic_frame') || null) : null)}
+                    isOwner={isSeatOwner}
+                    size={variant === 'vip' ? 'lg' : variant === 'compact' ? 'sm' : 'md'}
+                    showEffects={Boolean(seat.isSpeaking || isCelebrating || isSelectedRecipient)}
+                    isMuted={Boolean(seat.isMuted)}
+                  />
+                  <div className="absolute inset-0 bg-cyan-500/15 backdrop-blur-[0.5px] pointer-events-none" />
+                  <div className="absolute bottom-0.5 inset-x-0 mx-auto w-max px-1 py-0.2 bg-cyan-400 text-slate-950 font-black text-[7px] rounded-full flex items-center gap-0.5 shadow">
+                    <Video className="w-2 h-2" />
+                    <span>فيديو</span>
+                  </div>
+                </div>
+              )
             ) : (
               <Avatar4DFrame
                 avatarUrl={seat.userAvatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${seat.userId}`}
-                frameId={seat.userFrameId || null}
+                frameId={isSeatOwner ? 'frame_owner_king' : seat.userFrameId || null}
                 customFrameUrl={(seat as any).customFrameUrl || (seat.userFrameId?.startsWith('data:') ? seat.userFrameId : null) || (seat.userId === currentUser?.id ? (localStorage.getItem('user_custom_mic_frame') || null) : null)}
+                isOwner={isSeatOwner}
                 size={variant === 'vip' ? 'lg' : variant === 'compact' ? 'sm' : 'md'}
                 showEffects={Boolean(seat.isSpeaking || isCelebrating || isSelectedRecipient)}
                 isMuted={Boolean(seat.isMuted)}
@@ -108,14 +135,14 @@ export const MicSeat: React.FC<MicSeatProps> = ({
               </div>
             )}
 
-            {/* Speaking animated wave ring */}
+            {/* Speaking ring */}
             {seat.isSpeaking && !seat.isMuted && (
-              <div className="absolute inset-0 rounded-full border-2 border-amber-400 animate-ping opacity-60 pointer-events-none" />
+              <div className="absolute inset-0 rounded-full border-2 border-amber-400 opacity-80 pointer-events-none" />
             )}
 
             {/* VIP Star Badge for Co-Host / VIP seat (when not host) */}
             {!seat.isHostSeat && seat.isVipSeat && (
-              <div className="absolute -top-1.5 -right-1 p-0.5 sm:p-1 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full text-white shadow-md z-20">
+              <div className="absolute -top-1.5 -right-1 p-0.5 sm:p-1 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full text-slate-950 shadow-md z-20">
                 <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-current" />
               </div>
             )}
@@ -175,8 +202,8 @@ export const MicSeat: React.FC<MicSeatProps> = ({
           <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
         ) : (
           <div className="flex flex-col items-center justify-center">
-            <Plus className={`${variant === 'vip' ? 'w-5 h-5 text-amber-400' : 'w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400'} group-hover:text-amber-400 group-hover:scale-110 transition-transform`} />
-            <span className={`text-[9px] sm:text-[10px] font-bold ${variant === 'vip' ? 'text-amber-300' : 'text-slate-400'} group-hover:text-amber-300 mt-0.5`}>
+            <Plus className={`${variant === 'vip' ? 'w-5 h-5 text-amber-950' : 'w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-800'} group-hover:text-emerald-900 group-hover:scale-110 transition-transform`} />
+            <span className={`text-[9px] sm:text-[10px] font-black ${variant === 'vip' ? 'text-amber-950' : 'text-amber-950'} group-hover:text-emerald-900 mt-0.5`}>
               {seat.seatLabel || (variant === 'vip' ? (seat.seatIndex === 0 ? 'المضيف' : 'VIP') : `مايك ${seat.seatIndex + 1}`)}
             </span>
           </div>
@@ -185,7 +212,7 @@ export const MicSeat: React.FC<MicSeatProps> = ({
 
       {/* Support / Gift Points Pill directly under Avatar */}
       {isOccupied && (
-        <div className="mt-0.5 px-1.5 py-0.2 rounded-full bg-slate-950/80 text-amber-300 border border-amber-500/30 text-[8px] sm:text-[9px] font-black flex items-center gap-0.5 shadow-sm">
+        <div className="mt-0.5 px-1.5 py-0.2 rounded-full bg-amber-950/90 text-amber-300 border border-amber-400 text-[8px] sm:text-[9px] font-black flex items-center gap-0.5 shadow-sm">
           <span>💎</span>
           <span>{(seat as any).giftPoints || 0}</span>
         </div>
@@ -205,7 +232,7 @@ export const MicSeat: React.FC<MicSeatProps> = ({
               size="xs"
             />
           )}
-          <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-100 truncate text-center leading-tight">
+          <span className="text-[9px] sm:text-[10px] font-black text-amber-950 truncate text-center leading-tight">
             {isOccupied ? seat.userName : (seat.seatLabel || `مايك ${seat.seatIndex + 1}`)}
           </span>
           {isOccupied && seat.userGender && (

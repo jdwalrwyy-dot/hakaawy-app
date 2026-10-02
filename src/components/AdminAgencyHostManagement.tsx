@@ -6,7 +6,8 @@ import {
   AgentApplication,
   Agency,
   HostProfile,
-  TargetConfig
+  TargetConfig,
+  AgencyDispute
 } from '../types';
 import { API } from '../services/api';
 import {
@@ -37,7 +38,7 @@ interface AdminAgencyHostManagementProps {
 
 export const AdminAgencyHostManagement: React.FC<AdminAgencyHostManagementProps> = ({ currentUser }) => {
   const [subTab, setSubTab] = useState<
-    'host_apps' | 'agent_apps' | 'agencies' | 'hosts' | 'targets'
+    'host_apps' | 'agent_apps' | 'agencies' | 'hosts' | 'targets' | 'shipping_agents' | 'disputes'
   >('host_apps');
 
   const [loading, setLoading] = useState<boolean>(true);
@@ -46,6 +47,15 @@ export const AdminAgencyHostManagement: React.FC<AdminAgencyHostManagementProps>
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [hosts, setHosts] = useState<HostProfile[]>([]);
   const [targetConfigs, setTargetConfigs] = useState<TargetConfig[]>([]);
+  const [shippingAgents, setShippingAgents] = useState<any[]>([]);
+  const [disputes, setDisputes] = useState<AgencyDispute[]>([]);
+
+  // Shipping Agent Form State
+  const [newAgentUserId, setNewAgentUserId] = useState('');
+  const [newAgentCountry, setNewAgentCountry] = useState('مصر 🇪🇬');
+  const [newAgentPhone, setNewAgentPhone] = useState('+201000000000');
+  const [selectedSupplyAgent, setSelectedSupplyAgent] = useState<any | null>(null);
+  const [supplyCoinsAmount, setSupplyCoinsAmount] = useState('1000000');
 
   // Search
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -91,20 +101,37 @@ export const AdminAgencyHostManagement: React.FC<AdminAgencyHostManagementProps>
       API.getAdminAgentApplications(currentUser.id),
       API.getAdminAgencies(currentUser.id),
       API.getAdminHostProfiles(currentUser.id),
-      API.getAdminTargetConfigs(currentUser.id)
+      API.getAdminTargetConfigs(currentUser.id),
+      API.getAdminAgencyDisputes(currentUser.id).catch(() => [])
     ])
-      .then(([hApps, aApps, ags, hsts, targets]) => {
+      .then(([hApps, aApps, ags, hsts, targets, disps]) => {
         setHostApps(hApps);
         setAgentApps(aApps);
         setAgencies(ags);
         setHosts(hsts);
         setTargetConfigs(targets);
+        setDisputes(disps || []);
         setLoading(false);
       })
       .catch(err => {
         console.error('Error loading admin agency data:', err);
         setLoading(false);
       });
+  };
+
+  // Resolve Agency Dispute (Force Release / Reject)
+  const handleResolveDispute = async (disputeId: string, action: 'FORCE_RELEASE' | 'REJECT') => {
+    try {
+      const res = await API.resolveAgencyDispute({
+        ownerId: currentUser.id,
+        disputeId,
+        action
+      });
+      setActionMsg({ type: 'success', text: res.message });
+      loadAll();
+    } catch (err: any) {
+      setActionMsg({ type: 'error', text: err.message || 'فشلت معالجة النزاع' });
+    }
   };
 
   useEffect(() => {

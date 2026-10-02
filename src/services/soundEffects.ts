@@ -946,6 +946,14 @@ class SoundEffectsService {
     } catch {}
   }
 
+  playVictoryFanfare() {
+    this.playHorn();
+  }
+
+  playCoinCollect() {
+    this.playCoinSound();
+  }
+
   // --- 4D CINEMATIC ROYAL CAR ENTRANCE SOUNDS ---
 
   // 0. Powerful Cinematic Opening Hit & Hans-Zimmer-style Sub-Bass Braam

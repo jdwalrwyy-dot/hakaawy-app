@@ -1,0 +1,3121 @@
+{
+  "users": [
+    {
+      "id": "user_admin",
+      "name": "جدو الرويعى",
+      "username": "jdwalrwyy",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "gender": "male",
+      "phone": "+966500000001",
+      "email": "jdwalrwyy@gmail.com",
+      "bio": "المالك العام ومؤسس منصة حكاوي | أعلى صلاحية في النظام 👑",
+      "level": 99,
+      "exp": 10322,
+      "coins": 1000199,
+      "diamonds": 196642,
+      "role": "OWNER",
+      "isOwner": true,
+      "is_owner": true,
+      "followersCount": 9999,
+      "followingCount": 12,
+      "friendsCount": 140,
+      "activeFrameId": "frame_owner_king",
+      "referralCode": "HEKAWY1",
+      "createdAt": "2026-10-01T16:23:47.396Z",
+      "isOnline": true,
+      "isBanned": false,
+      "activeEntranceId": "entrance_royal_luxury_car_5d",
+      "isVipNumericId": true,
+      "numericId": "888888",
+      "canRecharge": true,
+      "googleId": "108031087043510505294"
+    },
+    {
+      "id": "user_owner_waled",
+      "name": "وليد (المالك)",
+      "username": "waledwwwz41",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "gender": "male",
+      "phone": "+966500000002",
+      "email": "waledwwwz41@gmail.com",
+      "bio": "المالك العام وشريك مؤسس في منصة حكاوي | أعلى صلاحية في النظام 👑",
+      "level": 99,
+      "exp": 9999,
+      "coins": 999999,
+      "diamonds": 999999,
+      "role": "OWNER",
+      "isOwner": true,
+      "is_owner": true,
+      "followersCount": 9999,
+      "followingCount": 12,
+      "friendsCount": 140,
+      "activeFrameId": "frame_owner_king",
+      "referralCode": "WALED1",
+      "createdAt": "2026-10-01T16:23:47.398Z",
+      "isOnline": true,
+      "activeEntranceId": "entrance_royal_luxury_car_5d",
+      "isVipNumericId": true,
+      "numericId": "777777",
+      "isBanned": false
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room_1790890584049_w06s",
+      "roomCode": "331830",
+      "title": "غرفة الإدارة والدعم الفني 🎙️👑",
+      "description": "الغرفة الصوتية الرسمية للإدارة والرد على استفسارات وحاجات المستخدمين والدعم الفني المباشر",
+      "coverImage": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80",
+      "hostId": "user_admin",
+      "hostName": "جدو الرويعى",
+      "hostAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "hostFrameId": "frame_owner_king",
+      "type": "PUBLIC",
+      "roomType": "audio",
+      "status": "LIVE",
+      "allowAudio": true,
+      "allowVideo": false,
+      "viewerCount": 1,
+      "currentCategory": "عام",
+      "createdAt": "2026-10-01T21:36:24.049Z",
+      "tags": [
+        "OFFICIAL_ADMIN",
+        "رسمية",
+        "إدارة",
+        "دعم_فني"
+      ],
+      "micLayout": "2+15",
+      "seatsCount": 17
+    }
+  ],
+  "roomMembers": [
+    {
+      "roomId": "room_1790890584049_w06s",
+      "userId": "user_admin",
+      "userName": "جدو الرويعى",
+      "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "userFrameId": "frame_owner_king",
+      "userEntranceId": "entrance_royal_luxury_car_5d",
+      "roleInRoom": "HOST",
+      "isMuted": false,
+      "isCameraOn": false,
+      "isSpeaking": false,
+      "isStealth": false,
+      "joinedAt": "2026-10-02T10:27:08.986Z"
+    }
+  ],
+  "roomSeats": {
+    "room_1790890584049_w06s": [
+      {
+        "seatIndex": 0,
+        "userId": "user_admin",
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": true,
+        "isVipSeat": true,
+        "seatLabel": "المضيف 👑",
+        "userName": "جدو الرويعى",
+        "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+        "userGender": "male",
+        "userFrameId": "frame_owner_king"
+      },
+      {
+        "seatIndex": 1,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": true,
+        "seatLabel": "VIP 🌟"
+      },
+      {
+        "seatIndex": 2,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 1"
+      },
+      {
+        "seatIndex": 3,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 2"
+      },
+      {
+        "seatIndex": 4,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 3"
+      },
+      {
+        "seatIndex": 5,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 4"
+      },
+      {
+        "seatIndex": 6,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 5"
+      },
+      {
+        "seatIndex": 7,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 6"
+      },
+      {
+        "seatIndex": 8,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 7"
+      },
+      {
+        "seatIndex": 9,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 8"
+      },
+      {
+        "seatIndex": 10,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 9"
+      },
+      {
+        "seatIndex": 11,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 10"
+      },
+      {
+        "seatIndex": 12,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 11"
+      },
+      {
+        "seatIndex": 13,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 12"
+      },
+      {
+        "seatIndex": 14,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 13"
+      },
+      {
+        "seatIndex": 15,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 14"
+      },
+      {
+        "seatIndex": 16,
+        "userId": null,
+        "isMuted": false,
+        "isCameraOn": false,
+        "isSpeaking": false,
+        "isLocked": false,
+        "isHostSeat": false,
+        "isVipSeat": false,
+        "seatLabel": "مايك 15"
+      }
+    ]
+  },
+  "micRequests": [],
+  "messages": [
+    {
+      "id": "msg_1790894848451_x2qa",
+      "roomId": "room_1790890584049_w06s",
+      "userId": "user_admin",
+      "userName": "جدو الرويعى",
+      "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "userFrameId": "frame_owner_king",
+      "userRole": "OWNER",
+      "text": "أرسل 2x وردة كريستالية ملكية 🌹 إلى جدو الرويعى! 🎁✨",
+      "createdAt": "2026-10-01T22:47:28.451Z",
+      "isModerated": false,
+      "giftData": {
+        "giftId": "gift_crystal_rose",
+        "giftName": "وردة كريستالية ملكية",
+        "giftIcon": "🌹",
+        "count": 2,
+        "receiverName": "جدو الرويعى"
+      }
+    },
+    {
+      "id": "msg_1790894852868_z94r",
+      "roomId": "room_1790890584049_w06s",
+      "userId": "user_admin",
+      "userName": "جدو الرويعى",
+      "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "userFrameId": "frame_owner_king",
+      "userRole": "OWNER",
+      "text": "أرسل 2x وردة كريستالية ملكية 🌹 إلى جدو الرويعى! 🎁✨",
+      "createdAt": "2026-10-01T22:47:32.868Z",
+      "isModerated": false,
+      "giftData": {
+        "giftId": "gift_crystal_rose",
+        "giftName": "وردة كريستالية ملكية",
+        "giftIcon": "🌹",
+        "count": 2,
+        "receiverName": "جدو الرويعى"
+      }
+    },
+    {
+      "id": "msg_1790894858054_67zv",
+      "roomId": "room_1790890584049_w06s",
+      "userId": "user_admin",
+      "userName": "جدو الرويعى",
+      "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "userFrameId": "frame_owner_king",
+      "userRole": "OWNER",
+      "text": "أرسل 2x وردة كريستالية ملكية 🌹 إلى جدو الرويعى! 🎁✨",
+      "createdAt": "2026-10-01T22:47:38.054Z",
+      "isModerated": false,
+      "giftData": {
+        "giftId": "gift_crystal_rose",
+        "giftName": "وردة كريستالية ملكية",
+        "giftIcon": "🌹",
+        "count": 2,
+        "receiverName": "جدو الرويعى"
+      }
+    },
+    {
+      "id": "msg_1790894862743_zarb",
+      "roomId": "room_1790890584049_w06s",
+      "userId": "user_admin",
+      "userName": "جدو الرويعى",
+      "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "userFrameId": "frame_owner_king",
+      "userRole": "OWNER",
+      "text": "أرسل 2x وردة كريستالية ملكية 🌹 إلى جدو الرويعى! 🎁✨",
+      "createdAt": "2026-10-01T22:47:42.743Z",
+      "isModerated": false,
+      "giftData": {
+        "giftId": "gift_crystal_rose",
+        "giftName": "وردة كريستالية ملكية",
+        "giftIcon": "🌹",
+        "count": 2,
+        "receiverName": "جدو الرويعى"
+      }
+    },
+    {
+      "id": "msg_1790894870887_j7d3",
+      "roomId": "room_1790890584049_w06s",
+      "userId": "user_admin",
+      "userName": "جدو الرويعى",
+      "userAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "userFrameId": "frame_owner_king",
+      "userRole": "OWNER",
+      "text": "أرسل 30x وردة كريستالية ملكية 🌹 إلى جدو الرويعى! 🎁✨",
+      "createdAt": "2026-10-01T22:47:50.887Z",
+      "isModerated": false,
+      "giftData": {
+        "giftId": "gift_crystal_rose",
+        "giftName": "وردة كريستالية ملكية",
+        "giftIcon": "🌹",
+        "count": 30,
+        "receiverName": "جدو الرويعى"
+      }
+    }
+  ],
+  "privateMessages": [],
+  "friendships": [],
+  "follows": [],
+  "gifts": [
+    {
+      "id": "gift_crystal_rose",
+      "nameAr": "وردة كريستالية ملكية",
+      "icon": "🌹",
+      "diamondCost": 5,
+      "coinReward": 5,
+      "animationType": "crystal_rose_refraction",
+      "soundKey": "common_chime",
+      "category": "common",
+      "tierLevel": "COMMON",
+      "descriptionAr": "وردة منحوتة من الكريستال الوردي والزمرد الملكي."
+    },
+    {
+      "id": "gift_ruby_gem",
+      "nameAr": "ياقوت ملكي متألق",
+      "icon": "💎",
+      "diamondCost": 20,
+      "coinReward": 20,
+      "animationType": "ruby_radiance",
+      "soundKey": "common_chime",
+      "category": "common",
+      "tierLevel": "COMMON",
+      "descriptionAr": "جوهرة ياقوت أحمر إمبراطوري بقصة برليانت ثلاثية الأبعاد."
+    },
+    {
+      "id": "gift_golden_dagger",
+      "nameAr": "خنجر دمشقي مذهب",
+      "icon": "🗡️",
+      "diamondCost": 50,
+      "coinReward": 50,
+      "animationType": "golden_dagger_sheen",
+      "soundKey": "common_chime",
+      "category": "common",
+      "tierLevel": "COMMON",
+      "descriptionAr": "خنجر عربي أصيل بنقوش ذهبية وأحجار كريمة."
+    },
+    {
+      "id": "gift_royal_falcon",
+      "nameAr": "صقر الصيد الملكي",
+      "icon": "🦅",
+      "diamondCost": 75,
+      "coinReward": 75,
+      "animationType": "falcon_soar",
+      "soundKey": "common_chime",
+      "category": "common",
+      "tierLevel": "COMMON",
+      "descriptionAr": "صقر شاهين حر بعيون من الياقوت وريش ذهبي."
+    },
+    {
+      "id": "gift_golden_lamp",
+      "nameAr": "مصباح الأساطير الذهبي",
+      "icon": "🪔",
+      "diamondCost": 100,
+      "coinReward": 100,
+      "animationType": "lamp_magic_dust",
+      "soundKey": "common_chime",
+      "category": "common",
+      "tierLevel": "COMMON",
+      "descriptionAr": "مصباح عربي تراثي من الذهب الخالص ينثر أطيافاً ساحرة."
+    },
+    {
+      "id": "gift_diamond_ring",
+      "nameAr": "خاتم ألماس فاخر",
+      "icon": "💍",
+      "diamondCost": 300,
+      "coinReward": 300,
+      "animationType": "diamond_ring_flare",
+      "soundKey": "pretty_crystal",
+      "category": "pretty",
+      "tierLevel": "PRETTY",
+      "descriptionAr": "خاتم سوليتير من البلاتين النقي يتوسطه فص ألماس ملكي."
+    },
+    {
+      "id": "gift_diamond_necklace",
+      "nameAr": "عقد ألماس ملكي",
+      "icon": "📿",
+      "diamondCost": 800,
+      "coinReward": 800,
+      "animationType": "necklace_cascades",
+      "soundKey": "pretty_crystal",
+      "category": "pretty",
+      "tierLevel": "PRETTY",
+      "descriptionAr": "عقد ريفيير ماسي بقطع ماركيز يتلألأ بأطياف النور."
+    },
+    {
+      "id": "gift_jewelry_box",
+      "nameAr": "صندوق مجوهرات فاخر",
+      "icon": "🎁",
+      "diamondCost": 1500,
+      "coinReward": 1500,
+      "animationType": "jewelry_chest_open",
+      "soundKey": "pretty_crystal",
+      "category": "pretty",
+      "tierLevel": "PRETTY",
+      "descriptionAr": "صندوق مخملي مطعم بالذهب الخالص يفيض بالزمرد واللؤلؤ."
+    },
+    {
+      "id": "gift_royal_stallion",
+      "nameAr": "حصان ملكي عربي",
+      "icon": "🐎",
+      "diamondCost": 3000,
+      "coinReward": 3000,
+      "animationType": "stallion_gallop",
+      "soundKey": "pretty_crystal",
+      "category": "pretty",
+      "tierLevel": "PRETTY",
+      "descriptionAr": "جواد عربي أصيل بدرع ذهبي وسرج مرصع بالأحجار الكريمة."
+    },
+    {
+      "id": "gift_majestic_peacock",
+      "nameAr": "طاووس ملكي فاخر",
+      "icon": "🦚",
+      "diamondCost": 5000,
+      "coinReward": 5000,
+      "animationType": "peacock_spread",
+      "soundKey": "pretty_crystal",
+      "category": "pretty",
+      "tierLevel": "PRETTY",
+      "descriptionAr": "طاووس إمبراطوري بذيل مروحي يعكس بريق الزمرد والذهب."
+    },
+    {
+      "id": "gift_luxury_supercar",
+      "nameAr": "سيارة رياضية خارقة",
+      "icon": "🏎️",
+      "diamondCost": 8000,
+      "coinReward": 8000,
+      "animationType": "supercar_thrust",
+      "soundKey": "luxury_fanfare",
+      "category": "luxury",
+      "tierLevel": "LUXURY",
+      "descriptionAr": "هايبركار ديناميكية بهيكل كربوني مطعم بذهب عيار 24."
+    },
+    {
+      "id": "gift_golden_rolls",
+      "nameAr": "سيارة ذهبية ملكية",
+      "icon": "🚘",
+      "diamondCost": 12000,
+      "coinReward": 12000,
+      "animationType": "golden_rolls_glide",
+      "soundKey": "luxury_fanfare",
+      "category": "luxury",
+      "tierLevel": "LUXURY",
+      "descriptionAr": "ليموزين فانتوم فارهة مصنوعة بالكامل من الذهب المصقول."
+    },
+    {
+      "id": "gift_luxury_superyacht",
+      "nameAr": "يخت ملكي فاخر",
+      "icon": "🛥️",
+      "diamondCost": 18000,
+      "coinReward": 18000,
+      "animationType": "superyacht_cruise",
+      "soundKey": "luxury_fanfare",
+      "category": "luxury",
+      "tierLevel": "LUXURY",
+      "descriptionAr": "ميغايخت متعدد الطوابق مع مهبط مروحيات وحوض زجاجي مضيء."
+    },
+    {
+      "id": "gift_private_jet",
+      "nameAr": "طائرة خاصة فاخرة",
+      "icon": "🛩️",
+      "diamondCost": 24000,
+      "coinReward": 24000,
+      "animationType": "private_jet_flight",
+      "soundKey": "luxury_fanfare",
+      "category": "luxury",
+      "tierLevel": "LUXURY",
+      "descriptionAr": "طائرة نفاثة رئاسية تتألق باللون الأبيض والخطوط الذهبية."
+    },
+    {
+      "id": "gift_royal_palace",
+      "nameAr": "قصر الملوك الفاخر",
+      "icon": "🏰",
+      "diamondCost": 30000,
+      "coinReward": 30000,
+      "animationType": "royal_palace_illuminated",
+      "soundKey": "luxury_fanfare",
+      "category": "luxury",
+      "tierLevel": "LUXURY",
+      "descriptionAr": "قصر ملكي شامخ بقباب ذهبية ومآذن رخامية مشعة بالنور."
+    },
+    {
+      "id": "gift_golden_castle",
+      "nameAr": "قلعة ذهبية شامخة",
+      "icon": "🏯",
+      "diamondCost": 40000,
+      "coinReward": 40000,
+      "animationType": "golden_castle_unfold",
+      "soundKey": "legendary_grand",
+      "category": "legendary",
+      "tierLevel": "LEGENDARY",
+      "descriptionAr": "قلعة أسطورية محصنة بأسوار من الذهب الخالص وأبراج مشتعلة."
+    },
+    {
+      "id": "gift_golden_3d_dragon",
+      "nameAr": "تنين ذهبي أسطوري",
+      "icon": "🐉",
+      "diamondCost": 50000,
+      "coinReward": 50000,
+      "animationType": "dragon_celestial_roar",
+      "soundKey": "legendary_grand",
+      "category": "legendary",
+      "tierLevel": "LEGENDARY",
+      "descriptionAr": "تنين مجنح ثلاثي الأبعاد يلتف في الفضاء وينفث شواظاً ذهبية."
+    },
+    {
+      "id": "gift_golden_eagle",
+      "nameAr": "نسر ذهبي إمبراطوري",
+      "icon": "🦅",
+      "diamondCost": 60000,
+      "coinReward": 60000,
+      "animationType": "imperial_eagle_strike",
+      "soundKey": "legendary_grand",
+      "category": "legendary",
+      "tierLevel": "LEGENDARY",
+      "descriptionAr": "نسر إمبراطوري عملاق باسط جناحيه يقبض على صواعق البرق الذهبي."
+    },
+    {
+      "id": "gift_cosmic_stargate",
+      "nameAr": "بوابة كونية أسطورية",
+      "icon": "🌀",
+      "diamondCost": 70000,
+      "coinReward": 70000,
+      "animationType": "stargate_vortex",
+      "soundKey": "legendary_grand",
+      "category": "legendary",
+      "tierLevel": "LEGENDARY",
+      "descriptionAr": "بوابة هولوغرافية بين المجرات تدور بحلقات رونية وأشعة سماوية."
+    },
+    {
+      "id": "gift_vortex_galaxy",
+      "nameAr": "مجرة كونية متحركة",
+      "icon": "🌌",
+      "diamondCost": 80000,
+      "coinReward": 80000,
+      "animationType": "vortex_galaxy_spin",
+      "soundKey": "legendary_grand",
+      "category": "legendary",
+      "tierLevel": "LEGENDARY",
+      "descriptionAr": "مجرة حلزونية ساطعة بسدم نجمية وثقوب ضوئية تبهر الأبصار."
+    },
+    {
+      "id": "gift_golden_planet",
+      "nameAr": "كوكب ذهبي أسطوري",
+      "icon": "🪐",
+      "diamondCost": 90000,
+      "coinReward": 90000,
+      "animationType": "golden_planet_eclipse",
+      "soundKey": "vip_imperial",
+      "category": "vip",
+      "tierLevel": "VIP",
+      "badge": "VIP",
+      "descriptionAr": "كوكب عملاق من الذهب الخالص تحيط به حلقات من الماس المشع."
+    },
+    {
+      "id": "gift_luxury_starship",
+      "nameAr": "صاروخ ملكي فضائي",
+      "icon": "🚀",
+      "diamondCost": 95000,
+      "coinReward": 95000,
+      "animationType": "starship_hyperdrive",
+      "soundKey": "vip_imperial",
+      "category": "vip",
+      "tierLevel": "VIP",
+      "badge": "VIP",
+      "descriptionAr": "مركبة استكشاف فضائية ملكية تخترق الفضاء بمحركات البلازما."
+    },
+    {
+      "id": "gift_golden_empire",
+      "nameAr": "إمبراطورية ذهبية شامخة",
+      "icon": "🏛️",
+      "diamondCost": 98000,
+      "coinReward": 98000,
+      "animationType": "golden_empire_ascension",
+      "soundKey": "vip_imperial",
+      "category": "vip",
+      "tierLevel": "VIP",
+      "badge": "VIP",
+      "descriptionAr": "مدينة أكروبوليس ملكية بأعمدة بارثينون شامخة من الذهب الخالص."
+    },
+    {
+      "id": "gift_royal_throne",
+      "nameAr": "عرش الملوك الأعظم",
+      "icon": "👑",
+      "diamondCost": 100000,
+      "coinReward": 100000,
+      "animationType": "royal_throne_coronation",
+      "soundKey": "vip_imperial",
+      "category": "vip",
+      "tierLevel": "VIP",
+      "badge": "VIP",
+      "descriptionAr": "أعظم هدية في حكاوي: عرش الملوك الإمبراطوري بتاج مرصع بألماس كولينان."
+    }
+  ],
+  "giftTransactions": [
+    {
+      "id": "tx_gift_1790894870885_0z9c",
+      "giftId": "gift_crystal_rose",
+      "giftName": "وردة كريستالية ملكية",
+      "giftIcon": "🌹",
+      "senderId": "user_admin",
+      "senderName": "جدو الرويعى",
+      "senderAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "receiverId": "user_admin",
+      "receiverName": "جدو الرويعى",
+      "receiverAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "roomId": "room_1790890584049_w06s",
+      "count": 30,
+      "totalDiamonds": 150,
+      "createdAt": "2026-10-01T22:47:50.885Z",
+      "idempotencyKey": "gift_user_admin_user_admin_gift_crystal_rose_1790894870382_b1umu"
+    },
+    {
+      "id": "tx_gift_1790894862741_uaei",
+      "giftId": "gift_crystal_rose",
+      "giftName": "وردة كريستالية ملكية",
+      "giftIcon": "🌹",
+      "senderId": "user_admin",
+      "senderName": "جدو الرويعى",
+      "senderAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "receiverId": "user_admin",
+      "receiverName": "جدو الرويعى",
+      "receiverAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "roomId": "room_1790890584049_w06s",
+      "count": 2,
+      "totalDiamonds": 10,
+      "createdAt": "2026-10-01T22:47:42.741Z",
+      "idempotencyKey": "gift_user_admin_user_admin_gift_crystal_rose_1790894862238_kcwig"
+    },
+    {
+      "id": "tx_gift_1790894858052_7vmk",
+      "giftId": "gift_crystal_rose",
+      "giftName": "وردة كريستالية ملكية",
+      "giftIcon": "🌹",
+      "senderId": "user_admin",
+      "senderName": "جدو الرويعى",
+      "senderAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "receiverId": "user_admin",
+      "receiverName": "جدو الرويعى",
+      "receiverAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "roomId": "room_1790890584049_w06s",
+      "count": 2,
+      "totalDiamonds": 10,
+      "createdAt": "2026-10-01T22:47:38.052Z",
+      "idempotencyKey": "gift_user_admin_user_admin_gift_crystal_rose_1790894857542_3vi3h"
+    },
+    {
+      "id": "tx_gift_1790894852866_ge34",
+      "giftId": "gift_crystal_rose",
+      "giftName": "وردة كريستالية ملكية",
+      "giftIcon": "🌹",
+      "senderId": "user_admin",
+      "senderName": "جدو الرويعى",
+      "senderAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "receiverId": "user_admin",
+      "receiverName": "جدو الرويعى",
+      "receiverAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "roomId": "room_1790890584049_w06s",
+      "count": 2,
+      "totalDiamonds": 10,
+      "createdAt": "2026-10-01T22:47:32.866Z",
+      "idempotencyKey": "gift_user_admin_user_admin_gift_crystal_rose_1790894852354_dql74"
+    },
+    {
+      "id": "tx_gift_1790894848447_dw8h",
+      "giftId": "gift_crystal_rose",
+      "giftName": "وردة كريستالية ملكية",
+      "giftIcon": "🌹",
+      "senderId": "user_admin",
+      "senderName": "جدو الرويعى",
+      "senderAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "receiverId": "user_admin",
+      "receiverName": "جدو الرويعى",
+      "receiverAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "roomId": "room_1790890584049_w06s",
+      "count": 2,
+      "totalDiamonds": 10,
+      "createdAt": "2026-10-01T22:47:28.447Z",
+      "idempotencyKey": "gift_user_admin_user_admin_gift_crystal_rose_1790894847941_cszk5"
+    }
+  ],
+  "walletTransactions": [
+    {
+      "id": "wtx_1790902953182_rc0d",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 500,
+      "newBalance": 196642,
+      "reason": "فوز في لعبة مزرعة الحظ (عنب) - رهان 100 ماسة",
+      "createdAt": "2026-10-02T01:02:33.182Z"
+    },
+    {
+      "id": "wtx_1790902926550_2rps",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 196142,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-02T01:02:06.550Z"
+    },
+    {
+      "id": "wtx_1790898957367_orqy",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 196242,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:57.367Z"
+    },
+    {
+      "id": "wtx_1790898956560_4wd5",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 246242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:56.560Z"
+    },
+    {
+      "id": "wtx_1790898955838_7nlu",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 296242,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:55.838Z"
+    },
+    {
+      "id": "wtx_1790898955240_5w6j",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 346242,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:55.240Z"
+    },
+    {
+      "id": "wtx_1790898954479_29c6",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 396242,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:54.479Z"
+    },
+    {
+      "id": "wtx_1790898953864_sjci",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 446242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:53.864Z"
+    },
+    {
+      "id": "wtx_1790898953079_jrey",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 496242,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:53.079Z"
+    },
+    {
+      "id": "wtx_1790898952620_b6xy",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 546242,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:52.620Z"
+    },
+    {
+      "id": "wtx_1790898952159_hkhv",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 596242,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:52.159Z"
+    },
+    {
+      "id": "wtx_1790898951401_2q48",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 646242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:51.401Z"
+    },
+    {
+      "id": "wtx_1790898949980_bnwb",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 696242,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:49.980Z"
+    },
+    {
+      "id": "wtx_1790898948380_q0ua",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 746242,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:48.380Z"
+    },
+    {
+      "id": "wtx_1790898947540_jkaj",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 796242,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:47.540Z"
+    },
+    {
+      "id": "wtx_1790898946988_pqft",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 846242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:46.988Z"
+    },
+    {
+      "id": "wtx_1790898919967_z855",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 896242,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:19.967Z"
+    },
+    {
+      "id": "wtx_1790898919239_13ni",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 946242,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:19.239Z"
+    },
+    {
+      "id": "wtx_1790898918421_fu4x",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 996242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:18.421Z"
+    },
+    {
+      "id": "wtx_1790898917700_wir0",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1046242,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:17.700Z"
+    },
+    {
+      "id": "wtx_1790898916906_hofd",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1096242,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:16.906Z"
+    },
+    {
+      "id": "wtx_1790898916179_xx8s",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1146242,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:16.179Z"
+    },
+    {
+      "id": "wtx_1790898915300_f7f1",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1196242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:15.300Z"
+    },
+    {
+      "id": "wtx_1790898914368_sbw4",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1246242,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:14.368Z"
+    },
+    {
+      "id": "wtx_1790898912259_ut5j",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1296242,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:12.259Z"
+    },
+    {
+      "id": "wtx_1790898910119_brsh",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1346242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:10.119Z"
+    },
+    {
+      "id": "wtx_1790898909540_v2gw",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1396242,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:09.540Z"
+    },
+    {
+      "id": "wtx_1790898908449_vgil",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1446242,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:55:08.449Z"
+    },
+    {
+      "id": "wtx_1790898902594_t2br",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 800000,
+      "newBalance": 1496242,
+      "reason": "فوز في لعبة مزرعة الحظ (دجاجة) - رهان 100,000 ماسة",
+      "createdAt": "2026-10-01T23:55:02.594Z"
+    },
+    {
+      "id": "wtx_1790898884792_1snb",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 696242,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:44.792Z"
+    },
+    {
+      "id": "wtx_1790898884357_p5ck",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 746242,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:44.357Z"
+    },
+    {
+      "id": "wtx_1790898883818_wxcq",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 796242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:43.818Z"
+    },
+    {
+      "id": "wtx_1790898883021_vctj",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 846242,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:43.021Z"
+    },
+    {
+      "id": "wtx_1790898879240_54se",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 896242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:39.240Z"
+    },
+    {
+      "id": "wtx_1790898877202_ydy0",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 946242,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:37.202Z"
+    },
+    {
+      "id": "wtx_1790898876668_kuw2",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 996242,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:36.668Z"
+    },
+    {
+      "id": "wtx_1790898876002_ktct",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 1046242,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:36.002Z"
+    },
+    {
+      "id": "wtx_1790898867563_oee6",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 250000,
+      "newBalance": 1096242,
+      "reason": "فوز في لعبة مزرعة الحظ (عنب) - رهان 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:27.563Z"
+    },
+    {
+      "id": "wtx_1790898844470_hpi4",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 846242,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:04.470Z"
+    },
+    {
+      "id": "wtx_1790898842579_0o9r",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 896242,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:02.579Z"
+    },
+    {
+      "id": "wtx_1790898841660_c350",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -50000,
+      "newBalance": 946242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 50,000 ماسة",
+      "createdAt": "2026-10-01T23:54:01.660Z"
+    },
+    {
+      "id": "wtx_1790898817259_u4vq",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996242,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:53:37.259Z"
+    },
+    {
+      "id": "wtx_1790898815447_nzfz",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996342,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:53:35.447Z"
+    },
+    {
+      "id": "wtx_1790898813372_hb0b",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996442,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:53:33.372Z"
+    },
+    {
+      "id": "wtx_1790897996936_0210",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996542,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:56.936Z"
+    },
+    {
+      "id": "wtx_1790897996248_18qd",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996642,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:56.248Z"
+    },
+    {
+      "id": "wtx_1790897994638_itnk",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996742,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:54.638Z"
+    },
+    {
+      "id": "wtx_1790897994025_8dbx",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996842,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:54.025Z"
+    },
+    {
+      "id": "wtx_1790897961247_9p6g",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996942,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:21.247Z"
+    },
+    {
+      "id": "wtx_1790897959197_6cgo",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997042,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:19.197Z"
+    },
+    {
+      "id": "wtx_1790897958559_nyt4",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997142,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:18.559Z"
+    },
+    {
+      "id": "wtx_1790897957039_ottg",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:39:17.040Z"
+    },
+    {
+      "id": "wtx_1790897530993_mjpq",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997342,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:32:10.993Z"
+    },
+    {
+      "id": "wtx_1790897530243_8t81",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997442,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:32:10.243Z"
+    },
+    {
+      "id": "wtx_1790897529266_rqjm",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997542,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:32:09.266Z"
+    },
+    {
+      "id": "wtx_1790897512713_43i0",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 1000,
+      "newBalance": 997642,
+      "reason": "فوز في لعبة مزرعة الحظ (برتقال) - رهان 200 ماسة",
+      "createdAt": "2026-10-01T23:31:52.713Z"
+    },
+    {
+      "id": "wtx_1790897497062_xma4",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996642,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:37.062Z"
+    },
+    {
+      "id": "wtx_1790897496436_ff79",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996742,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:36.436Z"
+    },
+    {
+      "id": "wtx_1790897495631_87oq",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996842,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:35.631Z"
+    },
+    {
+      "id": "wtx_1790897495035_c6bs",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 996942,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:35.035Z"
+    },
+    {
+      "id": "wtx_1790897492843_bdf3",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997042,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:32.843Z"
+    },
+    {
+      "id": "wtx_1790897490860_psdb",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997142,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:30.860Z"
+    },
+    {
+      "id": "wtx_1790897489457_db6m",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997242,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:29.457Z"
+    },
+    {
+      "id": "wtx_1790897486006_80lz",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997342,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:26.006Z"
+    },
+    {
+      "id": "wtx_1790897461474_dil7",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997442,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:31:01.474Z"
+    },
+    {
+      "id": "wtx_1790897458418_o873",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997542,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:30:58.418Z"
+    },
+    {
+      "id": "wtx_1790896338854_cr5j",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 200,
+      "newBalance": 997642,
+      "reason": "فوز في لعبة مزرعة الحظ (فراولة) - رهان 100 ماسة",
+      "createdAt": "2026-10-01T23:12:18.854Z"
+    },
+    {
+      "id": "wtx_1790896316725_hxji",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997442,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:56.725Z"
+    },
+    {
+      "id": "wtx_1790896316178_mxw2",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997542,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:56.178Z"
+    },
+    {
+      "id": "wtx_1790896315619_ac3i",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997642,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:55.619Z"
+    },
+    {
+      "id": "wtx_1790896314491_9qc8",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997742,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:54.491Z"
+    },
+    {
+      "id": "wtx_1790896312710_io0w",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997842,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:52.710Z"
+    },
+    {
+      "id": "wtx_1790896311649_qhmf",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 997942,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:51.649Z"
+    },
+    {
+      "id": "wtx_1790896311170_4q7u",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998042,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:51.170Z"
+    },
+    {
+      "id": "wtx_1790896310391_4huv",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998142,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:11:50.391Z"
+    },
+    {
+      "id": "wtx_1790895625152_cnni",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:25.152Z"
+    },
+    {
+      "id": "wtx_1790895624394_bv2j",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998342,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:24.394Z"
+    },
+    {
+      "id": "wtx_1790895622771_v1kd",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998442,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:22.771Z"
+    },
+    {
+      "id": "wtx_1790895619725_un7w",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998542,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:19.725Z"
+    },
+    {
+      "id": "wtx_1790895619134_jy3k",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998642,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:19.134Z"
+    },
+    {
+      "id": "wtx_1790895616611_6cr2",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998742,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:16.611Z"
+    },
+    {
+      "id": "wtx_1790895615992_bsf5",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998842,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:15.992Z"
+    },
+    {
+      "id": "wtx_1790895614472_5n5t",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 998942,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T23:00:14.472Z"
+    },
+    {
+      "id": "wtx_1790895591043_fi5z",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999042,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:59:51.043Z"
+    },
+    {
+      "id": "wtx_1790895549768_l5zo",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999142,
+      "reason": "رهان مزرعة الحظ (buffalo) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:59:09.768Z"
+    },
+    {
+      "id": "wtx_1790895549167_xchm",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999242,
+      "reason": "رهان مزرعة الحظ (steak) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:59:09.167Z"
+    },
+    {
+      "id": "wtx_1790895547796_z8pb",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999342,
+      "reason": "رهان مزرعة الحظ (goat) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:59:07.796Z"
+    },
+    {
+      "id": "wtx_1790895547238_85eu",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999442,
+      "reason": "رهان مزرعة الحظ (chicken) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:59:07.238Z"
+    },
+    {
+      "id": "wtx_1790895512528_e76e",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999542,
+      "reason": "رهان مزرعة الحظ (strawberry) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:58:32.528Z"
+    },
+    {
+      "id": "wtx_1790895511427_c53n",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999642,
+      "reason": "رهان مزرعة الحظ (apple) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:58:31.427Z"
+    },
+    {
+      "id": "wtx_1790895508808_tcqo",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999742,
+      "reason": "رهان مزرعة الحظ (orange) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:58:28.808Z"
+    },
+    {
+      "id": "wtx_1790895508072_3b1a",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -100,
+      "newBalance": 999842,
+      "reason": "رهان مزرعة الحظ (banana) بقيمة 100 ماسة",
+      "createdAt": "2026-10-01T22:58:28.072Z"
+    },
+    {
+      "id": "wtx_1790894870885_6n2l",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 105,
+      "newBalance": 999942,
+      "reason": "استقبال 30x وردة كريستالية ملكية من جدو الرويعى (حصة الهدية)",
+      "createdAt": "2026-10-01T22:47:50.885Z"
+    },
+    {
+      "id": "wtx_1790894870885_2c3o",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 150,
+      "newBalance": 1000199,
+      "reason": "استقبال 30x وردة كريستالية ملكية من جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:50.885Z"
+    },
+    {
+      "id": "wtx_1790894870883_bw45",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -150,
+      "newBalance": 999837,
+      "reason": "إرسال 30x وردة كريستالية ملكية إلى جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:50.883Z"
+    },
+    {
+      "id": "wtx_1790894862741_51af",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 7,
+      "newBalance": 999987,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى (حصة الهدية)",
+      "createdAt": "2026-10-01T22:47:42.741Z"
+    },
+    {
+      "id": "wtx_1790894862741_mayo",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 10,
+      "newBalance": 1000049,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:42.741Z"
+    },
+    {
+      "id": "wtx_1790894862740_szlh",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -10,
+      "newBalance": 999980,
+      "reason": "إرسال 2x وردة كريستالية ملكية إلى جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:42.740Z"
+    },
+    {
+      "id": "wtx_1790894858052_cpp8",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 7,
+      "newBalance": 999990,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى (حصة الهدية)",
+      "createdAt": "2026-10-01T22:47:38.052Z"
+    },
+    {
+      "id": "wtx_1790894858052_rv87",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 10,
+      "newBalance": 1000039,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:38.052Z"
+    },
+    {
+      "id": "wtx_1790894858050_hvyq",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -10,
+      "newBalance": 999983,
+      "reason": "إرسال 2x وردة كريستالية ملكية إلى جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:38.050Z"
+    },
+    {
+      "id": "wtx_1790894852866_smbe",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 7,
+      "newBalance": 999993,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى (حصة الهدية)",
+      "createdAt": "2026-10-01T22:47:32.866Z"
+    },
+    {
+      "id": "wtx_1790894852866_ivaw",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 10,
+      "newBalance": 1000029,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:32.866Z"
+    },
+    {
+      "id": "wtx_1790894852864_09hc",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -10,
+      "newBalance": 999986,
+      "reason": "إرسال 2x وردة كريستالية ملكية إلى جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:32.864Z"
+    },
+    {
+      "id": "wtx_1790894848447_a6vb",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": 7,
+      "newBalance": 999996,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى (حصة الهدية)",
+      "createdAt": "2026-10-01T22:47:28.447Z"
+    },
+    {
+      "id": "wtx_1790894848447_umgd",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 10,
+      "newBalance": 1000019,
+      "reason": "استقبال 2x وردة كريستالية ملكية من جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:28.447Z"
+    },
+    {
+      "id": "wtx_1790894848446_7jmk",
+      "userId": "user_admin",
+      "type": "DIAMOND",
+      "amount": -10,
+      "newBalance": 999989,
+      "reason": "إرسال 2x وردة كريستالية ملكية إلى جدو الرويعى",
+      "createdAt": "2026-10-01T22:47:28.446Z"
+    },
+    {
+      "id": "wtx_1790894072621_ob8b",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 5,
+      "newBalance": 1000009,
+      "reason": "مكافأة المهمة اليومية (دخول غرفة صوتية أو بث)",
+      "createdAt": "2026-10-01T22:34:32.621Z"
+    },
+    {
+      "id": "wtx_1790887687570_5o1i",
+      "userId": "user_admin",
+      "type": "COIN",
+      "amount": 5,
+      "newBalance": 1000004,
+      "reason": "مكافأة المهمة اليومية (تسجيل الدخول اليومي)",
+      "createdAt": "2026-10-01T20:48:07.570Z"
+    }
+  ],
+  "dailyTasks": [
+    {
+      "id": "task_login",
+      "titleAr": "تسجيل الدخول اليومي",
+      "rewardCoins": 5,
+      "rewardExp": 20,
+      "taskType": "DAILY_LOGIN",
+      "requiredCount": 1,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    },
+    {
+      "id": "task_share_app",
+      "titleAr": "📤 مشاركة تطبيق حكاوي",
+      "descriptionAr": "شارك حكاوي مع أصدقائك وعائلتك، وكل شخص جديد يسجل من رابطك يمنحك 10 كونز.",
+      "rewardCoins": 10,
+      "rewardExp": 50,
+      "taskType": "SHARE_APP",
+      "requiredCount": 1,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    },
+    {
+      "id": "task_join_room",
+      "titleAr": "دخول غرفة صوتية أو بث",
+      "rewardCoins": 5,
+      "rewardExp": 20,
+      "taskType": "JOIN_ROOM",
+      "requiredCount": 1,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    },
+    {
+      "id": "task_stay_10min",
+      "titleAr": "البقاء في الغرفة لمدة 10 دقائق",
+      "rewardCoins": 10,
+      "rewardExp": 50,
+      "taskType": "STAY_10_MIN",
+      "requiredCount": 10,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    },
+    {
+      "id": "task_send_gift",
+      "titleAr": "إرسال هدية لأحد المضيفين",
+      "rewardCoins": 5,
+      "rewardExp": 30,
+      "taskType": "SEND_GIFT",
+      "requiredCount": 1,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    },
+    {
+      "id": "task_receive_gift",
+      "titleAr": "استقبال هدية على المايك",
+      "rewardCoins": 5,
+      "rewardExp": 30,
+      "taskType": "RECEIVE_GIFT",
+      "requiredCount": 1,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    },
+    {
+      "id": "task_invite",
+      "titleAr": "دعوة مستخدم جديد برمز الإحالة",
+      "rewardCoins": 10,
+      "rewardExp": 60,
+      "taskType": "INVITE_FRIEND",
+      "requiredCount": 1,
+      "progress": 0,
+      "completed": false,
+      "claimed": false
+    }
+  ],
+  "userDailyTaskProgress": [
+    {
+      "userId": "user_admin",
+      "taskId": "task_login",
+      "date": "2026-10-01",
+      "progress": 1,
+      "completed": true,
+      "claimed": true
+    },
+    {
+      "userId": "user_admin",
+      "taskId": "task_join_room",
+      "date": "2026-10-01",
+      "progress": 1,
+      "completed": true,
+      "claimed": true
+    },
+    {
+      "userId": "user_admin",
+      "taskId": "task_send_gift",
+      "date": "2026-10-01",
+      "progress": 1,
+      "completed": true,
+      "claimed": false
+    },
+    {
+      "userId": "user_admin",
+      "taskId": "task_receive_gift",
+      "date": "2026-10-01",
+      "progress": 1,
+      "completed": true,
+      "claimed": false
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame_legendary_colorful",
+      "nameAr": "إطار أسطوري ملون",
+      "icon": "🌈",
+      "imageUrl": "https://i.postimg.cc/tT3W1Vm0/file-841827-331881.jpg",
+      "previewGradient": "linear-gradient(135deg, #FF007A 0%, #7928CA 50%, #4FE2B1 100%)",
+      "borderStyle": "border-2 border-fuchsia-400 shadow-[0_0_12px_rgba(217,70,239,0.8)]",
+      "diamondPrice": 5000,
+      "coinPrice": 50000,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "إطار أسطوري بألوان هولوجرافية ساحرة ومتميزة.",
+      "category": "LEGENDARY"
+    },
+    {
+      "id": "frame_golden_round",
+      "nameAr": "إطار دائري ذهبي لامع",
+      "icon": "✨",
+      "imageUrl": "https://i.postimg.cc/85RMFrnS/file-841827-512527.png",
+      "previewGradient": "linear-gradient(135deg, #FFD700 0%, #F59E0B 50%, #D97706 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]",
+      "diamondPrice": 3000,
+      "coinPrice": 30000,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "إطار دائري ذهبي ناصع البريق يحيط بملفك الشخصي بفخامة.",
+      "category": "GOLDEN"
+    },
+    {
+      "id": "frame_royal_golden_ornament",
+      "nameAr": "إطار زخرفة ذهبية ملكي",
+      "icon": "⚜️",
+      "imageUrl": "https://i.postimg.cc/TwVgyWNz/file-841827-883967.jpg",
+      "previewGradient": "linear-gradient(135deg, #D97706 0%, #B45309 100%)",
+      "borderStyle": "border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.9)]",
+      "diamondPrice": 7000,
+      "coinPrice": 70000,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "نقوش وزخارف إمبراطورية ذهبية للملوك والأمراء.",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_golden_hearts",
+      "nameAr": "إطار القلوب الذهبية",
+      "icon": "💛",
+      "imageUrl": "https://i.postimg.cc/gJV8w6BP/file-841827-889787.jpg",
+      "previewGradient": "linear-gradient(135deg, #F59E0B 0%, #EC4899 100%)",
+      "borderStyle": "border-2 border-pink-400 shadow-[0_0_12px_rgba(244,114,182,0.8)]",
+      "diamondPrice": 4000,
+      "coinPrice": 40000,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "إطار مفعم بقلوب ذهبية ورومانسية ساحرة.",
+      "category": "ROMANCE"
+    },
+    {
+      "id": "frame_golden_wheat",
+      "nameAr": "إطار سنبلة القمح الذهبية",
+      "icon": "🌾",
+      "imageUrl": "https://i.postimg.cc/QtQ1BWYP/file-841827-394731.jpg",
+      "previewGradient": "linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)",
+      "borderStyle": "border-2 border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.7)]",
+      "diamondPrice": 3500,
+      "coinPrice": 35000,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "إطار سنابل الخير والوفرة الذهبية الجذابة.",
+      "category": "GOLDEN"
+    },
+    {
+      "id": "frame_golden_stars",
+      "nameAr": "إطار النجوم الذهبية",
+      "icon": "⭐",
+      "imageUrl": "https://i.postimg.cc/TwVgyWNz/file-841827-883967.jpg",
+      "previewGradient": "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)",
+      "borderStyle": "border-2 border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.9)]",
+      "diamondPrice": 4500,
+      "coinPrice": 45000,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "إطار نجوم متلألئة في السماء الذهبية.",
+      "category": "STARS"
+    },
+    {
+      "id": "frame_owner_king",
+      "nameAr": "إطار المالك الحصري الملكي",
+      "icon": "👑",
+      "imageUrl": "https://i.postimg.cc/XqC9Yg7x/Screenshot-2026-09-21-23-31-12-43-680d03679600f7af0b4c700c6b270fe7-removebg-preview-removebg-preview.png",
+      "previewGradient": "linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF4500 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,1)] ring-2 ring-yellow-300",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": true,
+      "requiredLevel": 999,
+      "descriptionAr": "إطار المالك التنفيذي الحصري مع التاج الذهبي والشارة الملكية.",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_owner_exclusive",
+      "nameAr": "إطار المالك الحصري الخاص",
+      "icon": "👑",
+      "imageUrl": "https://i.postimg.cc/XqC9Yg7x/Screenshot-2026-09-21-23-31-12-43-680d03679600f7af0b4c700c6b270fe7-removebg-preview-removebg-preview.png",
+      "previewGradient": "linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF4500 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,1)] ring-2 ring-yellow-300",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": true,
+      "requiredLevel": 999,
+      "descriptionAr": "إطار المالك الخاص والمميز للقيادة والإدارة العليا.",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_king",
+      "nameAr": "إطار الإدارة والمالك",
+      "icon": "👑",
+      "imageUrl": "https://i.postimg.cc/XqC9Yg7x/Screenshot-2026-09-21-23-31-12-43-680d03679600f7af0b4c700c6b270fe7-removebg-preview-removebg-preview.png",
+      "previewGradient": "linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF4500 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.9)] ring-2 ring-yellow-300",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": true,
+      "requiredLevel": 999,
+      "descriptionAr": "إطار المالك والإدارة الحصري للتطبيق 4D - متحرك وصامت",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_flowers",
+      "nameAr": "إطار الزهور",
+      "icon": "🌸",
+      "previewGradient": "linear-gradient(135deg, #EC4899 0%, #F43F5E 100%)",
+      "borderStyle": "border-2 border-pink-400 shadow-[0_0_8px_rgba(236,72,153,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 1,
+      "descriptionAr": "إطار أزهار الكرز والساكورا الوردية - مجاني ومتاح للجميع من المستوى 1",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_cat",
+      "nameAr": "إطار القط",
+      "icon": "🐱",
+      "previewGradient": "linear-gradient(135deg, #D946EF 0%, #8B5CF6 100%)",
+      "borderStyle": "border-2 border-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 5,
+      "descriptionAr": "إطار آذان القطة النيون - يفتح عند المستوى 5",
+      "category": "ANIMAL"
+    },
+    {
+      "id": "frame_neon",
+      "nameAr": "إطار النيون",
+      "icon": "💡",
+      "previewGradient": "linear-gradient(135deg, #06B6D4 0%, #EC4899 100%)",
+      "borderStyle": "border-2 border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 8,
+      "descriptionAr": "إطار حلقة النيون الكهربائية - يفتح عند المستوى 8",
+      "category": "NEON"
+    },
+    {
+      "id": "frame_traveler",
+      "nameAr": "إطار الرحالة",
+      "icon": "🤠",
+      "previewGradient": "linear-gradient(135deg, #B45309 0%, #78350F 100%)",
+      "borderStyle": "border-2 border-amber-700 shadow-[0_0_8px_rgba(180,83,9,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 10,
+      "descriptionAr": "إطار حبل المغامرة وقبعة السفاري - يفتح عند المستوى 10",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_summer",
+      "nameAr": "إطار الصيف",
+      "icon": "🏖️",
+      "previewGradient": "linear-gradient(135deg, #0EA5E9 0%, #F59E0B 100%)",
+      "borderStyle": "border-2 border-sky-400 shadow-[0_0_8px_rgba(14,165,233,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 12,
+      "descriptionAr": "إطار شاطئ الصيف وأشجار النخيل - يفتح عند المستوى 12",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_roses",
+      "nameAr": "إطار الورود",
+      "icon": "🌹",
+      "previewGradient": "linear-gradient(135deg, #E11D48 0%, #881337 100%)",
+      "borderStyle": "border-2 border-rose-600 shadow-[0_0_10px_rgba(225,29,72,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 15,
+      "descriptionAr": "إطار إكليل الورود الحمراء المخملية - يفتح عند المستوى 15",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_nature",
+      "nameAr": "إطار الطبيعة",
+      "icon": "🌿",
+      "previewGradient": "linear-gradient(135deg, #10B981 0%, #047857 100%)",
+      "borderStyle": "border-2 border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 18,
+      "descriptionAr": "إطار أوراق الشجر الخضراء وفراشات النيون - يفتح عند المستوى 18",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_love",
+      "nameAr": "إطار الحب",
+      "icon": "💖",
+      "previewGradient": "linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)",
+      "borderStyle": "border-2 border-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 20,
+      "descriptionAr": "إطار القلوب الوردية النيون المضيئة - يفتح عند المستوى 20",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_dreams",
+      "nameAr": "إطار الأحلام",
+      "icon": "🌈",
+      "previewGradient": "linear-gradient(135deg, #F472B6 0%, #38BDF8 100%)",
+      "borderStyle": "border-2 border-pink-300 shadow-[0_0_10px_rgba(244,114,182,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 22,
+      "descriptionAr": "إطار قوس قزح والسحاب والنجوم - يفتح عند المستوى 22",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_music",
+      "nameAr": "إطار الموسيقى",
+      "icon": "🎧",
+      "previewGradient": "linear-gradient(135deg, #06B6D4 0%, #8B5CF6 100%)",
+      "borderStyle": "border-2 border-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 25,
+      "descriptionAr": "إطار سماعات الرأس النيون والنوتات - يفتح عند المستوى 25",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_winter",
+      "nameAr": "إطار الشتاء",
+      "icon": "❄️",
+      "previewGradient": "linear-gradient(135deg, #38BDF8 0%, #0284C7 100%)",
+      "borderStyle": "border-2 border-sky-200 shadow-[0_0_10px_rgba(56,189,248,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 28,
+      "descriptionAr": "إطار جليد الشتاء وتساقط ندف الثلج - يفتح عند المستوى 28",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_butterfly",
+      "nameAr": "إطار الفراشة",
+      "icon": "🦋",
+      "previewGradient": "linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)",
+      "borderStyle": "border-2 border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 30,
+      "descriptionAr": "إطار الفراشات السحرية المتوهجة - يفتح عند المستوى 30",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_knowledge",
+      "nameAr": "إطار المعرفة",
+      "icon": "📚",
+      "previewGradient": "linear-gradient(135deg, #0284C7 0%, #0F172A 100%)",
+      "borderStyle": "border-2 border-sky-500 shadow-[0_0_8px_rgba(2,132,199,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 32,
+      "descriptionAr": "إطار الكتب الأسطورية المفتوحة - يفتح عند المستوى 32",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_gaming",
+      "nameAr": "إطار الألعاب",
+      "icon": "🎮",
+      "previewGradient": "linear-gradient(135deg, #6366F1 0%, #A855F7 100%)",
+      "borderStyle": "border-2 border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 35,
+      "descriptionAr": "إطار يد التحكم للجيمنج والسايبر نيون - يفتح عند المستوى 35",
+      "category": "NEON"
+    },
+    {
+      "id": "frame_nautical",
+      "nameAr": "إطار البحر والإبحار",
+      "icon": "⚓",
+      "previewGradient": "linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%)",
+      "borderStyle": "border-2 border-blue-600 shadow-[0_0_8px_rgba(30,64,175,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 38,
+      "descriptionAr": "إطار دفة السفينة والمرساة الذهبية - يفتح عند المستوى 38",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_sports",
+      "nameAr": "إطار الرياضة",
+      "icon": "⚽",
+      "previewGradient": "linear-gradient(135deg, #22C55E 0%, #15803D 100%)",
+      "borderStyle": "border-2 border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 40,
+      "descriptionAr": "إطار مضمار الرياضة وكرة القدم - يفتح عند المستوى 40",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_stars",
+      "nameAr": "إطار النجوم",
+      "icon": "⭐",
+      "previewGradient": "linear-gradient(135deg, #A855F7 0%, #EC4899 100%)",
+      "borderStyle": "border-2 border-fuchsia-400 shadow-[0_0_10px_rgba(168,85,247,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 45,
+      "descriptionAr": "إطار مجرة النجوم الفضائية وحلقة النيون - يفتح عند المستوى 45",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_silver",
+      "nameAr": "إطار فضي",
+      "icon": "🥈",
+      "previewGradient": "linear-gradient(135deg, #94A3B8 0%, #CBD5E1 100%)",
+      "borderStyle": "border-2 border-slate-300 shadow-[0_0_10px_rgba(203,213,225,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 50,
+      "descriptionAr": "إطار التاج الفضي الماسي الأنيق - يفتح عند المستوى 50",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_sea",
+      "nameAr": "إطار البحر",
+      "icon": "🐬",
+      "previewGradient": "linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%)",
+      "borderStyle": "border-2 border-sky-400 shadow-[0_0_10px_rgba(14,165,233,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 55,
+      "descriptionAr": "إطار أمواج المحيط الأزرق - يفتح عند المستوى 55",
+      "category": "NATURE"
+    },
+    {
+      "id": "frame_future",
+      "nameAr": "إطار المستقبل",
+      "icon": "⚡",
+      "previewGradient": "linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)",
+      "borderStyle": "border-2 border-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 60,
+      "descriptionAr": "إطار تكنولوجيا المستقبل والسايبر - يفتح عند المستوى 60",
+      "category": "NEON"
+    },
+    {
+      "id": "frame_space",
+      "nameAr": "إطار الفضاء",
+      "icon": "🚀",
+      "previewGradient": "linear-gradient(135deg, #0284C7 0%, #3B82F6 100%)",
+      "borderStyle": "border-2 border-sky-400 shadow-[0_0_10px_rgba(2,132,199,0.7)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 65,
+      "descriptionAr": "إطار رواد الفضاء والكواكب - يفتح عند المستوى 65",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_mystery",
+      "nameAr": "إطار الغموض",
+      "icon": "🔮",
+      "previewGradient": "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)",
+      "borderStyle": "border-2 border-purple-500 shadow-[0_0_12px_rgba(139,92,246,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 70,
+      "descriptionAr": "إطار شبح الغموض والبرق الأرجواني - يفتح عند المستوى 70",
+      "category": "SPECIAL"
+    },
+    {
+      "id": "frame_gold",
+      "nameAr": "إطار ذهبي",
+      "icon": "👑",
+      "previewGradient": "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 80,
+      "descriptionAr": "إطار التاج الذهبي الفاخر المزدوج - يفتح عند المستوى 80",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_wings",
+      "nameAr": "إطار الأجنحة",
+      "icon": "🦅",
+      "previewGradient": "linear-gradient(135deg, #F59E0B 0%, #B45309 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 90,
+      "descriptionAr": "إطار الأجنحة الذهبية الضخمة - يفتح عند المستوى 90",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_luxury",
+      "nameAr": "إطار الفخامة",
+      "icon": "👑",
+      "previewGradient": "linear-gradient(135deg, #D97706 0%, #78350F 100%)",
+      "borderStyle": "border-2 border-amber-500 shadow-[0_0_12px_rgba(217,119,6,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 100,
+      "descriptionAr": "إطار إكليل الغار الذهبي وتاج الفخامة - يفتح عند المستوى 100",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_elite",
+      "nameAr": "إطار النخبة",
+      "icon": "🎖️",
+      "previewGradient": "linear-gradient(135deg, #EAB308 0%, #B45309 100%)",
+      "borderStyle": "border-2 border-amber-400 shadow-[0_0_12px_rgba(234,179,8,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 110,
+      "descriptionAr": "إطار التاج الذهبي لكبار شخصيات النخبة - يفتح عند المستوى 110",
+      "category": "ROYAL"
+    },
+    {
+      "id": "frame_lion",
+      "nameAr": "إطار الأسد",
+      "icon": "🦁",
+      "previewGradient": "linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)",
+      "borderStyle": "border-2 border-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 120,
+      "descriptionAr": "إطار رأس الأسد الذهبي 3D - يفتح عند المستوى 120",
+      "category": "ANIMAL"
+    },
+    {
+      "id": "frame_angel",
+      "nameAr": "إطار الملاك",
+      "icon": "👼",
+      "previewGradient": "linear-gradient(135deg, #38BDF8 0%, #818CF8 100%)",
+      "borderStyle": "border-2 border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.8)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 130,
+      "descriptionAr": "إطار الملاك بأجنحة نيون زرقاء - يفتح عند المستوى 130",
+      "category": "FANTASY"
+    },
+    {
+      "id": "frame_dragon",
+      "nameAr": "إطار التنين",
+      "icon": "🐉",
+      "previewGradient": "linear-gradient(135deg, #EF4444 0%, #F97316 100%)",
+      "borderStyle": "border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.9)]",
+      "diamondPrice": 0,
+      "coinPrice": 0,
+      "isExclusiveOwner": false,
+      "requiredLevel": 140,
+      "descriptionAr": "إطار التنين الخرافي الناري 4D - يفتح عند المستوى 140",
+      "category": "FANTASY"
+    }
+  ],
+  "userFrames": [
+    {
+      "id": "uf_1_1790871827397",
+      "userId": "user_admin",
+      "frameId": "frame_owner_king",
+      "acquiredAt": "2026-10-01T16:23:47.397Z"
+    },
+    {
+      "id": "uf_owner_king_user_owner_waled_1790871827398",
+      "userId": "user_owner_waled",
+      "frameId": "frame_owner_king",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    }
+  ],
+  "entrances": [
+    {
+      "id": "entrance_royal_luxury_car_5d",
+      "nameAr": "الدخلة الملكية - السيارة الفاخرة (5D Cinema)",
+      "nameEn": "Royal Luxury Car 5D",
+      "descriptionAr": "عرض سينمائي متدرج (8 ثوانٍ): سيارة فاخرة فائقة الواقعية بإنارة سينمائية، كشف الاسم والمستوى، وكادر ملكي.",
+      "diamondPrice": 25000,
+      "category": "5D",
+      "tier": "ROYAL_VIP",
+      "durationSeconds": 8,
+      "soundType": "supercar",
+      "previewColor": "#F59E0B",
+      "badgeLabel": "5D CINEMA"
+    },
+    {
+      "id": "entrance_king_limousine_5d",
+      "nameAr": "موكب الليموزين الملكي الإمبراطوري (5D VIP)",
+      "nameEn": "Imperial Royal Limousine 5D",
+      "descriptionAr": "موكب فخم من سيارة الليموزين السوداء الذهبية مع سجادة حمراء ملكية وكشافات ليزر عالية الدقة.",
+      "diamondPrice": 50000,
+      "category": "5D",
+      "tier": "OWNER_EXCLUSIVE",
+      "durationSeconds": 8,
+      "soundType": "supercar",
+      "previewColor": "#D97706",
+      "badgeLabel": "5D OWNER",
+      "isExclusiveOwner": true
+    },
+    {
+      "id": "entrance_private_jet_5d",
+      "nameAr": "الطائرة الخاصة الرئاسية (5D VIP)",
+      "nameEn": "Presidential Private Jet 5D",
+      "descriptionAr": "هبوط سينمائي لطائرة جيت سوداء وذهبية، انضباط الإضاءات المهبطية وتدفق السجاد الأحمر.",
+      "diamondPrice": 35000,
+      "category": "5D",
+      "tier": "ROYAL_VIP",
+      "durationSeconds": 8,
+      "soundType": "jet",
+      "previewColor": "#0284C7",
+      "badgeLabel": "5D AERIAL"
+    },
+    {
+      "id": "entrance_mega_yacht_5d",
+      "nameAr": "اليخت الإمبراطوري الفاخر (5D Ocean)",
+      "nameEn": "Imperial Mega Yacht 5D",
+      "descriptionAr": "إبحار سينمائي في أعماق المياه مع إضاءات LED تحت الماء وموجات متلألئة وبريق ذهبي.",
+      "diamondPrice": 30000,
+      "category": "5D",
+      "tier": "ROYAL_VIP",
+      "durationSeconds": 8,
+      "soundType": "yacht",
+      "previewColor": "#0EA5E9",
+      "badgeLabel": "5D OCEAN"
+    },
+    {
+      "id": "entrance_royal_crown_5d",
+      "nameAr": "عرش التاج الملكي الماسي (5D Sovereign)",
+      "nameEn": "Royal Sovereign Crown 5D",
+      "descriptionAr": "هبوط التاج الإمبراطوري ثلاثي الأبعاد مع انعكاسات الياقوت والألماس ومؤثرات ضوئية فاخرة.",
+      "diamondPrice": 20000,
+      "category": "5D",
+      "tier": "LEGENDARY",
+      "durationSeconds": 8,
+      "soundType": "royal_fanfare",
+      "previewColor": "#EAB308",
+      "badgeLabel": "5D CROWN"
+    },
+    {
+      "id": "entrance_royal_falcon_5d",
+      "nameAr": "الصقر العربي الذهبي الأصيل (5D Falcon)",
+      "nameEn": "Royal Golden Falcon 5D",
+      "descriptionAr": "تحليق صقر عربي حر بريش ذهبي وعيون الياقوت ينزل بسلاسة مع هالة شمسية سينمائية.",
+      "diamondPrice": 18000,
+      "category": "5D",
+      "tier": "LEGENDARY",
+      "durationSeconds": 8,
+      "soundType": "falcon",
+      "previewColor": "#B45309",
+      "badgeLabel": "5D FALCON"
+    },
+    {
+      "id": "entrance_superbike_chrome_3d",
+      "nameAr": "الدراجة النارية الكروم الفاخرة (3D Master)",
+      "nameEn": "Chrome Chopper Superbike 3D",
+      "descriptionAr": "دراجة تشوبر نارية فاخرة من الكروم والذهب مع زئير المحرك وانعكاسات الطرق.",
+      "diamondPrice": 12000,
+      "category": "3D",
+      "tier": "LUXURY",
+      "durationSeconds": 6,
+      "soundType": "bike",
+      "previewColor": "#F59E0B",
+      "badgeLabel": "3D BIKE"
+    },
+    {
+      "id": "entrance_arabian_steed_3d",
+      "nameAr": "الحصان العربي الأصيل (3D Noble)",
+      "nameEn": "Purebred Arabian Steed 3D",
+      "descriptionAr": "جواد عربي أصيل بسرج ذهبي وسرعة هيبة الملك على مضمار الروم.",
+      "diamondPrice": 10000,
+      "category": "3D",
+      "tier": "LUXURY",
+      "durationSeconds": 6,
+      "soundType": "steed",
+      "previewColor": "#D97706",
+      "badgeLabel": "3D STEED"
+    },
+    {
+      "id": "entrance_space_cruiser_5d",
+      "nameAr": "المركبة السايبر الفضائية (5D Galaxy)",
+      "nameEn": "Cyber Space Cruiser 5D",
+      "descriptionAr": "مركبة تيتانيوم سايبر المستقبلية مع خطوط نيون زرقاء ومحرك طاقة كمومية.",
+      "diamondPrice": 22000,
+      "category": "5D",
+      "tier": "LEGENDARY",
+      "durationSeconds": 8,
+      "soundType": "space",
+      "previewColor": "#06B6D4",
+      "badgeLabel": "5D CYBER"
+    }
+  ],
+  "userEntrances": [
+    {
+      "id": "ue_user_admin_entrance_royal_luxury_car_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_royal_luxury_car_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_king_limousine_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_king_limousine_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_private_jet_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_private_jet_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_mega_yacht_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_mega_yacht_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_royal_crown_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_royal_crown_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_royal_falcon_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_royal_falcon_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_superbike_chrome_3d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_superbike_chrome_3d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_arabian_steed_3d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_arabian_steed_3d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_admin_entrance_space_cruiser_5d_1790871827398",
+      "userId": "user_admin",
+      "entranceId": "entrance_space_cruiser_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_royal_luxury_car_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_royal_luxury_car_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_king_limousine_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_king_limousine_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_private_jet_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_private_jet_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_mega_yacht_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_mega_yacht_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_royal_crown_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_royal_crown_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_royal_falcon_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_royal_falcon_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_superbike_chrome_3d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_superbike_chrome_3d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_arabian_steed_3d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_arabian_steed_3d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    },
+    {
+      "id": "ue_user_owner_waled_entrance_space_cruiser_5d_1790871827398",
+      "userId": "user_owner_waled",
+      "entranceId": "entrance_space_cruiser_5d",
+      "acquiredAt": "2026-10-01T16:23:47.398Z"
+    }
+  ],
+  "reports": [],
+  "bans": [],
+  "auditLogs": [
+    {
+      "id": "audit_1790936822114_b7if",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T10:27:02.114Z"
+    },
+    {
+      "id": "audit_1790936276248_vruq",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T10:17:56.248Z"
+    },
+    {
+      "id": "audit_1790935892046_5x6a",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T10:11:32.046Z"
+    },
+    {
+      "id": "audit_1790903016663_juvv",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T01:03:36.663Z"
+    },
+    {
+      "id": "audit_1790902713679_ysfa",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T00:58:33.679Z"
+    },
+    {
+      "id": "audit_1790902226858_z01f",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T00:50:26.858Z"
+    },
+    {
+      "id": "audit_1790900585240_uy2f",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T00:23:05.240Z"
+    },
+    {
+      "id": "audit_1790900571505_l7fc",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-02T00:22:51.505Z"
+    },
+    {
+      "id": "audit_1790898735124_yccx",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T23:52:15.124Z"
+    },
+    {
+      "id": "audit_1790897942163_6y1x",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T23:39:02.163Z"
+    },
+    {
+      "id": "audit_1790897385930_0knv",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T23:29:45.931Z"
+    },
+    {
+      "id": "audit_1790896292321_6uxv",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T23:11:32.321Z"
+    },
+    {
+      "id": "audit_1790895492742_fbbj",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T22:58:12.742Z"
+    },
+    {
+      "id": "audit_1790894766314_ep2q",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T22:46:06.314Z"
+    },
+    {
+      "id": "audit_1790894250264_x0pc",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T22:37:30.264Z"
+    },
+    {
+      "id": "audit_1790894118941_7osj",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T22:35:18.941Z"
+    },
+    {
+      "id": "audit_1790893565214_ej28",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T22:26:05.214Z"
+    },
+    {
+      "id": "audit_1790893007814_wr9y",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T22:16:47.814Z"
+    },
+    {
+      "id": "audit_1790891505877_pnly",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:51:45.877Z"
+    },
+    {
+      "id": "audit_1790891133611_20x0",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:45:33.611Z"
+    },
+    {
+      "id": "audit_1790890934812_321l",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:42:14.812Z"
+    },
+    {
+      "id": "audit_1790890553120_n1y5",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:35:53.120Z"
+    },
+    {
+      "id": "audit_1790889914755_sffw",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:25:14.755Z"
+    },
+    {
+      "id": "audit_1790889397113_9idc",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:16:37.113Z"
+    },
+    {
+      "id": "audit_1790889274944_nx36",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:14:34.944Z"
+    },
+    {
+      "id": "audit_1790888952011_4df5",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:09:12.011Z"
+    },
+    {
+      "id": "audit_1790888884966_gavx",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T21:08:04.966Z"
+    },
+    {
+      "id": "audit_1790887631068_p2r7",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T20:47:11.068Z"
+    },
+    {
+      "id": "audit_1790884358798_p3pm",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T19:52:38.798Z"
+    },
+    {
+      "id": "audit_1790883486845_yo5e",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T19:38:06.845Z"
+    },
+    {
+      "id": "audit_1790871919301_a7gy",
+      "adminId": "user_admin",
+      "adminName": "جدو الرويعى",
+      "action": "OWNER_AUTH_LOGIN",
+      "targetType": "SYSTEM",
+      "targetId": "user_admin",
+      "details": "تسجيل دخول المالك العام للنظام (جدو الرويعى - jdwalrwyy@gmail.com) عبر المصادقة المركزية بنجاح.",
+      "createdAt": "2026-10-01T16:25:19.301Z"
+    },
+    {
+      "id": "audit_init",
+      "adminId": "user_admin",
+      "adminName": "حكاوي VIP",
+      "action": "SYSTEM_BOOTSTRAP",
+      "targetType": "SYSTEM",
+      "targetId": "hekawy_core",
+      "details": "تم بدء تشغيل منصة حكاوي بنجاح مع تهيئة السيرفر وقاعدة البيانات ونظام الرقابة الصارم.",
+      "createdAt": "2026-10-01T16:23:47.397Z"
+    }
+  ],
+  "moderationIncidents": [],
+  "bannedIdentifiers": [],
+  "notifications": [
+    {
+      "id": "notif_1790894870885_pqf4",
+      "userId": "user_admin",
+      "title": "هدية جديدة! 🎁",
+      "message": "أرسل لك جدو الرويعى عدد 30 وردة كريستالية ملكية 🌹! تم إضافة الرصيد إلى محفظتك.",
+      "type": "GIFT",
+      "isRead": false,
+      "createdAt": "2026-10-01T22:47:50.885Z"
+    },
+    {
+      "id": "notif_1790894862741_bupm",
+      "userId": "user_admin",
+      "title": "هدية جديدة! 🎁",
+      "message": "أرسل لك جدو الرويعى عدد 2 وردة كريستالية ملكية 🌹! تم إضافة الرصيد إلى محفظتك.",
+      "type": "GIFT",
+      "isRead": false,
+      "createdAt": "2026-10-01T22:47:42.741Z"
+    },
+    {
+      "id": "notif_1790894858052_xd9f",
+      "userId": "user_admin",
+      "title": "هدية جديدة! 🎁",
+      "message": "أرسل لك جدو الرويعى عدد 2 وردة كريستالية ملكية 🌹! تم إضافة الرصيد إلى محفظتك.",
+      "type": "GIFT",
+      "isRead": false,
+      "createdAt": "2026-10-01T22:47:38.052Z"
+    },
+    {
+      "id": "notif_1790894852866_50or",
+      "userId": "user_admin",
+      "title": "هدية جديدة! 🎁",
+      "message": "أرسل لك جدو الرويعى عدد 2 وردة كريستالية ملكية 🌹! تم إضافة الرصيد إلى محفظتك.",
+      "type": "GIFT",
+      "isRead": false,
+      "createdAt": "2026-10-01T22:47:32.866Z"
+    },
+    {
+      "id": "notif_1790894848449_e0yt",
+      "userId": "user_admin",
+      "title": "هدية جديدة! 🎁",
+      "message": "أرسل لك جدو الرويعى عدد 2 وردة كريستالية ملكية 🌹! تم إضافة الرصيد إلى محفظتك.",
+      "type": "GIFT",
+      "isRead": false,
+      "createdAt": "2026-10-01T22:47:28.449Z"
+    }
+  ],
+  "hostApplications": [],
+  "agentApplications": [],
+  "agencies": [],
+  "hostProfiles": [],
+  "targetConfigs": [
+    {
+      "id": "target_monthly_curr",
+      "title": "تارجت شهر سبتمبر 2026 الرسمي",
+      "period": "MONTHLY",
+      "monthYear": "2026-09",
+      "requiredDiamonds": 50000,
+      "requiredLiveMinutes": 1800,
+      "requiredActiveDays": 15,
+      "rewardCoins": 10000,
+      "rewardDiamonds": 5000,
+      "agentCommissionPct": 15,
+      "isActive": true,
+      "createdAt": "2026-09-26T16:23:47.396Z"
+    },
+    {
+      "id": "target_weekly_curr",
+      "title": "تارجت أسبوعي سريع للنجوم",
+      "period": "WEEKLY",
+      "monthYear": "2026-W36",
+      "requiredDiamonds": 15000,
+      "requiredLiveMinutes": 600,
+      "requiredActiveDays": 5,
+      "rewardCoins": 3000,
+      "rewardDiamonds": 1500,
+      "agentCommissionPct": 10,
+      "isActive": true,
+      "createdAt": "2026-09-29T16:23:47.396Z"
+    }
+  ],
+  "giftTierSettings": {
+    "globalSoundEnabled": true,
+    "bigGiftThreshold": 5000,
+    "globalBannerEnabled": true,
+    "globalBannerDurationMs": 10000,
+    "lastUpdated": "2026-10-02T10:22:52.303Z",
+    "tiers": [
+      {
+        "level": "COMMON",
+        "nameAr": "هدايا عادية (5 – 100 💎)",
+        "minDiamonds": 5,
+        "maxDiamonds": 100,
+        "hasSound": true,
+        "soundType": "common_chime",
+        "hasFullscreenAura": false,
+        "celebrationDurationMs": 4200,
+        "screenGlowColor": "rgba(251, 191, 36, 0.15)",
+        "descriptionAr": "هدايا أنيقة بحركة انسيابية هادئة وصوت رنين ناعم ورقيق."
+      },
+      {
+        "level": "PRETTY",
+        "nameAr": "هدايا مميزة (200 – 5,000 💎)",
+        "minDiamonds": 200,
+        "maxDiamonds": 5000,
+        "hasSound": true,
+        "soundType": "pretty_crystal",
+        "hasFullscreenAura": false,
+        "celebrationDurationMs": 4800,
+        "screenGlowColor": "rgba(56, 189, 248, 0.35)",
+        "descriptionAr": "هدايا متوسطة مع رنين هارموني بلوري وأطياف ضوئية ساحرة."
+      },
+      {
+        "level": "LUXURY",
+        "nameAr": "هدايا فخمة (8,000 – 30,000 💎)",
+        "minDiamonds": 8000,
+        "maxDiamonds": 30000,
+        "hasSound": true,
+        "soundType": "luxury_fanfare",
+        "hasFullscreenAura": false,
+        "celebrationDurationMs": 5600,
+        "screenGlowColor": "rgba(245, 158, 11, 0.65)",
+        "descriptionAr": "هدايا فاخرة بحركة سينمائية وتوقف احتفالي وعزف نحاسي مبهج."
+      },
+      {
+        "level": "LEGENDARY",
+        "nameAr": "هدايا أسطورية (40,000 – 80,000 💎)",
+        "minDiamonds": 40000,
+        "maxDiamonds": 80000,
+        "hasSound": true,
+        "soundType": "legendary_grand",
+        "hasFullscreenAura": true,
+        "celebrationDurationMs": 6800,
+        "screenGlowColor": "linear-gradient(135deg, rgba(168, 85, 247, 0.8), rgba(251, 191, 36, 0.7))",
+        "descriptionAr": "هدايا أسطورية بحركة ملحمية بطيئة وهالة احتفالية تغطي الغرفة كاملة."
+      },
+      {
+        "level": "VIP",
+        "nameAr": "هدايا VIP ملكية (90,000 – 100,000 💎)",
+        "minDiamonds": 90000,
+        "maxDiamonds": 100000,
+        "hasSound": true,
+        "soundType": "vip_imperial",
+        "hasFullscreenAura": true,
+        "celebrationDurationMs": 8000,
+        "screenGlowColor": "linear-gradient(135deg, rgba(250, 204, 21, 0.95), rgba(220, 38, 38, 0.85))",
+        "descriptionAr": "قمة الفخامة الملكية! تتويج إمبراطوري كامل، هالة شمسية ملكية وكرنفال عظيم."
+      }
+    ]
+  },
+  "referrals": [],
+  "shippingRechargeLogs": [],
+  "reservedNumericIds": [],
+  "deviceBindings": [
+    {
+      "deviceId": "dev_mtr725mo_sl9fb55ipy",
+      "userId": "user_admin",
+      "boundAt": "2026-10-01T16:24:44.097Z",
+      "lastUsedAt": "2026-10-02T10:27:02.117Z",
+      "userEmail": "jdwalrwyy@gmail.com",
+      "userPhone": "+966500000001",
+      "ip": "127.0.0.1"
+    }
+  ],
+  "blockedUsers": []
+}

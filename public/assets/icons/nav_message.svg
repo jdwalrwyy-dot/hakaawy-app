@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldScroll" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDE7"/>
+      <stop offset="30%" stop-color="#FFE082"/>
+      <stop offset="70%" stop-color="#FFB300"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <radialGradient id="emeraldSeal" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#A7F3D0"/>
+      <stop offset="40%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </radialGradient>
+
+    <linearGradient id="redBadge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCA5A5"/>
+      <stop offset="30%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#991B1B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Gold Outer Glow -->
+  <circle cx="48" cy="52" r="38" fill="url(#goldScroll)" opacity="0.25"/>
+
+  <!-- Rolled Scroll Body (Diagonally Placed 3D Scroll) -->
+  <g transform="translate(46, 54) rotate(-22)">
+    <!-- Main Parchment Cylinder -->
+    <rect x="-32" y="-16" width="64" height="32" rx="6" fill="url(#goldScroll)" stroke="#92400E" stroke-width="2"/>
+    
+    <!-- Rolled Edges Left & Right -->
+    <path d="M -32 -16 C -38 -16 -38 16 -32 16 C -26 16 -26 -16 -32 -16 Z" fill="#FFE082" stroke="#92400E" stroke-width="1.5"/>
+    <path d="M 32 -16 C 38 -16 38 16 32 16 C 26 16 26 -16 32 -16 Z" fill="#FFFDE7" stroke="#92400E" stroke-width="1.5"/>
+
+    <!-- Scroll Lines (Written Text Lines) -->
+    <line x1="-18" y1="-8" x2="18" y2="-8" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-18" y1="0" x2="10" y2="0" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+    <line x1="-18" y1="8" x2="14" y2="8" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Emerald Ribbon Tie -->
+    <rect x="-6" y="-17" width="12" height="34" rx="2" fill="url(#emeraldSeal)"/>
+    <circle cx="0" cy="0" r="5" fill="url(#goldScroll)" stroke="#047857" stroke-width="1"/>
+    <circle cx="0" cy="0" r="2" fill="url(#emeraldSeal)"/>
+  </g>
+
+  <!-- RED NOTIFICATION BADGE WITH "28" (Top-Right) -->
+  <g transform="translate(68, 24)">
+    <circle cx="0" cy="0" r="14" fill="url(#redBadge)" stroke="#FFFFFF" stroke-width="2.5"/>
+    <text x="0" y="4.5" fill="#FFFFFF" font-family="Arial, sans-serif" font-weight="900" font-size="12" text-anchor="middle">28</text>
+  </g>
+</svg>

@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { PublicUserProfile, User, RoomSeat, UserRole } from '../types';
+import { PublicUserProfile, User, RoomSeat, UserRole, Room, isUserOwner } from '../types';
 import { API } from '../services/api';
-import { RoleBadge, UserRoleBadges } from './RoleBadge';
+import { socketService } from '../services/socketService';
+import { RoleBadge, UserRoleBadges, UserVerifiedBadge } from './RoleBadge';
 import { AccountSettingsModal } from './AccountSettingsModal';
 import { LevelProgressCard } from './LevelProgressCard';
+import { Avatar4DFrame } from './Avatar4DFrame';
+import { ReportModal } from './ReportModal';
+import { handleShareApp } from '../utils/shareUtils';
 import {
   X,
   UserPlus,
@@ -24,7 +28,9 @@ import {
   Copy,
   ShieldAlert,
   Crown,
-  Sliders
+  Sliders,
+  Ban,
+  Share2
 } from 'lucide-react';
 
 interface PublicProfileModalProps {
@@ -33,6 +39,7 @@ interface PublicProfileModalProps {
   userId: string | null;
   currentUser: User;
   roomId?: string;
+  currentRoom?: Room | null;
   roomSeats?: RoomSeat[];
   isCurrentHost?: boolean;
   onSendGiftToUser?: (userId: string) => void;
@@ -47,6 +54,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
   userId,
   currentUser,
   roomId,
+  currentRoom,
   roomSeats = [],
   isCurrentHost = false,
   onSendGiftToUser,
@@ -71,6 +79,46 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
   const [dmSent, setDmSent] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedNumericId, setCopiedNumericId] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  const handleApplyPenalty = async (type: '15m' | '1h' | '24h' | 'perm', durationLabel: string) => {
+    const activeRoomId = currentRoom?.id || roomId;
+    if (!profile || !activeRoomId) return;
+    const now = Date.now();
+    let bannedUntil: number | null = null;
+    if (type === '15m') bannedUntil = now + 15 * 60 * 1000;
+    else if (type === '1h') bannedUntil = now + 60 * 60 * 1000;
+    else if (type === '24h') bannedUntil = now + 24 * 60 * 60 * 1000;
+    else bannedUntil = null; // permanent
+
+    try {
+      socketService.emitUserPenalty({
+        roomId: activeRoomId,
+        issuerId: currentUser.id,
+        targetUserId: profile.id,
+        targetUserName: profile.name,
+        penaltyType: type,
+        durationLabel,
+        bannedUntil,
+        reason: 'تم تعليق حسابك لمخالفة قواعد الغرفة'
+      });
+
+      await API.applyUserPenalty({
+        roomId: activeRoomId,
+        issuerId: currentUser.id,
+        targetUserId: profile.id,
+        penaltyType: type,
+        bannedUntil,
+        reason: 'تم تعليق حسابك لمخالفة قواعد الغرفة'
+      });
+
+      setRoleUpdateMsg(`تم تطبيق عقوبة (${durationLabel}) على المستخدم بنجاح`);
+      setTimeout(() => setRoleUpdateMsg(null), 3500);
+    } catch (err: any) {
+      setRoleUpdateMsg(err.message || 'فشل تطبيق العقوبة');
+      setTimeout(() => setRoleUpdateMsg(null), 3500);
+    }
+  };
 
   const handleCopyNumericId = () => {
     if (!profile) return;
@@ -208,7 +256,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal / Bottom Sheet Card */}
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 sm:border-slate-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-slate-950 overflow-hidden z-10 max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-250">
+      <div className="relative w-full max-w-md bg-slate-900 border-2 border-amber-500/40 sm:border-amber-500/50 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-amber-500/10 overflow-hidden z-10 max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-250">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/80 bg-slate-900/90">
           <div className="flex items-center gap-2">
@@ -226,6 +274,14 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
           </div>
 
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleShareApp()}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-amber-400 hover:bg-slate-800 transition-colors"
+              title="مشاركة التطبيق ودعوة الأصدقاء"
+            >
+              <Share2 className="w-4 h-4 text-amber-400" />
+            </button>
+
             {!isSelf && profile && onOpenReport && (
               <button
                 onClick={() => onOpenReport('USER', profile.id, profile.name)}
@@ -263,14 +319,13 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
               <div className="flex items-center gap-3.5">
                 {/* Avatar with active frame & online dot */}
                 <div className="relative shrink-0">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-amber-500 to-yellow-300 shadow-lg shadow-amber-500/10">
-                    <img
-                      src={profile.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.username}`}
-                      alt={profile.name}
-                      className="w-full h-full rounded-full object-cover bg-slate-800"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
+                  <Avatar4DFrame
+                    avatarUrl={profile.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.username}`}
+                    frameId={profile.activeFrameId}
+                    isOwner={isUserOwner(profile)}
+                    size={72}
+                    showEffects={true}
+                  />
 
                   {/* Online dot indicator */}
                   <span
@@ -288,6 +343,7 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
                     <h2 className="font-extrabold text-base sm:text-lg text-slate-100 truncate">
                       {profile.name}
                     </h2>
+                    <UserVerifiedBadge user={profile} size="sm" showTextLabel />
 
                     {/* Gender Badge Indicator */}
                     <span
@@ -436,71 +492,89 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
 
               {/* Primary Interaction Action Buttons (Send Gift, Follow, Add Friend, DM) */}
               {!isSelf ? (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                  {/* Send Gift Button */}
-                  {onSendGiftToUser && (
-                    <button
-                      onClick={() => {
-                        onClose();
-                        onSendGiftToUser(profile.id);
-                      }}
-                      className="py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-all active:scale-95"
-                    >
-                      <Gift className="w-4 h-4 animate-bounce" />
-                      <span>إرسال هدية</span>
-                    </button>
-                  )}
-
-                  {/* Follow / Unfollow */}
-                  <button
-                    onClick={handleToggleFollow}
-                    disabled={isActionLoading}
-                    className={`py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                      isFollowing
-                        ? 'bg-slate-800 text-amber-300 border border-amber-500/40 hover:bg-rose-950/40 hover:text-rose-300'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                    }`}
-                  >
-                    <Heart className={`w-4 h-4 ${isFollowing ? 'fill-amber-400 text-amber-400' : ''}`} />
-                    <span>{isFollowing ? 'متابَع' : 'متابعة'}</span>
-                  </button>
-
-                  {/* Add Friend */}
-                  <button
-                    onClick={handleSendFriendRequest}
-                    disabled={isActionLoading || friendshipStatus !== 'NONE'}
-                    className={`py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                      friendshipStatus === 'ACCEPTED'
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                        : friendshipStatus === 'PENDING'
-                        ? 'bg-slate-800 text-slate-400 border border-slate-700'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                    }`}
-                  >
-                    {friendshipStatus === 'ACCEPTED' ? (
-                      <>
-                        <UserCheck className="w-4 h-4 text-emerald-400" />
-                        <span>أصدقاء</span>
-                      </>
-                    ) : friendshipStatus === 'PENDING' ? (
-                      <span>قيد الانتظار</span>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4" />
-                        <span>إضافة صديق</span>
-                      </>
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {/* Send Gift Button */}
+                    {onSendGiftToUser && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onSendGiftToUser(profile.id);
+                        }}
+                        className="py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                      >
+                        <Gift className="w-4 h-4 animate-bounce" />
+                        <span>إرسال هدية</span>
+                      </button>
                     )}
-                  </button>
 
-                  {/* Send Direct Message */}
+                    {/* Follow / Unfollow */}
+                    <button
+                      onClick={handleToggleFollow}
+                      disabled={isActionLoading}
+                      className={`py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                        isFollowing
+                          ? 'bg-slate-800 text-amber-300 border border-amber-500/40 hover:bg-rose-950/40 hover:text-rose-300'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                      }`}
+                    >
+                      <Heart className={`w-4 h-4 ${isFollowing ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      <span>{isFollowing ? 'متابَع' : 'متابعة'}</span>
+                    </button>
+
+                    {/* Add Friend */}
+                    <button
+                      onClick={handleSendFriendRequest}
+                      disabled={isActionLoading || friendshipStatus !== 'NONE'}
+                      className={`py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                        friendshipStatus === 'ACCEPTED'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                          : friendshipStatus === 'PENDING'
+                          ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                      }`}
+                    >
+                      {friendshipStatus === 'ACCEPTED' ? (
+                        <>
+                          <UserCheck className="w-4 h-4 text-emerald-400" />
+                          <span>أصدقاء</span>
+                        </>
+                      ) : friendshipStatus === 'PENDING' ? (
+                        <span>قيد الانتظار</span>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" />
+                          <span>إضافة صديق</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Send Direct Message */}
+                    <button
+                      onClick={() => setShowQuickDm(!showQuickDm)}
+                      className="py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      <MessageSquare className="w-4 h-4 text-amber-400" />
+                      <span>رسالة</span>
+                    </button>
+                  </div>
+
+                  {/* Prominent Red Report Button */}
                   <button
-                    onClick={() => setShowQuickDm(!showQuickDm)}
-                    className="py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                    type="button"
+                    onClick={() => {
+                      if (onOpenReport && profile) {
+                        onOpenReport('USER', profile.id, profile.name);
+                      } else {
+                        setIsReportModalOpen(true);
+                      }
+                    }}
+                    className="w-full py-2.5 px-3.5 rounded-2xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer mt-2"
                   >
-                    <MessageSquare className="w-4 h-4 text-amber-400" />
-                    <span>رسالة</span>
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <span>إبلاغ عن مخالفة ⚠️</span>
                   </button>
-                </div>
+                </>
               ) : (
                 /* خيار "الضبط" داخل حسابي / الملف الشخصي */
                 <div className="pt-1">
@@ -550,6 +624,58 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
                     >
                       <UserX className="w-3.5 h-3.5 text-rose-400" />
                       <span>إنزال من المايك</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Moderation Penalty Options for Host / Owner / Moderator / Admin */}
+              {(isCurrentHost || isOwner || currentUser.role === 'MODERATOR' || currentUser.role === 'ADMIN') && !isSelf && (currentRoom || roomId) && (
+                <div className="bg-rose-950/40 border border-rose-500/40 rounded-2xl p-3 flex flex-col gap-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-black text-rose-300">
+                    <ShieldAlert className="w-4 h-4 text-rose-400" />
+                    <span>خيارات العقوبة والرقابة (Moderation Penalties)</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* 15 Mins Ban */}
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPenalty('15m', '15 دقيقة')}
+                      className="py-2 px-2.5 rounded-xl bg-slate-900/90 hover:bg-rose-900/60 text-rose-200 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>كتم / حظر: 15 دقيقة</span>
+                    </button>
+
+                    {/* 1 Hour Ban */}
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPenalty('1h', 'ساعة واحدة')}
+                      className="py-2 px-2.5 rounded-xl bg-slate-900/90 hover:bg-rose-900/60 text-rose-200 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>كتم / حظر: 1 ساعة</span>
+                    </button>
+
+                    {/* 24 Hours Ban */}
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPenalty('24h', '24 ساعة (يوم)')}
+                      className="py-2 px-2.5 rounded-xl bg-slate-900/90 hover:bg-rose-900/60 text-rose-200 border border-rose-500/30 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95"
+                    >
+                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>كتم / حظر: 24 ساعة</span>
+                    </button>
+
+                    {/* Permanent Ban */}
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPenalty('perm', 'حظر نهائي')}
+                      className="py-2 px-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs flex items-center justify-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-rose-600/30"
+                    >
+                      <Ban className="w-3.5 h-3.5 shrink-0" />
+                      <span>حظر نهائي (Permanent)</span>
                     </button>
                   </div>
                 </div>
@@ -608,6 +734,19 @@ export const PublicProfileModal: React.FC<PublicProfileModalProps> = ({
           onClose={() => setIsSettingsOpen(false)}
           currentUser={currentUser}
           onUserUpdated={onUserUpdated}
+        />
+      )}
+
+      {/* Embedded Report Modal Fallback */}
+      {profile && (
+        <ReportModal
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+          currentUser={currentUser}
+          targetType="USER"
+          targetId={profile.id}
+          targetName={profile.name}
+          roomId={currentRoom?.id || roomId}
         />
       )}
     </div>

@@ -43,7 +43,12 @@ import {
   UserEntrance,
   ShippingRechargeLog,
   OfficialMessageTarget,
-  OfficialHekawyMessage
+  OfficialHekawyMessage,
+  HostWithdrawalRequest,
+  WithdrawalStatus,
+  VerifiedUserRecord,
+  HostAgencyRequest,
+  AgencyDispute
 } from '../src/types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -106,6 +111,11 @@ export interface DatabaseSchema {
   reservedNumericIds?: string[];
   shippingRechargeLogs?: ShippingRechargeLog[];
   deviceBindings?: DeviceBinding[];
+  withdrawalRequests?: HostWithdrawalRequest[];
+  verifiedUsersLog?: VerifiedUserRecord[];
+  hostAgencyRequests?: HostAgencyRequest[];
+  agencyDisputes?: AgencyDispute[];
+  blockedUsers?: { currentUserId: string; targetUserId: string; blockedAt: string }[];
 }
 
 export interface DeviceBinding {
@@ -189,18 +199,132 @@ export const DEFAULT_GIFT_TIER_SETTINGS: SystemGiftTierSettings = {
 };
 
 const DEFAULT_FRAMES: Frame[] = [
+  // New Avatar Frames Store requested
+  {
+    id: 'frame_legendary_colorful',
+    nameAr: 'إطار أسطوري ملون',
+    icon: '🌈',
+    imageUrl: 'https://i.postimg.cc/tT3W1Vm0/file-841827-331881.jpg',
+    previewGradient: 'linear-gradient(135deg, #FF007A 0%, #7928CA 50%, #4FE2B1 100%)',
+    borderStyle: 'border-2 border-fuchsia-400 shadow-[0_0_12px_rgba(217,70,239,0.8)]',
+    diamondPrice: 5000,
+    coinPrice: 50000,
+    isExclusiveOwner: false,
+    requiredLevel: 1,
+    descriptionAr: 'إطار أسطوري بألوان هولوجرافية ساحرة ومتميزة.',
+    category: 'LEGENDARY'
+  },
+  {
+    id: 'frame_golden_round',
+    nameAr: 'إطار دائري ذهبي لامع',
+    icon: '✨',
+    imageUrl: 'https://i.postimg.cc/85RMFrnS/file-841827-512527.png',
+    previewGradient: 'linear-gradient(135deg, #FFD700 0%, #F59E0B 50%, #D97706 100%)',
+    borderStyle: 'border-2 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]',
+    diamondPrice: 3000,
+    coinPrice: 30000,
+    isExclusiveOwner: false,
+    requiredLevel: 1,
+    descriptionAr: 'إطار دائري ذهبي ناصع البريق يحيط بملفك الشخصي بفخامة.',
+    category: 'GOLDEN'
+  },
+  {
+    id: 'frame_royal_golden_ornament',
+    nameAr: 'إطار زخرفة ذهبية ملكي',
+    icon: '⚜️',
+    imageUrl: 'https://i.postimg.cc/TwVgyWNz/file-841827-883967.jpg',
+    previewGradient: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
+    borderStyle: 'border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.9)]',
+    diamondPrice: 7000,
+    coinPrice: 70000,
+    isExclusiveOwner: false,
+    requiredLevel: 1,
+    descriptionAr: 'نقوش وزخارف إمبراطورية ذهبية للملوك والأمراء.',
+    category: 'ROYAL'
+  },
+  {
+    id: 'frame_golden_hearts',
+    nameAr: 'إطار القلوب الذهبية',
+    icon: '💛',
+    imageUrl: 'https://i.postimg.cc/gJV8w6BP/file-841827-889787.jpg',
+    previewGradient: 'linear-gradient(135deg, #F59E0B 0%, #EC4899 100%)',
+    borderStyle: 'border-2 border-pink-400 shadow-[0_0_12px_rgba(244,114,182,0.8)]',
+    diamondPrice: 4000,
+    coinPrice: 40000,
+    isExclusiveOwner: false,
+    requiredLevel: 1,
+    descriptionAr: 'إطار مفعم بقلوب ذهبية ورومانسية ساحرة.',
+    category: 'ROMANCE'
+  },
+  {
+    id: 'frame_golden_wheat',
+    nameAr: 'إطار سنبلة القمح الذهبية',
+    icon: '🌾',
+    imageUrl: 'https://i.postimg.cc/QtQ1BWYP/file-841827-394731.jpg',
+    previewGradient: 'linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)',
+    borderStyle: 'border-2 border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.7)]',
+    diamondPrice: 3500,
+    coinPrice: 35000,
+    isExclusiveOwner: false,
+    requiredLevel: 1,
+    descriptionAr: 'إطار سنابل الخير والوفرة الذهبية الجذابة.',
+    category: 'GOLDEN'
+  },
+  {
+    id: 'frame_golden_stars',
+    nameAr: 'إطار النجوم الذهبية',
+    icon: '⭐',
+    imageUrl: 'https://i.postimg.cc/TwVgyWNz/file-841827-883967.jpg',
+    previewGradient: 'linear-gradient(135deg, #FBBF24 0%, #D97706 100%)',
+    borderStyle: 'border-2 border-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.9)]',
+    diamondPrice: 4500,
+    coinPrice: 45000,
+    isExclusiveOwner: false,
+    requiredLevel: 1,
+    descriptionAr: 'إطار نجوم متلألئة في السماء الذهبية.',
+    category: 'STARS'
+  },
   // Owner Exclusive Frame
+  {
+    id: 'frame_owner_king',
+    nameAr: 'إطار المالك الحصري الملكي',
+    icon: '👑',
+    imageUrl: 'https://i.postimg.cc/XqC9Yg7x/Screenshot-2026-09-21-23-31-12-43-680d03679600f7af0b4c700c6b270fe7-removebg-preview-removebg-preview.png',
+    previewGradient: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF4500 100%)',
+    borderStyle: 'border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,1)] ring-2 ring-yellow-300',
+    diamondPrice: 0,
+    coinPrice: 0,
+    isExclusiveOwner: true,
+    requiredLevel: 999,
+    descriptionAr: 'إطار المالك التنفيذي الحصري مع التاج الذهبي والشارة الملكية.',
+    category: 'ROYAL'
+  },
+  {
+    id: 'frame_owner_exclusive',
+    nameAr: 'إطار المالك الحصري الخاص',
+    icon: '👑',
+    imageUrl: 'https://i.postimg.cc/XqC9Yg7x/Screenshot-2026-09-21-23-31-12-43-680d03679600f7af0b4c700c6b270fe7-removebg-preview-removebg-preview.png',
+    previewGradient: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF4500 100%)',
+    borderStyle: 'border-2 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,1)] ring-2 ring-yellow-300',
+    diamondPrice: 0,
+    coinPrice: 0,
+    isExclusiveOwner: true,
+    requiredLevel: 999,
+    descriptionAr: 'إطار المالك الخاص والمميز للقيادة والإدارة العليا.',
+    category: 'ROYAL'
+  },
   {
     id: 'frame_king',
     nameAr: 'إطار الإدارة والمالك',
     icon: '👑',
+    imageUrl: 'https://i.postimg.cc/XqC9Yg7x/Screenshot-2026-09-21-23-31-12-43-680d03679600f7af0b4c700c6b270fe7-removebg-preview-removebg-preview.png',
     previewGradient: 'linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF4500 100%)',
     borderStyle: 'border-2 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.9)] ring-2 ring-yellow-300',
     diamondPrice: 0,
     coinPrice: 0,
     isExclusiveOwner: true,
     requiredLevel: 999,
-    descriptionAr: 'إطار الإدارة والمالك الحصري لمالك وإدارة التطبيق فقط 4D - متحرك وصامت',
+    descriptionAr: 'إطار المالك والإدارة الحصري للتطبيق 4D - متحرك وصامت',
     category: 'ROYAL'
   },
   // Level 1: Single Free Frame for everyone
@@ -1054,7 +1178,8 @@ const SEED_AGENCIES: Agency[] = [];
 const SEED_HOST_PROFILES: HostProfile[] = [];
 
 function getSeatsCountForLayout(layout: MicLayoutType = '2+15'): number {
-  switch (layout) {
+  const str = String(layout || '').trim();
+  switch (str) {
     case '4': return 4;
     case '5': return 5;
     case '8': return 8;
@@ -1062,14 +1187,22 @@ function getSeatsCountForLayout(layout: MicLayoutType = '2+15'): number {
     case '12': return 12;
     case '15': return 15;
     case '2+10': return 12;
-    case '2+15': return 17;
-    default: return 12;
+    case '2+15': case '17': return 17;
+    case '2+20': case '22': case '20': return 22;
+    case '2+25': case '27': case '25': return 27;
+    default: {
+      const num = parseInt(str, 10);
+      if (!isNaN(num) && num > 0) return num;
+      return 17;
+    }
   }
 }
 
 function createEmptySeats(roomId: string, hostUser: User, layout: MicLayoutType = '2+15'): RoomSeat[] {
   const count = getSeatsCountForLayout(layout);
   const seats: RoomSeat[] = [];
+  const str = String(layout || '').trim();
+  const isVipLayout = str === '2+10' || str === '2+15' || str === '2+20' || str === '22' || str === '2+25' || str === '27' || str === '12' || str === '17';
 
   for (let i = 0; i < count; i++) {
     if (i === 0) {
@@ -1089,7 +1222,7 @@ function createEmptySeats(roomId: string, hostUser: User, layout: MicLayoutType 
         isVipSeat: true,
         seatLabel: 'المضيف 👑'
       });
-    } else if (i === 1 && (layout === '2+10' || layout === '2+15')) {
+    } else if (i === 1 && isVipLayout) {
       // Seat 1 is VIP Co-Host Seat in 2+VIP layouts
       seats.push({
         seatIndex: 1,
@@ -1103,7 +1236,7 @@ function createEmptySeats(roomId: string, hostUser: User, layout: MicLayoutType 
         seatLabel: 'VIP 🌟'
       });
     } else {
-      const displayIndex = (layout === '2+10' || layout === '2+15') ? (i - 1) : (i + 1);
+      const displayIndex = isVipLayout ? (i - 1) : (i + 1);
       seats.push({
         seatIndex: i,
         userId: null,
@@ -1117,6 +1250,7 @@ function createEmptySeats(roomId: string, hostUser: User, layout: MicLayoutType 
       });
     }
   }
+
   return seats;
 }
 
@@ -1348,6 +1482,7 @@ class Database {
           // Ensure System Owner Account Integrity & Numeric IDs
           loaded.shippingRechargeLogs = loaded.shippingRechargeLogs || [];
           loaded.deviceBindings = loaded.deviceBindings || [];
+          loaded.blockedUsers = loaded.blockedUsers || [];
           this.ensureOwnerIntegrity(loaded);
           this.ensureNumericIdsIntegrity(loaded);
           this.purgeDemoAndFakeData(loaded);
@@ -1665,6 +1800,10 @@ class Database {
   }
 
   // --- GETTERS & ACTIONS ---
+
+  public getOwnerUser(): User | undefined {
+    return this.data.users.find(u => u.role === 'OWNER' || u.isOwner || u.email === SYSTEM_OWNER_EMAIL);
+  }
 
   private activeOwnerTokens: Set<string> = new Set<string>();
 
@@ -2458,6 +2597,7 @@ class Database {
     currentCategory?: string;
     tags?: string[];
     micLayout?: MicLayoutType;
+    requireHostApproval?: boolean;
   }): Room {
     const host = this.getUserById(roomData.hostId) || SEED_USERS[0];
     const roomId = `room_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
@@ -2476,6 +2616,7 @@ class Database {
       hostAvatar: host.avatar,
       hostFrameId: host.activeFrameId,
       type: roomData.type,
+      roomType: roomData.allowVideo === true ? 'video' : 'audio',
       password: roomData.password,
       status: 'LIVE',
       allowAudio: roomData.allowAudio !== undefined ? roomData.allowAudio : true,
@@ -2485,7 +2626,8 @@ class Database {
       createdAt: new Date().toISOString(),
       tags: roomData.tags && roomData.tags.length > 0 ? roomData.tags : ['حكاوي', 'صوت', 'لايف'],
       micLayout,
-      seatsCount
+      seatsCount,
+      requireHostApproval: roomData.requireHostApproval !== undefined ? Boolean(roomData.requireHostApproval) : true
     };
 
     this.data.rooms.unshift(newRoom);
@@ -2568,11 +2710,34 @@ class Database {
   // --- SEATS & MIC MANAGEMENT (FLEXIBLE RESPONSIVE SEATS) ---
 
   public getRoomSeats(roomId: string): RoomSeat[] {
+    const room = this.getRoomById(roomId);
+    const layout = room?.micLayout || '2+15';
+    const targetCount = getSeatsCountForLayout(layout);
+
     if (!this.data.roomSeats[roomId]) {
-      const room = this.getRoomById(roomId);
       const host = room ? (this.getUserById(room.hostId) || SEED_USERS[0]) : SEED_USERS[0];
-      const layout = room?.micLayout || '2+10';
       this.data.roomSeats[roomId] = createEmptySeats(roomId, host, layout);
+      this.save();
+    } else if (this.data.roomSeats[roomId].length !== targetCount) {
+      // Re-sync seats array if stored length does not match room's micLayout target count
+      const host = room ? (this.getUserById(room.hostId) || SEED_USERS[0]) : SEED_USERS[0];
+      const newSeats = createEmptySeats(roomId, host, layout);
+      const existingSeats = this.data.roomSeats[roomId];
+      for (let i = 0; i < Math.min(existingSeats.length, targetCount); i++) {
+        const oldSeat = existingSeats[i];
+        if (oldSeat && oldSeat.userId) {
+          newSeats[i].userId = oldSeat.userId;
+          newSeats[i].userName = oldSeat.userName;
+          newSeats[i].userAvatar = oldSeat.userAvatar;
+          newSeats[i].userGender = oldSeat.userGender;
+          newSeats[i].userFrameId = oldSeat.userFrameId;
+          newSeats[i].isMuted = oldSeat.isMuted;
+          newSeats[i].isCameraOn = oldSeat.isCameraOn;
+          newSeats[i].isSpeaking = oldSeat.isSpeaking;
+          newSeats[i].isLocked = oldSeat.isLocked;
+        }
+      }
+      this.data.roomSeats[roomId] = newSeats;
       this.save();
     }
     return this.data.roomSeats[roomId];
@@ -2630,6 +2795,7 @@ class Database {
     description?: string;
     micLayout?: MicLayoutType;
     tags?: string[];
+    requireHostApproval?: boolean;
   }): { success: boolean; message?: string; room?: Room; seats?: RoomSeat[] } {
     const room = this.getRoomById(roomId);
     if (!room) {
@@ -2656,6 +2822,10 @@ class Database {
 
     if (settings.tags && Array.isArray(settings.tags)) {
       room.tags = settings.tags;
+    }
+
+    if (settings.requireHostApproval !== undefined) {
+      room.requireHostApproval = Boolean(settings.requireHostApproval);
     }
 
     let updatedSeats = this.getRoomSeats(roomId);
@@ -2755,7 +2925,20 @@ class Database {
   // --- MIC REQUESTS ---
 
   public getMicRequests(roomId: string): MicRequest[] {
-    return this.data.micRequests.filter(r => r.roomId === roomId && r.status === 'PENDING');
+    return this.data.micRequests
+      .filter(r => r.roomId === roomId && r.status === 'PENDING')
+      .map(r => {
+        const user = this.getUserById(r.userId);
+        const member = this.data.roomMembers.find(m => m.roomId === roomId && m.userId === r.userId);
+        return {
+          ...r,
+          userName: user?.name || r.userName,
+          userAvatar: user?.avatar || r.userAvatar,
+          userFrameId: user?.activeFrameId || r.userFrameId,
+          customFrameUrl: user?.customFrameUrl || r.customFrameUrl,
+          userRole: member?.roleInRoom || r.userRole || 'LISTENER'
+        };
+      });
   }
 
   public getMyPendingMicRequest(roomId: string, userId: string): MicRequest | undefined {
@@ -2774,6 +2957,7 @@ class Database {
     }
 
     const user = this.getUserById(userId) || SEED_USERS[0];
+    const member = this.data.roomMembers.find(m => m.roomId === roomId && m.userId === userId);
     const seats = this.getRoomSeats(roomId);
     let seatLabel = 'أي مقعد متاح';
     if (targetSeatIndex !== undefined && targetSeatIndex >= 0 && targetSeatIndex < seats.length) {
@@ -2786,6 +2970,9 @@ class Database {
       userId,
       userName: user?.name || 'مستخدم',
       userAvatar: user?.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${userId}`,
+      userFrameId: user?.activeFrameId,
+      customFrameUrl: user?.customFrameUrl,
+      userRole: member?.roleInRoom || (user?.role === 'ADMIN' || user?.role === 'OWNER' ? 'MODERATOR' : 'LISTENER'),
       targetSeatIndex: targetSeatIndex !== undefined && targetSeatIndex >= 0 ? targetSeatIndex : undefined,
       seatLabel,
       requestedAt: new Date().toISOString(),
@@ -2956,10 +3143,19 @@ class Database {
     count: number;
     roomId?: string;
     idempotencyKey?: string;
-  }): { success: boolean; message: string; transaction?: GiftTransaction; senderNewDiamonds?: number; receiverNewCoins?: number; user?: User } {
+  }): {
+    success: boolean;
+    message: string;
+    transaction?: GiftTransaction;
+    senderNewDiamonds?: number;
+    senderNewCoins?: number;
+    receiverNewCoins?: number;
+    receiverNewDiamonds?: number;
+    user?: User;
+  } {
     const { senderId, receiverId, giftId, count, roomId, idempotencyKey } = params;
 
-    if (count <= 0 || !Number.isInteger(count)) {
+    if (!count || count <= 0 || !Number.isInteger(count)) {
       return { success: false, message: 'عدد الهدايا غير صالح' };
     }
 
@@ -2972,7 +3168,9 @@ class Database {
           success: true,
           message: 'تم إرسال الهدية بنجاح مسبقاً',
           transaction: existingTx,
-          senderNewDiamonds: sender?.diamonds
+          senderNewDiamonds: sender?.diamonds,
+          senderNewCoins: sender?.coins,
+          user: sender || undefined
         };
       }
     }
@@ -2985,21 +3183,85 @@ class Database {
     if (!receiver) return { success: false, message: 'المستلم غير مسجل' };
     if (!gift) return { success: false, message: 'الهدية غير صالحة' };
 
-    const totalDiamonds = gift.diamondCost * count;
-    const totalCoinReward = gift.coinReward * count;
+    // Ensure balance numeric integrity
+    sender.diamonds = Number(sender.diamonds) || 0;
+    sender.coins = Number(sender.coins) || 0;
+    receiver.diamonds = Number(receiver.diamonds) || 0;
+    receiver.coins = Number(receiver.coins) || 0;
 
-    if (sender.diamonds < totalDiamonds) {
-      return { success: false, message: 'رصيد الماسات غير كافٍ' };
+    const isCoinGift = (gift as any).currency === 'COIN' || gift.diamondCost === 0;
+    const unitCost = isCoinGift ? ((gift as any).coinCost || gift.coinReward || 10) : gift.diamondCost;
+    const totalCost = unitCost * count;
+
+    // 1. Balance Verification
+    if (isCoinGift) {
+      if (sender.coins < totalCost) {
+        return { success: false, message: 'رصيدك غير كافٍ، يرجى الشحن' };
+      }
+    } else {
+      if (sender.diamonds < totalCost) {
+        return { success: false, message: 'رصيدك غير كافٍ، يرجى الشحن' };
+      }
     }
 
-    // Deduct diamonds from sender (never allows negative)
-    sender.diamonds -= totalDiamonds;
-    this.addXP(sender.id, totalDiamonds, 'GIFT_SENT');
+    // 2. Direct Immediate Deduction from Sender
+    if (isCoinGift) {
+      sender.coins -= totalCost;
+      this.addWalletTransaction(
+        sender.id,
+        'COIN',
+        -totalCost,
+        sender.coins,
+        `إرسال ${count}x ${gift.nameAr} إلى ${receiver.name}`
+      );
+    } else {
+      sender.diamonds -= totalCost;
+      this.addXP(sender.id, totalCost, 'GIFT_SENT');
+      this.addWalletTransaction(
+        sender.id,
+        'DIAMOND',
+        -totalCost,
+        sender.diamonds,
+        `إرسال ${count}x ${gift.nameAr} إلى ${receiver.name}`
+      );
+    }
 
-    // Add coins & support exp to receiver
-    receiver.coins += totalCoinReward;
-    this.addXP(receiver.id, totalDiamonds, 'GIFT_RECEIVED');
+    // 3. Crediting Receiver (Convert value to recipient's wallet)
+    const coinReward = (gift.coinReward && gift.coinReward > 0)
+      ? gift.coinReward * count
+      : (isCoinGift ? Math.floor(totalCost * 0.5) : totalCost * 5);
 
+    const diamondReward = isCoinGift
+      ? Math.floor(totalCost / 5)
+      : Math.floor(totalCost * 0.70); // 70% share for host
+
+    receiver.coins += coinReward;
+    if (diamondReward > 0) {
+      receiver.diamonds += diamondReward;
+      this.addXP(receiver.id, diamondReward, 'GIFT_RECEIVED');
+    }
+
+    // Record wallet ledger transactions for receiver
+    if (coinReward > 0) {
+      this.addWalletTransaction(
+        receiver.id,
+        'COIN',
+        coinReward,
+        receiver.coins,
+        `استقبال ${count}x ${gift.nameAr} من ${sender.name}`
+      );
+    }
+    if (diamondReward > 0) {
+      this.addWalletTransaction(
+        receiver.id,
+        'DIAMOND',
+        diamondReward,
+        receiver.diamonds,
+        `استقبال ${count}x ${gift.nameAr} من ${sender.name} (حصة الهدية)`
+      );
+    }
+
+    // 4. Gift Transaction Log
     const txId = `tx_gift_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const tx: GiftTransaction = {
       id: txId,
@@ -3014,25 +3276,21 @@ class Database {
       receiverAvatar: receiver.avatar,
       roomId,
       count,
-      totalDiamonds,
+      totalDiamonds: isCoinGift ? 0 : totalCost,
       createdAt: new Date().toISOString(),
       idempotencyKey
     };
 
     this.data.giftTransactions.unshift(tx);
 
-    // Record in wallet ledger
-    this.addWalletTransaction(sender.id, 'DIAMOND', -totalDiamonds, sender.diamonds, `إرسال ${count}x ${gift.nameAr} إلى ${receiver.name}`);
-    this.addWalletTransaction(receiver.id, 'COIN', totalCoinReward, receiver.coins, `استقبال ${count}x ${gift.nameAr} من ${sender.name}`);
-
     // Update Host Profile & Agency Performance in real-time
     const receiverHostProfile = this.data.hostProfiles.find(hp => hp.userId === receiver.id);
     if (receiverHostProfile) {
-      receiverHostProfile.totalDiamondsReceived += totalDiamonds;
+      receiverHostProfile.totalDiamondsReceived += isCoinGift ? diamondReward : totalCost;
       if (receiverHostProfile.agencyId) {
         const agency = this.data.agencies.find(a => a.id === receiverHostProfile.agencyId);
         if (agency) {
-          agency.totalDiamondsEarned += totalDiamonds;
+          agency.totalDiamondsEarned += isCoinGift ? diamondReward : totalCost;
         }
       }
     }
@@ -3045,17 +3303,20 @@ class Database {
     this.addNotification({
       userId: receiver.id,
       title: 'هدية جديدة! 🎁',
-      message: `أرسل لك ${sender.name} عدد ${count} ${gift.nameAr} ${gift.icon}! حصلت على ${totalCoinReward} كونز.`,
+      message: `أرسل لك ${sender.name} عدد ${count} ${gift.nameAr} ${gift.icon}! تم إضافة الرصيد إلى محفظتك.`,
       type: 'GIFT'
     });
 
     this.save();
+
     return {
       success: true,
       message: `تم إرسال ${count}x ${gift.nameAr} بنجاح!`,
       transaction: tx,
       senderNewDiamonds: sender.diamonds,
+      senderNewCoins: sender.coins,
       receiverNewCoins: receiver.coins,
+      receiverNewDiamonds: receiver.diamonds,
       user: sender
     };
   }
@@ -3454,10 +3715,10 @@ class Database {
     return true;
   }
 
-  public assignKingFrame(ownerId: string, targetUserId: string): { success: boolean; message: string; user?: User } {
-    const owner = this.getUserById(ownerId);
-    if (!owner || owner.role !== 'OWNER') {
-      return { success: false, message: 'غير مصرح: تخصيص إطار «ملك» متاح فقط للمالك الأساسي للتطبيق.' };
+  public assignKingFrame(adminId: string, targetUserId: string): { success: boolean; message: string; user?: User } {
+    const admin = this.getUserById(adminId);
+    if (!admin || !this.isAdminOrOwner(adminId)) {
+      return { success: false, message: 'غير مصرح: تخصيص إطار المالك والملك متاح فقط للمشرفين والمالك.' };
     }
 
     const targetUser = this.getUserById(targetUserId);
@@ -3480,22 +3741,22 @@ class Database {
     this.save();
 
     this.addAuditLog({
-      adminId: ownerId,
-      adminName: owner.name,
+      adminId,
+      adminName: admin.name,
       action: 'ASSIGN_KING_FRAME',
       targetType: 'USER',
       targetId: targetUserId,
-      details: `تم تخصيص ومنح إطار الملك الحصري للمستخدم ${targetUser.name} (@${targetUser.username})`
+      details: `تم تخصيص ومنح إطار المالك الحصري للمستخدم ${targetUser.name} (@${targetUser.username}) بواسطة ${admin.name}`
     });
 
     this.addNotification({
       userId: targetUserId,
       title: '👑 تكريم ملكي خاص من إدارة حكاوي',
-      message: `تهانينا! لقد تم منحك وتفعيل إطار «الملك» الحصري على حسابك من قِبل مالك التطبيق.`,
+      message: `تهانينا! لقد تم منحك وتفعيل إطار «المالك والملك» الحصري على حسابك من قِبل إدارة التطبيق.`,
       type: 'ADMIN'
     });
 
-    return { success: true, message: `تم منح إطار الملك وتفعيله للمستخدم ${targetUser.name} بنجاح!`, user: targetUser };
+    return { success: true, message: `تم منح إطار المالك وتفعيله للمستخدم ${targetUser.name} بنجاح!`, user: targetUser };
   }
 
   // --- ENTRANCES SYSTEM ---
@@ -4080,28 +4341,65 @@ class Database {
 
   public addReport(reportData: {
     reporterId: string;
-    targetType: 'USER' | 'ROOM' | 'MESSAGE' | 'STREAM';
-    targetId: string;
-    targetName: string;
+    reportedUserId?: string;
+    targetType?: 'USER' | 'ROOM' | 'MESSAGE' | 'STREAM';
+    targetId?: string;
+    targetName?: string;
     reason: string;
     details?: string;
+    roomId?: string;
   }): Report {
     const reporter = this.getUserById(reportData.reporterId);
+    const reportedUser = reportData.reportedUserId ? this.getUserById(reportData.reportedUserId) : undefined;
+    const reportId = `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    
     const report: Report = {
-      id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: reportId,
+      reportId: reportId,
       reporterId: reportData.reporterId,
       reporterName: reporter?.name || 'مستخدم',
-      targetType: reportData.targetType,
-      targetId: reportData.targetId,
-      targetName: reportData.targetName,
+      reportedUserId: reportData.reportedUserId,
+      targetType: reportData.targetType || 'USER',
+      targetId: reportData.targetId || reportData.reportedUserId || 'unknown',
+      targetName: reportData.targetName || reportedUser?.name || 'مستخدم',
       reason: reportData.reason,
       details: reportData.details || '',
-      status: 'PENDING',
+      roomId: reportData.roomId,
+      timestamp: Date.now(),
+      status: 'pending',
       createdAt: new Date().toISOString()
     };
     this.data.reports.unshift(report);
     this.save();
     return report;
+  }
+
+  public blockUser(currentUserId: string, targetUserId: string): { success: boolean; message: string } {
+    if (currentUserId === targetUserId) {
+      return { success: false, message: 'لا يمكنك حظر نفسك' };
+    }
+    if (!this.data.blockedUsers) {
+      this.data.blockedUsers = [];
+    }
+    const existing = this.data.blockedUsers.find(
+      b => b.currentUserId === currentUserId && b.targetUserId === targetUserId
+    );
+    if (!existing) {
+      this.data.blockedUsers.push({
+        currentUserId,
+        targetUserId,
+        blockedAt: new Date().toISOString()
+      });
+      this.save();
+    }
+    return { success: true, message: 'تم حظر المستخدم بنجاح' };
+  }
+
+  public getBlockedUsers(currentUserId: string): string[] {
+    if (!this.data.blockedUsers) return [];
+    return this.data.blockedUsers
+      .filter(b => b.currentUserId === currentUserId)
+      .map(b => b.targetUserId);
   }
 
   public getReports(): Report[] {
@@ -4305,6 +4603,359 @@ class Database {
     return true;
   }
 
+  public processGraduatedModeration(payload: {
+    userId: string;
+    reason: string;
+    category: ModerationCategory;
+    targetType: 'AVATAR' | 'ROOM_COVER' | 'LIVE_STREAM' | 'CHAT_MEDIA' | 'VIDEO' | 'ROOM_TEXT';
+    targetId?: string;
+    mediaSnapshot?: string;
+    confidenceScore?: number;
+    details?: string;
+    roomId?: string;
+  }): { success: boolean; incident: ModerationIncident; user: User; banType: string; remainingMinutes?: number } {
+    const { userId, reason, category, targetType, targetId, mediaSnapshot, confidenceScore, details } = payload;
+    const user = this.getUserById(userId);
+    if (!user) {
+      throw new Error('المستخدم غير موجود');
+    }
+
+    // Protection: System Owner cannot be banned
+    if (this.isOwner(userId)) {
+      throw new Error('عملية مرفوضة: لا يمكن تطبيق العقوبات الرقابية على حساب المالك العام للنظام.');
+    }
+
+    // Increment violation count
+    user.violationCount = (user.violationCount || 0) + 1;
+    const step = user.violationCount;
+    const now = Date.now();
+
+    let banType: '15m' | '1h' | '2h' | 'pending_admin_review' | 'perm' = '15m';
+    let durationMinutes = 15;
+    let userNotice = '';
+
+    if (step === 1) {
+      banType = '15m';
+      durationMinutes = 15;
+      user.temporaryBanUntil = now + 15 * 60 * 1000;
+      user.temporaryBanType = '15m';
+      user.isPendingAdminReview = false;
+      user.banReason = reason;
+      userNotice = 'المخالفة الأولى: حظر تلقائي مؤقت لمدة 15 دقيقة من استخدام المايك والبث والدخول.';
+    } else if (step === 2) {
+      banType = '1h';
+      durationMinutes = 60;
+      user.temporaryBanUntil = now + 60 * 60 * 1000;
+      user.temporaryBanType = '1h';
+      user.isPendingAdminReview = false;
+      user.banReason = reason;
+      userNotice = 'المخالفة الثانية (تكرار المخالفة): تمديد الحظر التلقائي لمدة ساعة كاملة (60 دقيقة).';
+    } else if (step === 3) {
+      banType = '2h';
+      durationMinutes = 120;
+      user.temporaryBanUntil = now + 120 * 60 * 1000;
+      user.temporaryBanType = '2h';
+      user.isPendingAdminReview = false;
+      user.banReason = reason;
+      userNotice = 'المخالفة الثالثة: تمديد الحظر التلقائي لمدة ساعتين (120 دقيقة).';
+    } else {
+      // Step 4+: Do NOT ban permanently automatically. Transfer to Admin Review Pending list!
+      banType = 'pending_admin_review';
+      durationMinutes = 0;
+      user.temporaryBanUntil = now + 365 * 86400 * 1000; // Hold until reviewed
+      user.temporaryBanType = 'pending_admin_review';
+      user.isPendingAdminReview = true;
+      user.isFrozen = true;
+      user.banReason = `مخالفة رابعة: تحويل لـ قائمة المراجعة الإدارية المعلقة (${reason})`;
+      userNotice = 'المخالفة الرابعة: تم تجميد الحساب ونقله إلى [قائمة المراجعة الإدارية المعلقة]. القرار النهائي المباشر بيد المالك/الأدمن حصراً.';
+    }
+
+    // Eject user from any occupied mic seats immediately
+    if (this.data.roomSeats) {
+      Object.entries(this.data.roomSeats).forEach(([, seats]) => {
+        seats.forEach(s => {
+          if (s.userId === userId) {
+            s.userId = null;
+            s.userName = undefined;
+            s.userAvatar = undefined;
+            s.isMuted = true;
+            s.isSpeaking = false;
+            s.isCameraOn = false;
+            s.userGender = undefined;
+          }
+        });
+      });
+    }
+
+    // Send user warning notification
+    this.addNotification({
+      userId: user.id,
+      title: '🚨 تنبيه عقوبة رقابية تلقائية',
+      message: `${userNotice}\nالسبب: ${reason}`,
+      type: 'ADMIN'
+    });
+
+    // If Step >= 4 (Admin Review Pending), alert all Admins & Owners immediately!
+    if (step >= 4) {
+      const adminOwners = (this.data.users || []).filter(u => u.role === 'OWNER' || u.role === 'ADMIN');
+      adminOwners.forEach(admin => {
+        this.addNotification({
+          userId: admin.id,
+          title: '🚨 قائمة المراجعة الإدارية المعلقة (مخالفة رابعة)',
+          message: `وصل المستخدم [${user.name} - ID: ${user.numericId || user.id}] للمخالفة الرابعة (${reason}). تم تجميد الحساب وتحويله للمراجعة الإدارية لقرار الحظر النهائي الدائم أو الإعفاء بضغطة زر.`,
+          type: 'ADMIN'
+        });
+      });
+    }
+
+    // Record Moderation Incident
+    const incident: ModerationIncident = {
+      id: `mod_inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      userAvatar: user.avatar,
+      targetType,
+      targetId,
+      reason,
+      category,
+      confidenceScore: confidenceScore || 0.95,
+      status: step >= 4 ? 'NEEDS_REVIEW' : 'BLOCKED_BANNED',
+      actionTaken: step === 1 ? 'TEMP_BAN_15M' : step === 2 ? 'TEMP_BAN_1H' : step === 3 ? 'TEMP_BAN_2H' : 'QUEUED_FOR_REVIEW',
+      mediaSnapshot,
+      details: `${details || ''} | العقوبة التدرجية خطوة (${step}): ${userNotice}`,
+      detectedAt: new Date().toISOString()
+    };
+
+    if (!this.data.moderationIncidents) this.data.moderationIncidents = [];
+    this.data.moderationIncidents.unshift(incident);
+
+    this.addAuditLog({
+      adminId: 'SYSTEM_GRADUATED_MODERATOR',
+      adminName: '🛡️ نظام الرقابة التدرجي الذكي (AI Graduated Shield)',
+      action: `GRADUATED_BAN_STEP_${step}`,
+      targetType,
+      targetId: targetId || userId,
+      details: `[عقوبة متدرجة - خطوة ${step}]: ${userNotice} للمستخدم ${user.name}. السبب: ${reason}`,
+      mediaSnapshot
+    });
+
+    this.save();
+    return { success: true, incident, user, banType, remainingMinutes: durationMinutes };
+  }
+
+  public checkUserActiveBan(userId: string): { isBanned: boolean; banReason?: string; isPendingAdminReview?: boolean; isFrozen?: boolean; remainingSeconds?: number; message?: string } {
+    const user = this.getUserById(userId);
+    if (!user) return { isBanned: false };
+
+    // Permanent Ban
+    if (user.isBanned) {
+      return {
+        isBanned: true,
+        banReason: user.banReason || 'حسابك محظور نهائياً لمخالفة القواعد والآداب العامة.',
+        message: 'حسابك محظور نهائياً وبشكل شامل بقرار إداري.'
+      };
+    }
+
+    // Pending Admin Review / Frozen
+    if (user.isPendingAdminReview || user.isFrozen) {
+      return {
+        isBanned: true,
+        isPendingAdminReview: true,
+        isFrozen: true,
+        banReason: user.banReason || 'الحساب معلق وفي قائمة المراجعة الإدارية المعلقة.',
+        message: 'تم تحويل حسابك إلى [قائمة المراجعة الإدارية المعلقة] وتجميد الحساب لمخالفة المعايير للمرة الرابعة. بانتظار قرار المالك/الأدمن.'
+      };
+    }
+
+    // Graduated Temporary Ban Check
+    if (user.temporaryBanUntil) {
+      const now = Date.now();
+      const diffMs = user.temporaryBanUntil - now;
+      if (diffMs > 0) {
+        const remainingSec = Math.ceil(diffMs / 1000);
+        const remainingMins = Math.ceil(remainingSec / 60);
+        return {
+          isBanned: true,
+          remainingSeconds: remainingSec,
+          banReason: user.banReason || 'عقوبة حظر مؤقتة لتدرج المخالفات الرقابية.',
+          message: `حسابك مقيد مؤقتاً بسبب عقوبة رقابية متدرجة. المتبقي: ${remainingMins} دقيقة (${remainingSec} ثانية).`
+        };
+      } else {
+        // Temporary ban expired! Clear temp ban fields
+        user.temporaryBanUntil = null;
+        user.temporaryBanType = undefined;
+        this.save();
+      }
+    }
+
+    return { isBanned: false };
+  }
+
+  public resolveGraduatedModerationAction(
+    adminId: string,
+    targetUserId: string,
+    action: 'PERMANENT_BAN_FREEZE' | 'LIFT_BAN_RESET'
+  ): { success: boolean; message: string; user?: User } {
+    const admin = this.getUserById(adminId);
+    if (!admin || !this.isAdminOrOwner(adminId)) {
+      throw new Error('غير مصرح لك بإدارة قرارات سلم العقوبات الإدارية');
+    }
+
+    const targetUser = this.getUserById(targetUserId);
+    if (!targetUser) {
+      return { success: false, message: 'المستخدم المطلوب غير موجود' };
+    }
+
+    if (action === 'PERMANENT_BAN_FREEZE') {
+      // 1. Permanent Ban Account & Device IP
+      this.banUser(targetUserId, adminId, 'حظر نهائي دائم وتجميد الجهاز بقرار إداري من لوحة التحكم');
+      targetUser.isBanned = true;
+      targetUser.isPendingAdminReview = false;
+      targetUser.isFrozen = true;
+      targetUser.banReason = 'حظر نهائي دائم وتجميد الجهاز لمخالفة معايير المنصة والآداب العامة';
+
+      // Update incident logs for this user
+      if (this.data.moderationIncidents) {
+        this.data.moderationIncidents.forEach(inc => {
+          if (inc.userId === targetUserId) {
+            inc.status = 'BLOCKED_BANNED';
+            inc.reviewedBy = admin.name;
+            inc.reviewedAt = new Date().toISOString();
+          }
+        });
+      }
+
+      this.addAuditLog({
+        adminId,
+        adminName: admin.name,
+        action: 'PERMANENT_BAN_AND_DEVICE_FREEZE',
+        targetType: 'USER',
+        targetId: targetUserId,
+        details: `قام الأدمن/المالك (${admin.name}) بحظر الحساب نهائياً وتجميد الجهاز والشبكة للمستخدم [${targetUser.name}]`
+      });
+
+      this.save();
+      return {
+        success: true,
+        message: `تم تطبيق الحظر النهائي الدائم وتجميد الجهاز للمستخدم ${targetUser.name} بنجاح 🔴`,
+        user: targetUser
+      };
+    } else {
+      // 2. Lift Ban & Give Final Chance
+      targetUser.isBanned = false;
+      targetUser.isPendingAdminReview = false;
+      targetUser.isFrozen = false;
+      targetUser.temporaryBanUntil = null;
+      targetUser.temporaryBanType = undefined;
+      targetUser.violationCount = 0; // Reset violation ladder
+      targetUser.banReason = undefined;
+
+      // Remove from bannedIdentifiers if present
+      if (this.data.bannedIdentifiers) {
+        this.data.bannedIdentifiers = this.data.bannedIdentifiers.filter(b => 
+          b.value !== targetUser.id &&
+          b.value !== targetUser.username &&
+          b.value !== targetUser.phone &&
+          b.value !== targetUser.email &&
+          b.value !== targetUser.googleId
+        );
+      }
+
+      // Update incidents log
+      if (this.data.moderationIncidents) {
+        this.data.moderationIncidents.forEach(inc => {
+          if (inc.userId === targetUserId) {
+            inc.status = 'DISMISSED';
+            inc.reviewedBy = admin.name;
+            inc.reviewedAt = new Date().toISOString();
+          }
+        });
+      }
+
+      this.addNotification({
+        userId: targetUser.id,
+        title: 'تم رفع الحظر وإعطاؤك فرصة أخيرة! 💚',
+        message: `تم رفع الحظر وإعادة تفعيل حسابك بقرار من الإدارة (${admin.name}). نأمل منك الالتزام التام بالتعليمات والآداب العامة.`,
+        type: 'ADMIN'
+      });
+
+      this.addAuditLog({
+        adminId,
+        adminName: admin.name,
+        action: 'LIFT_BAN_GIVE_FINAL_CHANCE',
+        targetType: 'USER',
+        targetId: targetUserId,
+        details: `قام الأدمن/المالك (${admin.name}) برفع الحظر وإعادة تعيين عداد المخالفات وإعطاء فرصة أخيرة للمستخدم [${targetUser.name}]`
+      });
+
+      this.save();
+      return {
+        success: true,
+        message: `تم رفع الحظر وتمرير الحساب وإعطاء فرصة أخيرة للمستخدم ${targetUser.name} بنجاح 💚`,
+        user: targetUser
+      };
+    }
+  }
+
+  public getViolatingUsersList(): {
+    user: User;
+    violationCount: number;
+    banStepLabel: string;
+    isPendingReview: boolean;
+    remainingSeconds: number;
+    incidents: ModerationIncident[];
+  }[] {
+    const violatingUsers: {
+      user: User;
+      violationCount: number;
+      banStepLabel: string;
+      isPendingReview: boolean;
+      remainingSeconds: number;
+      incidents: ModerationIncident[];
+    }[] = [];
+
+    const incidents = this.getModerationIncidents();
+
+    (this.data.users || []).forEach(u => {
+      const vCount = u.violationCount || 0;
+      const isPending = !!u.isPendingAdminReview;
+      const hasTempBan = u.temporaryBanUntil ? Date.now() < u.temporaryBanUntil : false;
+      const isBanned = !!u.isBanned;
+
+      if (vCount > 0 || isPending || hasTempBan || isBanned) {
+        let banStepLabel = 'بدون عقوبة معلقة';
+        if (isBanned) {
+          banStepLabel = 'حظر نهائي دائم وتجميد الجهاز';
+        } else if (isPending) {
+          banStepLabel = 'المخالفة الرابعة: معلق بانتظار المراجع الإداري ⛔';
+        } else if (u.temporaryBanType === '2h') {
+          banStepLabel = 'المخالفة الثالثة: حظر مؤقت 120 دقيقة';
+        } else if (u.temporaryBanType === '1h') {
+          banStepLabel = 'المخالفة الثانية: حظر مؤقت 60 دقيقة';
+        } else if (u.temporaryBanType === '15m') {
+          banStepLabel = 'المخالفة الأولى: حظر مؤقت 15 دقيقة';
+        } else if (vCount > 0) {
+          banStepLabel = `إجمالي المخالفات المسجلة: (${vCount})`;
+        }
+
+        const remainingSec = u.temporaryBanUntil ? Math.max(0, Math.ceil((u.temporaryBanUntil - Date.now()) / 1000)) : 0;
+        const userIncidents = incidents.filter(inc => inc.userId === u.id);
+
+        violatingUsers.push({
+          user: u,
+          violationCount: vCount,
+          banStepLabel,
+          isPendingReview: isPending,
+          remainingSeconds: remainingSec,
+          incidents: userIncidents
+        });
+      }
+    });
+
+    return violatingUsers;
+  }
+
   public autoBanForModeration(payload: {
     userId: string;
     reason: string;
@@ -4315,45 +4966,8 @@ class Database {
     confidenceScore?: number;
     details?: string;
   }): { success: boolean; incident: ModerationIncident } {
-    const { userId, reason, category, targetType, targetId, mediaSnapshot, confidenceScore, details } = payload;
-    const user = this.getUserById(userId);
-
-    // Apply strict permanent ban
-    this.banUser(userId, 'SYSTEM_AUTO_MODERATOR', reason, undefined, category, mediaSnapshot);
-
-    const incident: ModerationIncident = {
-      id: `mod_inc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      userId,
-      userName: user?.name || 'مستخدم غير معروف',
-      userRole: user?.role || 'USER',
-      userAvatar: user?.avatar || '',
-      targetType,
-      targetId,
-      reason,
-      category,
-      confidenceScore: confidenceScore || 0.95,
-      status: 'BLOCKED_BANNED',
-      actionTaken: 'AUTO_BAN_PERMANENT',
-      mediaSnapshot,
-      details,
-      detectedAt: new Date().toISOString()
-    };
-
-    if (!this.data.moderationIncidents) this.data.moderationIncidents = [];
-    this.data.moderationIncidents.unshift(incident);
-
-    this.addAuditLog({
-      adminId: 'SYSTEM_MODERATOR',
-      adminName: '🛡️ نظام الرقابة التلقائية (AI Shield)',
-      action: 'AUTO_BAN_VIOLATION',
-      targetType,
-      targetId: targetId || userId,
-      details: `[حظر تلقائي فوري]: مخالفة سياسة الحشمة والآداب (${reason}) على المستخدم ${user?.name}. تم حظر الحساب ووسائل تسجيله نهائياً.`,
-      mediaSnapshot
-    });
-
-    this.save();
-    return { success: true, incident };
+    const res = this.processGraduatedModeration(payload);
+    return { success: res.success, incident: res.incident };
   }
 
   public addModerationIncident(incidentData: Omit<ModerationIncident, 'id' | 'detectedAt'>): ModerationIncident {
@@ -5618,7 +6232,9 @@ class Database {
   public setShippingAgent(
     ownerId: string,
     targetUserId: string,
-    isAgent: boolean
+    isAgent: boolean,
+    country?: string,
+    phone?: string
   ): { success: boolean; message: string; user?: User } {
     if (!this.isOwner(ownerId)) {
       throw new Error('فقط المالك العام يستطيع تعيين أو إلغاء وكلاء الشحن');
@@ -5629,6 +6245,9 @@ class Database {
     }
 
     targetUser.isShippingAgent = isAgent;
+    if (country) targetUser.bio = `وكيل شحن معتمد - ${country}`;
+    if (phone) targetUser.phone = phone;
+
     if (isAgent) {
       if (targetUser.role === 'USER') {
         targetUser.role = 'AGENT';
@@ -5643,7 +6262,7 @@ class Database {
       userId: targetUser.id,
       title: isAgent ? 'تهانينا! أصبحت وكيل شحن رسمي 💎' : 'تحديث الصلاحيات',
       message: isAgent
-        ? 'تم تعيينك كـ «وكيل شحن» رسمي في حكاوي بواسطة المالك. يمكنك الآن شحن وتحويل الماسات للمستخدمين.'
+        ? 'تم تعيينك كـ «وكيل شحن» رسمي في حكاوي بواسطة المالك. يمكنك الآن شحن وتحويل الكونز والماسات للمستخدمين.'
         : 'تم إلغاء تعيينك كـ وكيل شحن بواسطة المالك.',
       type: 'ADMIN'
     });
@@ -5663,6 +6282,183 @@ class Database {
         ? `تم تعيين ${targetUser.name} كـ وكيل شحن بنجاح`
         : `تم إلغاء وكيل الشحن عن ${targetUser.name}`,
       user: targetUser
+    };
+  }
+
+  public supplyAgentCoins(
+    ownerId: string,
+    agentUserId: string,
+    coinAmount: number
+  ): { success: boolean; message: string; agent?: User } {
+    if (!this.isOwner(ownerId)) {
+      throw new Error('فقط المالك العام يستطيع تزويد الوكلاء بالرصيد');
+    }
+    const agent = this.getUserById(agentUserId);
+    if (!agent) {
+      throw new Error('حساب الوكيل غير موجود');
+    }
+
+    const coinsToAdd = Math.floor(Number(coinAmount));
+    if (isNaN(coinsToAdd) || coinsToAdd <= 0) {
+      throw new Error('يرجى إدخال عدد كوينز صحيح');
+    }
+
+    agent.coins = (agent.coins || 0) + coinsToAdd;
+    agent.isShippingAgent = true;
+    if (agent.role === 'USER') {
+      agent.role = 'AGENT';
+    }
+
+    const refCode = `SUPPLY-${Date.now().toString().slice(-6)}`;
+
+    this.addWalletTransaction(
+      agent.id,
+      'COIN',
+      coinsToAdd,
+      agent.coins,
+      `شحن رصيد الوكالة بواسطة المالك العام [${coinsToAdd.toLocaleString()} 🪙] (مرجع: ${refCode})`
+    );
+
+    this.addNotification({
+      userId: agent.id,
+      title: 'تم تزويد رصيد وكالتك بالكونز! 🪙🎉',
+      message: `تمت إضافة ${coinsToAdd.toLocaleString('ar-EG')} كونز إلى رصيد وكالتك بنجاح من المالك العام. مرجع: ${refCode}`,
+      type: 'ADMIN'
+    });
+
+    this.addAuditLog({
+      adminId: ownerId,
+      action: 'SUPPLY_AGENT_COINS',
+      targetType: 'USER',
+      targetId: agent.id,
+      details: `قام المالك بتزويد الوكيل (${agent.name}) بـ ${coinsToAdd.toLocaleString()} كونز`
+    });
+
+    this.save();
+    return {
+      success: true,
+      message: `تم شحن ${coinsToAdd.toLocaleString('ar-EG')} كونز إلى رصيد الوكيل ${agent.name} بنجاح!`,
+      agent
+    };
+  }
+
+  public agentTransferCoins(
+    agentId: string,
+    targetUserIdentifier: string,
+    coinAmount: number
+  ): { success: boolean; message?: string; error?: string; agentCoins?: number; targetUser?: Partial<User>; receipt?: ShippingRechargeLog } {
+    const agent = this.getUserById(agentId);
+    if (!agent) {
+      return { success: false, error: 'حساب الوكيل غير موجود' };
+    }
+
+    const isAuthorizedAgent = agent.isShippingAgent === true || agent.role === 'AGENT' || agent.role === 'OWNER' || agent.isOwner === true;
+    if (!isAuthorizedAgent) {
+      return { success: false, error: 'غير مصرح لك بإجراء عمليات شحن كوكيل معتمد' };
+    }
+
+    const cleanIdentifier = (targetUserIdentifier || '').trim();
+    if (!cleanIdentifier) {
+      return { success: false, error: 'يرجى إدخال ID المستخدم الرقمي أو اسم المستخدم' };
+    }
+
+    let targetUser = this.getUserById(cleanIdentifier) ||
+      this.data.users.find(u => u.numericId && u.numericId === cleanIdentifier) ||
+      this.getUserByUsername(cleanIdentifier.toLowerCase()) ||
+      this.getUserByPhone(cleanIdentifier);
+
+    if (!targetUser) {
+      return { success: false, error: 'لم يتم العثور على مستخدم بهذا الـ ID. يرجى التأكد من المعرّف.' };
+    }
+
+    if (targetUser.id === agent.id) {
+      return { success: false, error: 'الوكيل لا يستطيع تحويل رصيد لحسابه الشخصي مباشرة' };
+    }
+
+    const amount = Math.floor(Number(coinAmount));
+    if (isNaN(amount) || amount <= 0) {
+      return { success: false, error: 'يرجى إدخال عدد كوينز صحيح' };
+    }
+
+    const isOwnerAgent = this.isOwner(agent.id);
+    if (!isOwnerAgent && (agent.coins || 0) < amount) {
+      return { success: false, error: `رصيد وكالتك غير كافٍ. رصيدك المتاح: ${agent.coins?.toLocaleString()} 🪙` };
+    }
+
+    if (!isOwnerAgent) {
+      agent.coins = (agent.coins || 0) - amount;
+    }
+    targetUser.coins = (targetUser.coins || 0) + amount;
+    this.addXP(targetUser.id, amount, 'AGENT_RECHARGE');
+
+    const refCode = `TXN-COIN-${Date.now().toString().slice(-6)}${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const rechargeLog: ShippingRechargeLog = {
+      id: `recharge_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      referenceId: refCode,
+      userId: targetUser.id,
+      userName: targetUser.name,
+      userUsername: targetUser.username,
+      userNumericId: targetUser.numericId || targetUser.id,
+      amountEgp: Math.round(amount / 1000),
+      diamonds: amount,
+      agentId: agent.id,
+      agentName: agent.name,
+      agentNumericId: agent.numericId || agent.id,
+      createdAt: new Date().toISOString(),
+      status: 'COMPLETED',
+      notes: `شحن كوينز رسمي من وكالة (${agent.name})`
+    };
+
+    this.data.shippingRechargeLogs = this.data.shippingRechargeLogs || [];
+    this.data.shippingRechargeLogs.unshift(rechargeLog);
+
+    if (!isOwnerAgent) {
+      this.addWalletTransaction(
+        agent.id,
+        'COIN',
+        -amount,
+        agent.coins,
+        `تحويل شحن كوينز للمستخدم [${targetUser.name} - ID: ${targetUser.numericId || targetUser.id}] (مرجع: ${refCode})`
+      );
+    }
+
+    this.addWalletTransaction(
+      targetUser.id,
+      'COIN',
+      amount,
+      targetUser.coins,
+      `شحن كوينز عبر وكيل الشحن المعتمد [${agent.name}] (مرجع: ${refCode})`
+    );
+
+    this.addNotification({
+      userId: targetUser.id,
+      title: 'تم شحن رصيدك بالكونز! 🪙🎉',
+      message: `تم شحن ${amount.toLocaleString('ar-EG')} كونز لحسابك بنجاح من وكيل الشحن المعتمد (${agent.name}). مرجع: ${refCode}`,
+      type: 'ADMIN'
+    });
+
+    this.addNotification({
+      userId: agent.id,
+      title: 'نجاح عملية تحويل الكوينز 🪙',
+      message: `تم تحويل ${amount.toLocaleString('ar-EG')} كونز بنجاح إلى المستخدم ${targetUser.name} (مرجع: ${refCode}).`,
+      type: 'ADMIN'
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: `تم تحويل ${amount.toLocaleString('ar-EG')} كونز للمستخدم ${targetUser.name} بنجاح!`,
+      agentCoins: agent.coins,
+      targetUser: {
+        id: targetUser.id,
+        name: targetUser.name,
+        username: targetUser.username,
+        coins: targetUser.coins,
+        diamonds: targetUser.diamonds
+      },
+      receipt: rechargeLog
     };
   }
 
@@ -5850,6 +6646,247 @@ class Database {
     return { allowed: true };
   }
 
+  // --- HOST & AGENT WITHDRAWAL REQUESTS SYSTEM ---
+
+  public getWithdrawalRequests(userId?: string): HostWithdrawalRequest[] {
+    this.data.withdrawalRequests = this.data.withdrawalRequests || [];
+    if (userId) {
+      return this.data.withdrawalRequests.filter(r => r.userId === userId);
+    }
+    return this.data.withdrawalRequests;
+  }
+
+  public createWithdrawalRequest(params: {
+    userId: string;
+    requestedDiamonds: number;
+    paymentMethod: string;
+    paymentAccountDetails: string;
+    overrideDateCheck?: boolean;
+  }): { success: boolean; message: string; request?: HostWithdrawalRequest; user?: User } {
+    this.data.withdrawalRequests = this.data.withdrawalRequests || [];
+
+    const user = this.getUserById(params.userId);
+    if (!user) {
+      return { success: false, message: 'المستخدم غير موجود' };
+    }
+
+    if (user.isBanned) {
+      return { success: false, message: 'الحساب محظور ولا يمكنه تقديم طلبات سحب' };
+    }
+
+    // Strict Schedule Constraint: Day of month MUST be 15
+    const todayDay = new Date().getDate();
+    const isDay15 = todayDay === 15;
+    const isOwnerOrAdmin = this.isAdminOrOwner(user.id);
+    const allowOverride = params.overrideDateCheck && isOwnerOrAdmin;
+
+    if (!isDay15 && !allowOverride) {
+      return {
+        success: false,
+        message: 'فترة طلبات السحب تفتح حصرياً يوم 15 من كل شهر ميلادي'
+      };
+    }
+
+    const requestedDiamonds = Math.floor(Number(params.requestedDiamonds));
+    if (isNaN(requestedDiamonds) || requestedDiamonds <= 0) {
+      return { success: false, message: 'يرجى إدخال عدد ماسات إيجابي وصحيح للسحب' };
+    }
+
+    if (user.diamonds < requestedDiamonds) {
+      return {
+        success: false,
+        message: `رصيد الماسات غير كافٍ. رصيدك المتاح حالياً: ${user.diamonds.toLocaleString()} 💎`
+      };
+    }
+
+    if (!params.paymentMethod || !params.paymentAccountDetails || !params.paymentAccountDetails.trim()) {
+      return { success: false, message: 'يرجى اختيار وسيلة الدفع وكتابة رقم الحساب أو المحفظة بدقة' };
+    }
+
+    // Month Period Identifier (e.g. "2026-09")
+    const now = new Date();
+    const monthPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+    // Check if user has an existing active PENDING request for this month
+    const existingPending = this.data.withdrawalRequests.find(
+      r => r.userId === user.id && r.monthPeriod === monthPeriod && r.status === 'PENDING'
+    );
+    if (existingPending) {
+      return {
+        success: false,
+        message: 'تم استلام طلب السحب بنجاح وهو قيد المراجعة من قِبل الإدارة، يرجى الانتظار حتى تتم الموافقة والتحويل'
+      };
+    }
+
+    // Retrieve Host Profile & Target Progress
+    const hostProfile = this.getHostProfile(user.id);
+    const activeTarget = this.data.targetConfigs.find(t => t.isActive) || this.data.targetConfigs[0];
+    const targetProgress = activeTarget ? this.calculateHostTargetProgress(user.id, activeTarget.id) : null;
+
+    // Calculate details
+    const targetAchievedDiamonds = targetProgress ? targetProgress.currentDiamonds : (user.diamonds || 0);
+    const targetAchievedTitle = targetProgress
+      ? `${targetProgress.targetTitle} (${targetProgress.progressPercentage}% - ${targetProgress.isAchieved ? 'مكتمل ✅' : 'قيد التقدم'})`
+      : 'تارجت الشهر الجاري';
+    const targetLiveMinutes = targetProgress ? targetProgress.currentLiveMinutes : 0;
+    const targetActiveDays = targetProgress ? targetProgress.currentActiveDays : 0;
+
+    // Gifts & Wallet metrics
+    const userGiftsReceived = this.data.giftTransactions.filter(t => t.receiverId === user.id);
+    const giftCoinsReceived = userGiftsReceived.reduce((sum, t) => sum + (t.totalDiamonds * 10), 0);
+
+    // Estimate Financial Equivalent (10,000 Diamonds = 100 EGP / ~$2 USD approx)
+    const requestedAmountUsdOrEgp = Math.round((requestedDiamonds / 100) * 10) / 10;
+
+    // Freeze balance from user wallet
+    user.diamonds -= requestedDiamonds;
+
+    const request: HostWithdrawalRequest = {
+      id: `wdr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: user.id,
+      userName: user.name,
+      userAvatar: user.avatar,
+      userNumericId: user.numericId || user.id,
+      role: user.role,
+      hostCode: hostProfile?.hostCode,
+      agencyName: hostProfile?.agencyName,
+      agencyCode: hostProfile?.agencyCode,
+      monthPeriod,
+      targetAchievedDiamonds,
+      targetAchievedTitle,
+      targetLiveMinutes,
+      targetActiveDays,
+      giftCoinsReceived,
+      diamondsConverted: user.diamonds,
+      requestedDiamonds,
+      requestedAmountUsdOrEgp,
+      currency: 'EGP',
+      paymentMethod: params.paymentMethod,
+      paymentAccountDetails: params.paymentAccountDetails.trim(),
+      status: 'PENDING',
+      requestedAt: new Date().toISOString()
+    };
+
+    this.data.withdrawalRequests.unshift(request);
+
+    // Send user notification
+    this.addNotification({
+      userId: user.id,
+      title: 'طلب السحب قيد المراجعة الإدارية ⏳',
+      message: 'تم استلام طلب السحب بنجاح وهو قيد المراجعة من قِبل الإدارة، يرجى الانتظار حتى تتم الموافقة والتحويل',
+      type: 'SYSTEM'
+    });
+
+    this.addAuditLog({
+      adminId: user.id,
+      adminName: user.name,
+      action: 'SUBMIT_WITHDRAWAL_REQUEST',
+      targetType: 'WITHDRAWAL_REQUEST',
+      targetId: request.id,
+      details: `قدم المضيف [${user.name}] طلب سحب بمبلغ ${requestedDiamonds.toLocaleString()} 💎 (${requestedAmountUsdOrEgp.toLocaleString()} جنيه) عبر [${params.paymentMethod}]`
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: 'تم استلام طلب السحب بنجاح وهو قيد المراجعة من قِبل الإدارة، يرجى الانتظار حتى تتم الموافقة والتحويل',
+      request,
+      user
+    };
+  }
+
+  public reviewWithdrawalRequest(
+    adminId: string,
+    requestId: string,
+    action: 'APPROVE' | 'REJECT',
+    rejectionReason?: string
+  ): { success: boolean; message: string; request?: HostWithdrawalRequest; user?: User } {
+    this.data.withdrawalRequests = this.data.withdrawalRequests || [];
+
+    const admin = this.getUserById(adminId);
+    if (!admin || !this.isAdminOrOwner(adminId)) {
+      throw new Error('غير مصرح لك بمراجعة طلبات السحب (صلاحيات إدارية فقط)');
+    }
+
+    const request = this.data.withdrawalRequests.find(r => r.id === requestId);
+    if (!request) {
+      return { success: false, message: 'طلب السحب غير موجود' };
+    }
+
+    if (request.status !== 'PENDING') {
+      return { success: false, message: `طلب السحب تمت معالجته سابقاً وحالته الحالية: [${request.status}]` };
+    }
+
+    const hostUser = this.getUserById(request.userId);
+    if (!hostUser) {
+      return { success: false, message: 'صاحب طلب السحب غير موجود بالسيستم' };
+    }
+
+    request.reviewedBy = admin.id;
+    request.reviewedByName = admin.name;
+    request.reviewedAt = new Date().toISOString();
+
+    if (action === 'APPROVE') {
+      request.status = 'APPROVED';
+      request.transactionRef = `TX-WDR-${Date.now()}`;
+
+      this.addNotification({
+        userId: hostUser.id,
+        title: 'تمت الموافقة والتحويل بنجاح! 💸🎉',
+        message: `تمت الموافقة والتحويل بنجاح على طلب السحب بمبلغ ${request.requestedAmountUsdOrEgp.toLocaleString()} جنيه (${request.requestedDiamonds.toLocaleString()} 💎) عبر [${request.paymentMethod}] لحسابك (${request.paymentAccountDetails}).`,
+        type: 'SYSTEM'
+      });
+
+      this.addAuditLog({
+        adminId: admin.id,
+        adminName: admin.name,
+        action: 'APPROVE_WITHDRAWAL_REQUEST',
+        targetType: 'WITHDRAWAL_REQUEST',
+        targetId: request.id,
+        details: `اعتمد ${admin.name} تحويل مبلغ ${request.requestedAmountUsdOrEgp} جنيه للمضيف ${hostUser.name} عبر ${request.paymentMethod}`
+      });
+
+      this.save();
+      return {
+        success: true,
+        message: `تمت الموافقة والتحويل بنجاح للمضيف ${hostUser.name}`,
+        request,
+        user: hostUser
+      };
+    } else {
+      // Reject request & return frozen diamonds back to host's wallet balance
+      request.status = 'REJECTED';
+      request.rejectionReason = rejectionReason || 'عدم استيفاء الشروط الإدارية';
+
+      hostUser.diamonds += request.requestedDiamonds;
+
+      this.addNotification({
+        userId: hostUser.id,
+        title: 'إشعار بخصوص طلب السحب ⚠️',
+        message: `تم رفض طلب السحب الخاص بك. السبب: ${request.rejectionReason}. تم إرجاع الرصيد (${request.requestedDiamonds.toLocaleString()} 💎) إلى محفظتك بنجاح.`,
+        type: 'SYSTEM'
+      });
+
+      this.addAuditLog({
+        adminId: admin.id,
+        adminName: admin.name,
+        action: 'REJECT_WITHDRAWAL_REQUEST',
+        targetType: 'WITHDRAWAL_REQUEST',
+        targetId: request.id,
+        details: `رفض ${admin.name} طلب السحب للمضيف ${hostUser.name}. السبب: ${request.rejectionReason}. تم إرجاع ${request.requestedDiamonds} 💎 لمحفظته.`
+      });
+
+      this.save();
+      return {
+        success: true,
+        message: `تم رفض طلب السحب وإرجاع ${request.requestedDiamonds.toLocaleString()} 💎 إلى محفظة ${hostUser.name}`,
+        request,
+        user: hostUser
+      };
+    }
+  }
+
   public bindDevice(deviceId: string, userId: string, ip?: string): void {
     if (!deviceId || !deviceId.trim() || !userId) return;
     const cleanDeviceId = deviceId.trim();
@@ -5877,6 +6914,595 @@ class Database {
       });
     }
     this.save();
+  }
+
+  // --- INSTANT VERIFICATION & ADMIN POST-MODERATION SYSTEM ---
+
+  public verifyUserInstant(
+    userId: string,
+    params: {
+      gender: 'male' | 'female' | 'MALE' | 'FEMALE';
+      verificationPhoto: string;
+      livenessFrontPhoto?: string;
+      livenessRightPhoto?: string;
+      livenessLeftPhoto?: string;
+    }
+  ): { success: boolean; message: string; user?: User } {
+    const user = this.getUserById(userId);
+    if (!user) {
+      return { success: false, message: 'المستخدم غير موجود' };
+    }
+
+    if (user.isBanned) {
+      return { success: false, message: 'الحساب محظور ولا يمكن توثيقه' };
+    }
+
+    if (!params.verificationPhoto || !params.verificationPhoto.trim()) {
+      return { success: false, message: 'يرجى إتمام عملية فحص الكاميرا الحية والتقاط صور التوثيق' };
+    }
+
+    const normalizedGender = params.gender?.toLowerCase() === 'female' ? 'female' : 'male';
+    const nowIso = new Date().toISOString();
+
+    const frontPhoto = params.livenessFrontPhoto || params.verificationPhoto;
+    const rightPhoto = params.livenessRightPhoto || params.verificationPhoto;
+    const leftPhoto = params.livenessLeftPhoto || params.verificationPhoto;
+
+    // Instant Verification Granted!
+    user.isVerified = true;
+    user.verifiedGender = normalizedGender;
+    user.gender = normalizedGender;
+    user.verificationPhoto = frontPhoto;
+    user.livenessFrontPhoto = frontPhoto;
+    user.livenessRightPhoto = rightPhoto;
+    user.livenessLeftPhoto = leftPhoto;
+    user.verifiedAt = nowIso;
+
+    // Log to Admin Verified Users List for Post-Moderation
+    this.data.verifiedUsersLog = this.data.verifiedUsersLog || [];
+    const existingLogIndex = this.data.verifiedUsersLog.findIndex(r => r.userId === user.id);
+
+    const logRecord: VerifiedUserRecord = {
+      id: `vlog_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: user.id,
+      userName: user.name,
+      userAvatar: user.avatar,
+      userNumericId: user.numericId || user.id,
+      gender: normalizedGender,
+      verificationPhoto: frontPhoto,
+      livenessFrontPhoto: frontPhoto,
+      livenessRightPhoto: rightPhoto,
+      livenessLeftPhoto: leftPhoto,
+      verifiedAt: nowIso,
+      isVerified: true
+    };
+
+    if (existingLogIndex >= 0) {
+      this.data.verifiedUsersLog[existingLogIndex] = logRecord;
+    } else {
+      this.data.verifiedUsersLog.unshift(logRecord);
+    }
+
+    // Add Notification to User
+    this.addNotification({
+      userId: user.id,
+      title: 'تم التوثيق وتفعيل الشارة بنجاح! 💙🌸',
+      message: `مبروك! تم توثيق حسابك وتفعيل شارة المصداقية (${normalizedGender === 'female' ? 'وردية ♀️' : 'زرقاء ♂️'}) فوراً.`,
+      type: 'SYSTEM'
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: 'تم تفعيل توثيق الحساب وشارة المصداقية فوراً بنجاح! 🎉',
+      user
+    };
+  }
+
+  public getVerifiedUsersLog(): VerifiedUserRecord[] {
+    this.data.verifiedUsersLog = this.data.verifiedUsersLog || [];
+    return this.data.verifiedUsersLog;
+  }
+
+  public revokeUserVerification(
+    adminId: string,
+    targetUserId: string
+  ): { success: boolean; message: string; user?: User } {
+    if (!this.isAdminOrOwner(adminId)) {
+      throw new Error('غير مصرح لك بإدارة توثيق الحسابات');
+    }
+
+    const targetUser = this.getUserById(targetUserId);
+    if (!targetUser) {
+      return { success: false, message: 'المستخدم المطلوب غير موجود' };
+    }
+
+    targetUser.isVerified = false;
+
+    // Update log
+    this.data.verifiedUsersLog = this.data.verifiedUsersLog || [];
+    const logItem = this.data.verifiedUsersLog.find(r => r.userId === targetUser.id);
+    if (logItem) {
+      logItem.isVerified = false;
+      logItem.revokedAt = new Date().toISOString();
+      logItem.revokedBy = adminId;
+    }
+
+    this.addNotification({
+      userId: targetUser.id,
+      title: 'تم سحب توثيق الحساب ⚠️',
+      message: 'تم سحب شارة التوثيق والمصداقية من حسابك من قِبل الإدارة لعدم مطابقة صورة التحقق الشخصية.',
+      type: 'SYSTEM'
+    });
+
+    const admin = this.getUserById(adminId);
+    this.addAuditLog({
+      adminId,
+      adminName: admin?.name || 'Admin',
+      action: 'REVOKE_VERIFICATION',
+      targetType: 'USER',
+      targetId: targetUser.id,
+      details: `تم سحب توثيق الحساب من المستخدم [${targetUser.name}] بواسطة الإدارة`
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: `تم سحب التوثيق وشارة المصداقية من المستخدم ${targetUser.name} بنجاح`,
+      user: targetUser
+    };
+  }
+
+  public banUserWithVerificationRevoke(
+    adminId: string,
+    targetUserId: string,
+    banReason?: string
+  ): { success: boolean; message: string; user?: User } {
+    if (!this.isAdminOrOwner(adminId)) {
+      throw new Error('غير مصرح لك بحظر الحسابات');
+    }
+
+    const targetUser = this.getUserById(targetUserId);
+    if (!targetUser) {
+      return { success: false, message: 'المستخدم المطلوب غير موجود' };
+    }
+
+    targetUser.isBanned = true;
+    targetUser.banReason = banReason || 'انتحال شخصية أو مخالفة معايير التوثيق والمجتمع';
+    targetUser.isVerified = false;
+
+    // Update log
+    this.data.verifiedUsersLog = this.data.verifiedUsersLog || [];
+    const logItem = this.data.verifiedUsersLog.find(r => r.userId === targetUser.id);
+    if (logItem) {
+      logItem.isVerified = false;
+      logItem.revokedAt = new Date().toISOString();
+      logItem.revokedBy = adminId;
+    }
+
+    const admin = this.getUserById(adminId);
+    this.addAuditLog({
+      adminId,
+      adminName: admin?.name || 'Admin',
+      action: 'BAN_USER',
+      targetType: 'USER',
+      targetId: targetUser.id,
+      details: `تم حظر الحساب وسحب التوثيق من [${targetUser.name}]. السبب: ${targetUser.banReason}`
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: `تم حظر الحساب ${targetUser.name} وطرده وسحب توثيقه بنجاح`,
+      user: targetUser
+    };
+  }
+
+  // =========================================================================
+  // --- HOST-AGENCY AUTOMATED SYSTEM & DISPUTES METHODS ---
+  // =========================================================================
+
+  public createHostAgencyRequest(params: { userId: string; agencyCode: string; phone: string }): { success: boolean; message: string; request?: HostAgencyRequest } {
+    const user = this.getUserById(params.userId);
+    if (!user) {
+      return { success: false, message: 'المستخدم غير موجود' };
+    }
+
+    const cleanCode = params.agencyCode.trim().toUpperCase();
+    const cleanPhone = params.phone.trim();
+
+    if (!cleanCode || !cleanPhone) {
+      return { success: false, message: 'كود الوكالة ورقم الهاتف مطلوبان كحقول إجبارية' };
+    }
+
+    // Find agency by agencyCode or inviteCode
+    const agency = (this.data.agencies || []).find(
+      a => a.agencyCode.toUpperCase() === cleanCode || a.inviteCode?.toUpperCase() === cleanCode
+    );
+
+    if (!agency) {
+      return { success: false, message: `كود الوكالة [${cleanCode}] غير صحيح أو غير موجود بالنظام` };
+    }
+
+    // Check if host is already linked to this agency
+    const existingHostProfile = this.getHostProfile(user.id);
+    if (existingHostProfile && existingHostProfile.agencyId === agency.id) {
+      return { success: false, message: 'أنت منضم بالفعل لهذه الوكالة' };
+    }
+
+    // Check if there is an existing pending request
+    this.data.hostAgencyRequests = this.data.hostAgencyRequests || [];
+    const existingPending = this.data.hostAgencyRequests.find(
+      r => r.userId === user.id && r.agencyId === agency.id && r.status === 'PENDING'
+    );
+
+    if (existingPending) {
+      return { success: false, message: 'لديك طلب انضمام قيد الانتظار مسبقاً لهذه الوكالة' };
+    }
+
+    const newRequest: HostAgencyRequest = {
+      id: `hag_req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      userId: user.id,
+      userName: user.name,
+      userAvatar: user.avatar,
+      userNumericId: user.numericId,
+      phone: cleanPhone,
+      agencyCode: agency.agencyCode,
+      agencyId: agency.id,
+      agencyName: agency.agencyName,
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    };
+
+    this.data.hostAgencyRequests.unshift(newRequest);
+
+    // Notify agency owner directly
+    this.addNotification({
+      userId: agency.ownerUserId,
+      title: 'طلب انضمام مضيف جديد! 🎙️💼',
+      message: `أرسل المضيف [${user.name}] طلب انضمام لوكالتك (${agency.agencyName}). يمكنك قبوله أو رفضه مباشرة.`,
+      type: 'SYSTEM'
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: `تم إرسال طلب الانضمام آلياً لوكالة [${agency.agencyName}] بنجاح!`,
+      request: newRequest
+    };
+  }
+
+  public getAgencyHostRequests(agencyOwnerUserId: string): HostAgencyRequest[] {
+    const agency = (this.data.agencies || []).find(a => a.ownerUserId === agencyOwnerUserId);
+    if (!agency) return [];
+
+    return (this.data.hostAgencyRequests || []).filter(r => r.agencyId === agency.id);
+  }
+
+  public reviewHostAgencyRequest(
+    agencyOwnerUserId: string,
+    requestId: string,
+    action: 'ACCEPTED' | 'REJECTED'
+  ): { success: boolean; message: string } {
+    const agency = (this.data.agencies || []).find(a => a.ownerUserId === agencyOwnerUserId);
+    if (!agency) {
+      return { success: false, message: 'غير مصرح: لا تملك وكالة معتمدة بالنظام' };
+    }
+
+    this.data.hostAgencyRequests = this.data.hostAgencyRequests || [];
+    const reqIndex = this.data.hostAgencyRequests.findIndex(r => r.id === requestId && r.agencyId === agency.id);
+    if (reqIndex === -1) {
+      return { success: false, message: 'طلب الانضمام غير موجود أو لا ينتمي لوكالتك' };
+    }
+
+    const reqItem = this.data.hostAgencyRequests[reqIndex];
+    reqItem.status = action;
+    reqItem.reviewedAt = new Date().toISOString();
+
+    const hostUser = this.getUserById(reqItem.userId);
+
+    if (action === 'ACCEPTED') {
+      // Link host directly to the agency
+      let hostProfile = this.getHostProfile(reqItem.userId);
+      if (!hostProfile) {
+        hostProfile = {
+          id: `hp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          userId: reqItem.userId,
+          userName: reqItem.userName,
+          userAvatar: reqItem.userAvatar,
+          hostCode: `HOST-${reqItem.userNumericId || Math.floor(100000 + Math.random() * 900000)}`,
+          agencyId: agency.id,
+          agencyName: agency.agencyName,
+          agencyCode: agency.agencyCode,
+          status: 'ACTIVE',
+          category: 'صوتي وتفاعلي',
+          bio: 'مذيع ومضيف معتمد',
+          totalLiveMinutes: 0,
+          totalDiamondsReceived: 0,
+          totalValidDays: 0,
+          approvedAt: new Date().toISOString(),
+          approvedBy: agency.ownerName
+        };
+        this.data.hostProfiles = this.data.hostProfiles || [];
+        this.data.hostProfiles.push(hostProfile);
+      } else {
+        hostProfile.agencyId = agency.id;
+        hostProfile.agencyName = agency.agencyName;
+        hostProfile.agencyCode = agency.agencyCode;
+        hostProfile.status = 'ACTIVE';
+      }
+
+      if (hostUser) {
+        if (hostUser.role === 'USER') {
+          hostUser.role = 'HOST';
+        }
+        if (reqItem.phone) {
+          hostUser.phone = reqItem.phone;
+        }
+      }
+
+      agency.hostsCount = (agency.hostsCount || 0) + 1;
+      agency.activeHostsCount = (agency.activeHostsCount || 0) + 1;
+
+      this.addNotification({
+        userId: reqItem.userId,
+        title: 'مبروك! تم قبول انضمامك للوكالة 🎙️🎉',
+        message: `تمت الموافقة على طلبك وأصبحت الآن مضيفاً رسمياً تابعاً لوكالة [${agency.agencyName}].`,
+        type: 'SYSTEM'
+      });
+    } else {
+      this.addNotification({
+        userId: reqItem.userId,
+        title: 'نعتذر، تم رفض طلب الانضمام ❌',
+        message: `تم رفض طلب الانضمام للوكالة [${agency.agencyName}] من قبل إدارة الوكالة.`,
+        type: 'SYSTEM'
+      });
+    }
+
+    this.save();
+
+    return {
+      success: true,
+      message: action === 'ACCEPTED'
+        ? `تم قبول المضيف [${reqItem.userName}] وربطه بوكالتك بنجاح!`
+        : `تم رفض طلب الانضمام للمضيف [${reqItem.userName}].`
+    };
+  }
+
+  public getHostTargetProgress(userId: string): any {
+    const host = this.getHostProfile(userId);
+    if (!host) {
+      return {
+        targetLevel: 1,
+        targetDiamonds: 100000,
+        currentDiamonds: 0,
+        diamondsPercentage: 0,
+        targetHours: 30,
+        currentHours: 0,
+        hoursPercentage: 0,
+        targetDays: 15,
+        currentDays: 0,
+        daysPercentage: 0,
+        isCompleted: false
+      };
+    }
+    const currentDiamonds = host.totalDiamondsReceived || 0;
+    const targetDiamonds = 100000;
+    const currentHours = Math.floor((host.totalLiveMinutes || 0) / 60);
+    const targetHours = 30;
+    const currentDays = host.totalValidDays || 0;
+    const targetDays = 15;
+
+    return {
+      targetLevel: 1,
+      targetDiamonds,
+      currentDiamonds,
+      diamondsPercentage: Math.min(100, Math.floor((currentDiamonds / targetDiamonds) * 100)),
+      targetHours,
+      currentHours,
+      hoursPercentage: Math.min(100, Math.floor((currentHours / targetHours) * 100)),
+      targetDays,
+      currentDays,
+      daysPercentage: Math.min(100, Math.floor((currentDays / targetDays) * 100)),
+      isCompleted: currentDiamonds >= targetDiamonds && currentHours >= targetHours && currentDays >= targetDays
+    };
+  }
+
+  public getAgencyHosts(agencyOwnerUserId: string): any[] {
+    const agency = (this.data.agencies || []).find(a => a.ownerUserId === agencyOwnerUserId);
+    if (!agency) return [];
+
+    const agencyHosts = (this.data.hostProfiles || []).filter(h => h.agencyId === agency.id && h.status === 'ACTIVE');
+    
+    return agencyHosts.map(h => {
+      const user = this.getUserById(h.userId);
+      const targetProgress = this.getHostTargetProgress(h.userId);
+      return {
+        hostProfile: h,
+        user: user || { id: h.userId, name: h.userName, avatar: h.userAvatar, role: 'HOST', level: 1, diamonds: 0, coins: 0 },
+        targetProgress
+      };
+    });
+  }
+
+  public terminateHostAgencyContract(agencyOwnerUserId: string, hostUserId: string): { success: boolean; message: string } {
+    const agency = (this.data.agencies || []).find(a => a.ownerUserId === agencyOwnerUserId);
+    if (!agency) {
+      return { success: false, message: 'غير مصرح: لا تملك وكالة معتمدة' };
+    }
+
+    const hostProfile = (this.data.hostProfiles || []).find(h => h.userId === hostUserId && h.agencyId === agency.id);
+    if (!hostProfile) {
+      return { success: false, message: 'المضيف غير تابع لوكالتك' };
+    }
+
+    delete hostProfile.agencyId;
+    delete hostProfile.agencyName;
+    delete hostProfile.agencyCode;
+
+    agency.hostsCount = Math.max(0, (agency.hostsCount || 1) - 1);
+    agency.activeHostsCount = Math.max(0, (agency.activeHostsCount || 1) - 1);
+
+    this.addNotification({
+      userId: hostUserId,
+      title: 'تم فك الارتباط الودي بالوكالة 🤝',
+      message: `تمت الموافقة على إنهاء العقد وفك الارتباط الودي بـ وكالة [${agency.agencyName}]. أصبح بإمكانك الانضمام لوكالة أخرى.`,
+      type: 'SYSTEM'
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: `تم فك الارتباط الودي مع المضيف [${hostProfile.userName}] بنجاح.`
+    };
+  }
+
+  public submitAgencyDispute(hostUserId: string, reason: string): { success: boolean; message: string; dispute?: AgencyDispute } {
+    const host = this.getUserById(hostUserId);
+    if (!host) {
+      return { success: false, message: 'حساب المضيف غير موجود' };
+    }
+
+    const hostProfile = this.getHostProfile(hostUserId);
+    if (!hostProfile || !hostProfile.agencyId) {
+      return { success: false, message: 'أنت غير منضم لأي وكالة حالياً لرفع نزاع' };
+    }
+
+    const agency = (this.data.agencies || []).find(a => a.id === hostProfile.agencyId || a.agencyCode === hostProfile.agencyCode);
+
+    this.data.agencyDisputes = this.data.agencyDisputes || [];
+    
+    // Check if dispute already pending
+    const existingPending = this.data.agencyDisputes.find(d => d.hostUserId === hostUserId && d.status === 'PENDING');
+    if (existingPending) {
+      return { success: false, message: 'لديك نزاع قائم بالفعل قيد مراجعة المالك' };
+    }
+
+    const dispute: AgencyDispute = {
+      id: `disp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      hostUserId: host.id,
+      hostName: host.name,
+      hostAvatar: host.avatar,
+      hostNumericId: host.numericId,
+      phone: host.phone,
+      agencyCode: hostProfile.agencyCode || agency?.agencyCode || '',
+      agencyName: hostProfile.agencyName || agency?.agencyName || 'الوكالة',
+      agencyOwnerUserId: agency?.ownerUserId || '',
+      agencyOwnerName: agency?.ownerName || 'الوكيل',
+      reason: reason.trim(),
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    };
+
+    this.data.agencyDisputes.unshift(dispute);
+
+    // Notify Super Admin Owners
+    const owners = (this.data.users || []).filter(u => u.role === 'OWNER' || this.isOwner(u.id));
+    owners.forEach(owner => {
+      this.addNotification({
+        userId: owner.id,
+        title: 'نزاع وكالة جديد محال للتحقيق ⚖️',
+        message: `أقام المضيف [${host.name}] نزاعاً لفك الارتباط إجبارياً عن وكالة [${dispute.agencyName}]. السبب: ${reason.substring(0, 40)}...`,
+        type: 'ADMIN'
+      });
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      message: 'تم رفع النزاع بنجاح وإحالته حصرياً للوحت المالك لفك الارتباط إجبارياً ⚖️',
+      dispute
+    };
+  }
+
+  public getAgencyDisputes(): AgencyDispute[] {
+    return this.data.agencyDisputes || [];
+  }
+
+  public resolveAgencyDispute(
+    ownerId: string,
+    disputeId: string,
+    action: 'FORCE_RELEASE' | 'REJECT'
+  ): { success: boolean; message: string } {
+    if (!this.isOwner(ownerId)) {
+      throw new Error('غير مصرح: فك الارتباط الإجباري ونزاعات الوكالات مخصصة حصرياً للمالك العام (Owner)');
+    }
+
+    this.data.agencyDisputes = this.data.agencyDisputes || [];
+    const dispute = this.data.agencyDisputes.find(d => d.id === disputeId);
+    if (!dispute) {
+      return { success: false, message: 'النزاع غير موجود' };
+    }
+
+    const hostProfile = this.getHostProfile(dispute.hostUserId);
+    const agency = (this.data.agencies || []).find(a => a.agencyCode === dispute.agencyCode || a.id === hostProfile?.agencyId);
+
+    if (action === 'FORCE_RELEASE') {
+      dispute.status = 'FORCE_RELEASED';
+      dispute.resolvedAt = new Date().toISOString();
+      dispute.resolvedBy = ownerId;
+
+      if (hostProfile) {
+        delete hostProfile.agencyId;
+        delete hostProfile.agencyName;
+        delete hostProfile.agencyCode;
+      }
+
+      if (agency) {
+        agency.hostsCount = Math.max(0, (agency.hostsCount || 1) - 1);
+        agency.activeHostsCount = Math.max(0, (agency.activeHostsCount || 1) - 1);
+      }
+
+      this.addNotification({
+        userId: dispute.hostUserId,
+        title: 'تم فك الارتباط إجبارياً بحكم المالك! 🔓⚖️',
+        message: `أصدر المالك قراراً بفك ارتباطك إجبارياً عن وكالة [${dispute.agencyName}]. أصبحت حراً بالكامل للتحويل لوكالة أخرى.`,
+        type: 'SYSTEM'
+      });
+
+      if (agency) {
+        this.addNotification({
+          userId: agency.ownerUserId,
+          title: 'إشعار فك ارتباط إجباري بقرار المالك ⚖️',
+          message: `تم فك ارتباط المضيف [${dispute.hostName}] من وكالتك بقرار إجباري مباشر من المالك.`,
+          type: 'ADMIN'
+        });
+      }
+
+      this.addAuditLog({
+        adminId: ownerId,
+        action: 'FORCE_RELEASE_HOST',
+        targetType: 'USER',
+        targetId: dispute.hostUserId,
+        details: `قرار المالك الإجباري: فك ارتباط المضيف [${dispute.hostName}] عن وكالة [${dispute.agencyName}]. سبب النزاع: ${dispute.reason}`
+      });
+    } else {
+      dispute.status = 'REJECTED';
+      dispute.resolvedAt = new Date().toISOString();
+      dispute.resolvedBy = ownerId;
+
+      this.addNotification({
+        userId: dispute.hostUserId,
+        title: 'تحديث بشأن النزاع ❌',
+        message: `تم رفض النزاع المرفوع بشأن مغادرة وكالة [${dispute.agencyName}]. يرجى التواصل الودي مع وكيلك.`,
+        type: 'SYSTEM'
+      });
+    }
+
+    this.save();
+
+    return {
+      success: true,
+      message: action === 'FORCE_RELEASE'
+        ? `تم فك ارتباط المضيف [${dispute.hostName}] إجبارياً من الوكالة بقرار المالك! 🔓`
+        : `تم رفض النزاع وإبقاء المضيف بالوكالة.`
+    };
   }
 }
 

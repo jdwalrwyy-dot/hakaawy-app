@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, HostDashboardData } from '../types';
+import { User, HostDashboardData, isUserOwner } from '../types';
 import { API } from '../services/api';
+import { HostWithdrawalSection } from './HostWithdrawalSection';
 import {
   Mic,
   Trophy,
@@ -274,6 +275,12 @@ export const HostDashboardModal: React.FC<HostDashboardModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Dedicated Host Withdrawal Requests Section */}
+              <HostWithdrawalSection
+                currentUser={currentUser}
+                isOwnerAdmin={isUserOwner(currentUser) || currentUser.role === 'ADMIN'}
+              />
 
               {/* Lifetime Performance Stats */}
               <div className="space-y-2">

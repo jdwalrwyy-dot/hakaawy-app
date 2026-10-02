@@ -9,6 +9,7 @@ import { Navbar } from './components/Navbar';
 import { BottomNavigation, TabType } from './components/BottomNavigation';
 import { RoomCard } from './components/RoomCard';
 import { LiveRoomView } from './components/LiveRoomView';
+import { SoloLiveStreamView } from './components/SoloLiveStreamView';
 import { FloatingAdminButton } from './components/FloatingAdminButton';
 import { CreateRoomModal } from './components/CreateRoomModal';
 import { WalletModal } from './components/WalletModal';
@@ -28,10 +29,13 @@ import { AuthModal } from './components/AuthModal';
 import { AccountSwitchModal } from './components/AccountSwitchModal';
 import { ReportModal } from './components/ReportModal';
 import { SecurityShieldOverlay } from './components/SecurityShieldOverlay';
+import { LuckyWheelArena } from './components/LuckyWheelArena';
+import { LuckyFarmArena } from './components/LuckyFarmArena';
 import { OwnerFreeRechargeModal } from './components/OwnerFreeRechargeModal';
 import { HekawyCoverBanner } from './components/HekawyCoverBanner';
 import { OwnerStealthFloatingButton } from './components/OwnerStealthFloatingButton';
 import { GlobalGiftBanner } from './components/GlobalGiftBanner';
+import { TestSandboxView } from './components/TestSandboxView';
 import { saveDeviceAccount, activateAccountSession } from './utils/deviceAccounts';
 
 import {
@@ -46,7 +50,17 @@ import {
   RefreshCw,
   Compass,
   X,
-  Minimize2
+  Minimize2,
+  LayoutGrid,
+  List,
+  Mic,
+  Video,
+  Globe,
+  Gamepad2,
+  Shield,
+  Trophy,
+  Gem,
+  Zap
 } from 'lucide-react';
 
 const CATEGORIES = ['الكل', 'سوالف', 'شعر وموسيقى', 'تقنية', 'ألعاب ومسابقات', 'ثقافة وتطوير', 'عام'];
@@ -90,14 +104,29 @@ export default function App() {
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [isRoomMinimized, setIsRoomMinimized] = useState(false);
   const [rooms, setRooms] = useState<Room[]>(() => getStoredRoomsList());
+  const [roomViewLayout, setRoomViewLayout] = useState<'grid' | 'list'>('grid');
+  const [streamTypeFilter, setStreamTypeFilter] = useState<'ALL' | 'AUDIO' | 'VIDEO'>('ALL');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifsCount, setUnreadNotifsCount] = useState(0);
+  const [activeGameSubTab, setActiveGameSubTab] = useState<'farm' | 'wheel'>('farm');
 
   // Modals state
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+  const [createRoomMode, setCreateRoomMode] = useState<'audio' | 'video'>('audio');
   const [isWalletOpen, setIsWalletOpen] = useState(false);
+
+  const handleOpenCreateRoom = (mode: 'audio' | 'video' = 'audio') => {
+    if (!currentUser) {
+      setIsAuthOpen(true);
+      return;
+    }
+    setCreateRoomMode(mode);
+    setIsCreateRoomOpen(true);
+  };
   const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [isLuckyFarmModalOpen, setIsLuckyFarmModalOpen] = useState(false);
+  const [isLuckyWheelModalOpen, setIsLuckyWheelModalOpen] = useState(false);
   const [isFramesOpen, setIsFramesOpen] = useState(false);
   const [isEntrancesOpen, setIsEntrancesOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -305,11 +334,36 @@ export default function App() {
       }
     });
 
+    // Listen to real-time room creation
+    const unsubRoomCreated = socketService.on('room_created', (data) => {
+      if (data.room) {
+        setRooms(prev => {
+          if (prev.some(r => r.id === data.room.id)) return prev;
+          const updated = [data.room, ...prev];
+          saveStoredRoomsList(updated);
+          return updated;
+        });
+      }
+    });
+
+    // Listen to force logout on permanent account ban
+    const unsubForceLogout = socketService.on('force_logout_banned', (data) => {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('hekawy_current_user');
+      localStorage.removeItem('hekawy_auth_user_id');
+      localStorage.removeItem('hekawy_owner_token');
+      setCurrentUser(null);
+      setIsAuthOpen(true);
+      alert(data.reason || 'تم حظر هذا الحساب نهائياً لمخالفة شروط الاستخدام');
+    });
+
     return () => {
       unsubBalance();
       unsubCounter();
       unsubDeleted();
       unsubRoomUpdated();
+      unsubRoomCreated();
+      unsubForceLogout();
       socketService.disconnect();
     };
   }, []);
@@ -405,13 +459,13 @@ export default function App() {
 
       // 1. Add all local saved rooms first
       localSaved.forEach(r => {
-        if (r && r.id) map.set(r.id, r);
+        if (r && r.id && r.status !== 'ENDED') map.set(r.id, r);
       });
 
       // 2. Add/Merge server rooms
       if (Array.isArray(serverRooms)) {
         serverRooms.forEach(sr => {
-          if (sr && sr.id) {
+          if (sr && sr.id && sr.status !== 'ENDED') {
             map.set(sr.id, sr);
           }
         });
@@ -419,26 +473,10 @@ export default function App() {
 
       const allCombined = Array.from(map.values());
       saveStoredRoomsList(allCombined);
-
-      // Apply category and search filters if active
-      let filtered = allCombined;
-      if (selectedCategory && selectedCategory !== 'الكل') {
-        filtered = filtered.filter(r => r.currentCategory === selectedCategory);
-      }
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        filtered = filtered.filter(r =>
-          r.title.toLowerCase().includes(q) ||
-          r.roomCode.toLowerCase().includes(q) ||
-          r.hostName.toLowerCase().includes(q)
-        );
-      }
-
-      setRooms(filtered);
-    } catch (err) {
-      console.error('Failed to load rooms from server, using local storage:', err);
+      setRooms(allCombined);
+    } catch {
       if (localSaved.length > 0) {
-        setRooms(localSaved);
+        setRooms(localSaved.filter(r => r.status !== 'ENDED'));
       }
     }
   };
@@ -486,6 +524,182 @@ export default function App() {
     loadRooms();
   };
 
+  const handleOpenMyRoom = async () => {
+    if (!currentUser) {
+      setIsAuthOpen(true);
+      return;
+    }
+
+    // 1. Check if user already has an active STRICT AUDIO room (no video)
+    const existingAudioRoom = rooms.find(
+      r => r.status !== 'ENDED' &&
+           (r.hostId === currentUser.id || r.hostName === currentUser.name) &&
+           !r.allowVideo &&
+           !(r as any).type?.includes('video') &&
+           !r.currentCategory?.includes('Solo Live') &&
+           !r.currentCategory?.includes('بث فيديو') &&
+           !r.currentCategory?.includes('بث مباشر') &&
+           !r.tags?.includes('SOLO_LIVE')
+    );
+
+    if (existingAudioRoom) {
+      const sanitizedAudioRoom: Room = {
+        ...existingAudioRoom,
+        allowVideo: false,
+        tags: (existingAudioRoom.tags || []).filter(t => t !== 'SOLO_LIVE')
+      };
+      handleJoinRoom(sanitizedAudioRoom);
+      return;
+    }
+
+    // 2. Otherwise create a permanent personal audio voice room for the user immediately
+    const isWaled = currentUser.name === 'وليد' || currentUser.id === 'user_owner_waled';
+    try {
+      const newRoom = await API.createRoom({
+        title: isWaled ? 'غرفة وليد الملكية 👑' : `غرفة ${currentUser.name || 'المستخدم'} 🎙️`,
+        description: `الغرفة الصوتية الدائمة الخاصة بـ ${currentUser.name || 'المستخدم'}`,
+        coverImage: currentUser.avatar || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80',
+        hostId: currentUser.id,
+        type: 'PUBLIC',
+        allowAudio: true,
+        allowVideo: false,
+        currentCategory: 'سوالف',
+        tags: ['غرفتي', 'حكاوي', 'صوت'],
+        micLayout: '2+15'
+      });
+      const cleanAudioRoom: Room = {
+        ...newRoom,
+        allowVideo: false,
+        tags: ['غرفتي', 'حكاوي', 'صوت']
+      };
+      handleRoomCreated(cleanAudioRoom);
+    } catch (err) {
+      console.error('Failed to create personal room:', err);
+    }
+  };
+
+  const handleOpenMyLiveStream = async () => {
+    if (!currentUser) {
+      setIsAuthOpen(true);
+      return;
+    }
+
+    // 1. Check if user already has an active live video room
+    const existingLive = rooms.find(
+      r => r.status !== 'ENDED' &&
+           (r.hostId === currentUser.id || r.hostName === currentUser.name) &&
+           (r.allowVideo === true || r.tags?.includes('SOLO_LIVE') || r.currentCategory?.includes('بث مباشر') || (r as any).type === 'video')
+    );
+
+    if (existingLive) {
+      const sanitizedLiveRoom: Room = {
+        ...existingLive,
+        allowVideo: true,
+        currentCategory: 'بث مباشر',
+        tags: Array.from(new Set([...(existingLive.tags || []), 'SOLO_LIVE']))
+      };
+      handleJoinRoom(sanitizedLiveRoom);
+      return;
+    }
+
+    // 2. Otherwise create a personal live broadcast for the user immediately
+    const isWaled = currentUser.name === 'وليد' || currentUser.id === 'user_owner_waled';
+    try {
+      const newLiveRoom = await API.createRoom({
+        title: isWaled ? 'بث وليد المباشر 🎥' : `بث ${currentUser.name || 'المستخدم'} المباشر 🎥`,
+        description: `البث الشخصي المباشر لـ ${currentUser.name || 'المستخدم'}`,
+        coverImage: currentUser.avatar || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=80',
+        hostId: currentUser.id,
+        type: 'PUBLIC',
+        allowAudio: true,
+        allowVideo: true,
+        currentCategory: 'بث مباشر',
+        tags: ['SOLO_LIVE', 'بث_مباشر', 'لايف'],
+        micLayout: '2+15'
+      });
+      const cleanLiveRoom: Room = {
+        ...newLiveRoom,
+        allowVideo: true,
+        tags: ['SOLO_LIVE', 'بث_مباشر', 'لايف']
+      };
+      handleRoomCreated(cleanLiveRoom);
+    } catch (err) {
+      console.error('Failed to create personal live stream:', err);
+    }
+  };
+
+  const handleOpenOfficialAdminRoom = async () => {
+    if (!currentUser) {
+      setIsAuthOpen(true);
+      return;
+    }
+
+    // 1. Search for existing official admin voice room
+    const existingAdminRoom = rooms.find(
+      r => r.status !== 'ENDED' &&
+           !r.allowVideo &&
+           (r.id === 'room_official_admin' ||
+            r.tags?.includes('OFFICIAL_ADMIN') ||
+            r.title?.includes('الإدارة والدعم الفني') ||
+            r.title?.includes('غرفة الإدارة'))
+    );
+
+    if (existingAdminRoom) {
+      const sanitizedAdminRoom: Room = {
+        ...existingAdminRoom,
+        allowVideo: false,
+        tags: (existingAdminRoom.tags || []).filter(t => t !== 'SOLO_LIVE')
+      };
+      handleJoinRoom(sanitizedAdminRoom);
+      return;
+    }
+
+    // 2. Otherwise create or join the official voice room
+    try {
+      const adminRoom = await API.createRoom({
+        title: 'غرفة الإدارة والدعم الفني 🎙️👑',
+        description: 'الغرفة الصوتية الرسمية للإدارة والرد على استفسارات وحاجات المستخدمين والدعم الفني المباشر',
+        coverImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80',
+        hostId: currentUser.id,
+        type: 'PUBLIC',
+        allowAudio: true,
+        allowVideo: false,
+        currentCategory: 'عام',
+        tags: ['OFFICIAL_ADMIN', 'رسمية', 'إدارة', 'دعم_فني'],
+        micLayout: '2+15'
+      });
+      const cleanAdminRoom: Room = {
+        ...adminRoom,
+        allowVideo: false,
+        tags: ['OFFICIAL_ADMIN', 'رسمية', 'إدارة', 'دعم_فني']
+      };
+      handleRoomCreated(cleanAdminRoom);
+    } catch (err) {
+      console.error('Failed to create official admin room:', err);
+      // Fallback local room object
+      const fallbackAdminRoom: Room = {
+        id: 'room_official_admin',
+        roomCode: 'ADM-999',
+        title: 'غرفة الإدارة والدعم الفني 🎙️👑',
+        description: 'الغرفة الصوتية الرسمية للإدارة للرد على الاستفسارات والتواصل مع المستخدمين',
+        coverImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80',
+        hostId: currentUser.id,
+        hostName: 'الإدارة الرسمية 🛡️',
+        hostAvatar: currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        viewerCount: 22,
+        status: 'LIVE',
+        type: 'PUBLIC',
+        allowAudio: true,
+        allowVideo: false,
+        currentCategory: 'عام',
+        tags: ['OFFICIAL_ADMIN', 'رسمية', 'إدارة', 'دعم_فني'],
+        createdAt: new Date().toISOString(),
+        micLayout: '2+15'
+      };
+      handleJoinRoom(fallbackAdminRoom);
+    }
+  };
+
   const handleRoomCreated = (newRoom: Room) => {
     setIsCreateRoomOpen(false);
 
@@ -518,8 +732,26 @@ export default function App() {
     setIsAdminOpen(true);
   };
 
-  // If inside an active live room and not minimized, render the full screen LiveRoomView
+  // If inside an active live room and not minimized, render the full screen LiveRoomView or SoloLiveStreamView
   if (activeRoom && currentUser && !isRoomMinimized) {
+    const isSoloLiveRoom =
+      activeRoom.allowVideo === true &&
+      (activeRoom.tags?.includes('SOLO_LIVE') ||
+       activeRoom.currentCategory?.includes('Solo Live') ||
+       activeRoom.currentCategory?.includes('بث فيديو') ||
+       activeRoom.currentCategory === 'بث مباشر');
+
+    if (isSoloLiveRoom) {
+      return (
+        <SoloLiveStreamView
+          room={activeRoom}
+          currentUser={currentUser}
+          onClose={handleLeaveRoom}
+          onUserUpdated={setCurrentUser}
+        />
+      );
+    }
+
     return (
       <div className="h-screen w-full bg-slate-950 text-slate-100 font-sans overflow-hidden" dir="rtl">
         <LiveRoomView
@@ -586,183 +818,188 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col justify-between pb-20 selection:bg-amber-500 selection:text-slate-950" dir="rtl">
-      {/* Top Navbar */}
-      <Navbar
-        currentUser={currentUser}
-        unreadNotifsCount={unreadNotifsCount}
-        onOpenWallet={() => setIsWalletOpen(true)}
-        onOpenNotifications={() => setActiveTab('notifications')}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenSearch={() => {
-          const el = document.getElementById('search-input');
-          el?.focus();
-        }}
-        onOpenAdmin={() => handleOpenAdminWithTab('overview')}
-        onOpenTasks={() => setIsTasksOpen(true)}
-        onOpenShippingAgent={() => setIsShippingAgentOpen(true)}
-      />
+    <div className="min-h-screen bg-gradient-to-b from-[#fffbeb] via-[#fef3c7] to-[#fde68a] text-amber-950 font-sans flex flex-col justify-between selection:bg-emerald-600 selection:text-amber-100 pb-20 overflow-y-auto" dir="rtl">
+      {/* Top Navbar for non-home tabs */}
+      {activeTab !== 'home' && (
+        <Navbar
+          currentUser={currentUser}
+          unreadNotifsCount={unreadNotifsCount}
+          onOpenWallet={() => setIsWalletOpen(true)}
+          onOpenNotifications={() => setActiveTab('notifications')}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onOpenSearch={() => {
+            const el = document.getElementById('search-input');
+            el?.focus();
+          }}
+          onOpenAdmin={() => handleOpenAdminWithTab('overview')}
+          onOpenTasks={() => setIsTasksOpen(true)}
+          onOpenShippingAgent={() => setIsShippingAgentOpen(true)}
+          onGoToHome={() => setActiveTab('home')}
+        />
+      )}
 
       {/* Main Content Body */}
-      <main className="max-w-6xl mx-auto w-full px-4 py-4 flex-1">
-        {/* TAB 1: HOME (الرئيسية) */}
+      <main className="max-w-6xl mx-auto w-full px-1 py-1 flex-1 overflow-y-auto">
+        {/* TAB 1: HOME (الرئيسية - الواجهة الملكية الافتراضية) */}
         {activeTab === 'home' && (
-          <div className="flex flex-col gap-5">
-            {/* Official Hekawy Cover / App Banner */}
-            <div className="flex flex-col gap-3">
-              <HekawyCoverBanner />
+          <TestSandboxView
+            onBackToHome={() => setActiveTab('home')}
+            onOpenCreateRoom={() => setIsCreateRoomOpen(true)}
+            onOpenDailyTasks={() => setIsTasksOpen(true)}
+            onOpenFrames={() => setIsFramesOpen(true)}
+            onOpenEntrances={() => setIsEntrancesOpen(true)}
+            onOpenAdmin={() => handleOpenAdminWithTab('agency_host')}
+            onOpenWallet={() => setIsWalletOpen(true)}
+            onSelectTab={(tab) => setActiveTab(tab as any)}
+          />
+        )}
 
-              {/* Quick Action Bar Below Cover */}
-              <div className="flex items-center justify-between gap-2.5 px-1">
-                <button
-                  id="create-room-home-btn"
-                  onClick={() => {
-                    if (!currentUser) setIsAuthOpen(true);
-                    else setIsCreateRoomOpen(true);
-                  }}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        {/* TAB 2: AUDIO VOICE ROOMS (الغرف الصوتية - شبكة من عمودين) */}
+        {activeTab === 'rooms' && (() => {
+          const audioRooms = rooms.filter(r => {
+            if (r.status === 'ENDED') return false;
+            return true;
+          });
+
+          return (
+            <div className="flex flex-col gap-3 pb-20">
+              {/* Slim Split Top Section - Personal Shortcuts (غرفتي & بثي المباشر & مزرعة الحظ) */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Right Side - غرفتي */}
+                <div
+                  onClick={handleOpenMyRoom}
+                  className="group relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 shadow-md shadow-amber-500/10 active:scale-95 transition-all cursor-pointer overflow-hidden min-h-[42px]"
                 >
-                  <Plus className="w-4 h-4 stroke-[3px]" />
-                  <span>إنشاء غرفة جديدة</span>
-                </button>
-
-                <button
-                  id="daily-rewards-home-btn"
-                  onClick={() => setIsTasksOpen(true)}
-                  className="py-3 px-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-800 text-amber-300 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 shadow-md"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>المكافآت اليومية</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Search & Categories Bar */}
-            <div className="flex flex-col gap-3">
-              <div className="relative">
-                <input
-                  id="search-input"
-                  type="text"
-                  placeholder="ابحث عن غرفة بالاسم، الكود، اسم المضيف أو الهاشتاج..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pr-10 rounded-2xl bg-slate-900 border border-slate-800 focus:border-amber-400 focus:outline-none text-slate-100 text-xs sm:text-sm transition-colors"
-                />
-                <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
-              </div>
-
-              {/* Category Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 scale-105'
-                        : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Live Rooms Header & Refresh */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 text-slate-100 font-extrabold text-base">
-                  <Flame className="w-5 h-5 text-rose-500" />
-                  <span>الغرف المباشرة الآن</span>
+                  <div className="absolute inset-0 bg-gradient-to-l from-amber-400/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800 text-amber-200 border border-amber-400 shrink-0 group-hover:scale-105 transition-transform shadow">
+                    <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0 z-10 flex-1">
+                    <span className="font-black text-[11px] sm:text-xs text-amber-950 whitespace-nowrap leading-tight">غرفتي</span>
+                    <span className="text-[8.5px] sm:text-[9.5px] text-amber-900 font-bold whitespace-nowrap leading-tight">غرفتك الصوتية</span>
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500 font-mono">({rooms.length})</span>
-              </div>
 
-              <button
-                onClick={loadRooms}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs border border-slate-800 transition-colors"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">تحديث</span>
-              </button>
-            </div>
-
-            {/* Live Rooms Grid */}
-            {rooms.length === 0 ? (
-              <div className="py-16 bg-slate-900/40 rounded-3xl border border-slate-800/80 flex flex-col items-center justify-center gap-3 text-center p-4">
-                <Compass className="w-12 h-12 text-slate-600 animate-pulse" />
-                <h3 className="font-bold text-slate-300 text-sm">لا توجد غرف مطابقة لبحثك حالياً</h3>
-                <p className="text-xs text-slate-500 max-w-sm">
-                  كن أول من يبدأ مساحة صوتية الآن وادعُ أصدقاءك للمشاركة!
-                </p>
-                <button
-                  onClick={() => setIsCreateRoomOpen(true)}
-                  className="mt-2 px-5 py-2 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-amber-500/20"
+                {/* Middle Side - بثي المباشر */}
+                <div
+                  onClick={handleOpenMyLiveStream}
+                  className="group relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 shadow-md shadow-amber-500/10 active:scale-95 transition-all cursor-pointer overflow-hidden min-h-[42px]"
                 >
-                  إنشاء غرفة الآن 🎙️
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rooms.map(room => (
-                  <RoomCard
-                    key={room.id}
-                    room={room}
-                    onJoin={handleJoinRoom}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  <div className="absolute inset-0 bg-gradient-to-l from-emerald-400/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800 text-amber-200 border border-amber-400 shrink-0 group-hover:scale-105 transition-transform shadow">
+                    <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse" />
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0 z-10 flex-1">
+                    <span className="font-black text-[11px] sm:text-xs text-amber-950 whitespace-nowrap leading-tight">بثي المباشر</span>
+                    <span className="text-[8.5px] sm:text-[9.5px] text-amber-900 font-bold whitespace-nowrap leading-tight">البث المباشر</span>
+                  </div>
+                </div>
 
-        {/* TAB 2: ROOMS DISCOVERY (الغرف) */}
-        {activeTab === 'rooms' && (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-extrabold text-lg text-slate-100">دليل الغرف المباشرة</h2>
-                <p className="text-xs text-slate-400">استكشف جميع المساحات الصوتية والبث المباشر</p>
-              </div>
-
-              <button
-                onClick={() => setIsCreateRoomOpen(true)}
-                className="px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20"
-              >
-                <Plus className="w-4 h-4 stroke-[3px]" />
-                <span>غرفة جديدة</span>
-              </button>
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
-                  }`}
+                {/* Left Side - مزرعة الحظ */}
+                <div
+                  onClick={() => {
+                    if (!currentUser) {
+                      setIsAuthOpen(true);
+                    } else {
+                      setIsLuckyFarmModalOpen(true);
+                    }
+                  }}
+                  className="group relative flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600 hover:border-amber-500 shadow-md shadow-amber-500/10 active:scale-95 transition-all cursor-pointer overflow-hidden min-h-[42px]"
                 >
-                  {cat}
-                </button>
-              ))}
-            </div>
+                  <div className="absolute inset-0 bg-gradient-to-l from-amber-400/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative p-1.5 rounded-lg bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800 text-amber-200 border border-amber-400 shrink-0 group-hover:scale-105 transition-transform shadow">
+                    <span className="text-sm">🎡</span>
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0 z-10 flex-1">
+                    <span className="font-black text-[11px] sm:text-xs text-amber-950 whitespace-nowrap leading-tight">ساقية الحظ</span>
+                    <span className="text-[8.5px] sm:text-[9.5px] text-emerald-800 font-bold whitespace-nowrap leading-tight">فواكه ولحوم 🌾</span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rooms.map(room => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  onJoin={handleJoinRoom}
-                />
-              ))}
+              {/* Sticky Official Administration Voice Room Card (غرفة الإدارة والدعم الفني) */}
+              <div className="sticky top-0 z-20 py-1 bg-[#fef3c7]/95 backdrop-blur-md">
+                <div
+                  onClick={handleOpenOfficialAdminRoom}
+                  className="group relative flex flex-col sm:flex-row items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600 hover:border-amber-500 shadow-xl shadow-amber-600/20 active:scale-98 transition-all cursor-pointer overflow-hidden w-full gap-2.5"
+                >
+                  {/* Glowing golden background animation */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-amber-300/10 to-amber-400/20 opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute -right-10 -top-10 w-32 h-32 bg-amber-400/30 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+
+                  {/* Left info area (RTL: right side) */}
+                  <div className="flex items-center gap-3 z-10 w-full sm:w-auto">
+                    <div className="relative p-2.5 rounded-2xl bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800 text-amber-100 font-black border-2 border-amber-400 shadow-lg shadow-emerald-900/30 shrink-0 group-hover:scale-110 transition-transform">
+                      <Shield className="w-5 h-5 stroke-[2.5]" />
+                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-emerald-900 flex items-center justify-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping" />
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col text-right flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-black text-sm sm:text-base text-amber-950 tracking-wide drop-shadow-sm">
+                          غرفة الإدارة والدعم الفني
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-700 text-amber-100 text-[10px] font-black border border-amber-400 flex items-center gap-1 shadow-sm">
+                          <Crown className="w-3 h-3 text-amber-300" />
+                          <span>رسمي 👑</span>
+                        </span>
+                      </div>
+
+                      {/* Badge / Subtitle */}
+                      <div className="flex items-center gap-1.5 mt-0.5 text-amber-900 font-bold text-[11px] sm:text-xs flex-wrap">
+                        <span className="text-emerald-800 font-black">🎙️ غرفة صوتية رسمية</span>
+                        <span className="text-amber-600">•</span>
+                        <span className="text-amber-950 font-bold">استفسارات ومساعدة مباشرة</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right side (RTL: left side) join action badge */}
+                  <div className="z-10 flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-800 text-amber-100 font-black text-xs border border-amber-300 shadow-md shadow-emerald-950/20 shrink-0 group-hover:from-emerald-600 group-hover:to-emerald-700 transition-all w-full sm:w-auto">
+                    <Mic className="w-3.5 h-3.5 text-amber-300" />
+                    <span>دخول الغرفة الصوتية</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Audio Rooms 2-Column Grid with Vertical Scrolling */}
+              {audioRooms.length === 0 ? (
+                <div className="py-16 bg-[#fffbeb]/90 rounded-3xl border-2 border-amber-600/60 shadow-xl flex flex-col items-center justify-center gap-3 text-center p-6 text-amber-950">
+                  <div className="p-4 rounded-3xl bg-amber-500/20 border border-amber-600/40 text-emerald-800">
+                    <Mic className="w-10 h-10 animate-pulse" />
+                  </div>
+                  <h3 className="font-black text-amber-950 text-base">لا توجد غرف صوتية نشطة حالياً</h3>
+                  <p className="text-xs text-amber-900 font-bold max-w-md">
+                    أنشئ غرفتك الصوتية الخاصة واستضف أصدقاءك ومتابعيك على المايكات للتحدث والتفاعل!
+                  </p>
+                  <button
+                    onClick={() => handleOpenCreateRoom('audio')}
+                    className="mt-2 px-6 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-800 hover:from-emerald-600 hover:to-emerald-700 text-amber-100 font-black text-xs transition-all shadow-lg border border-amber-300 active:scale-95 cursor-pointer flex items-center gap-2"
+                  >
+                    <Mic className="w-4 h-4 text-amber-300" />
+                    <span>إنشاء غرفة صوتية الآن 🎙️</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 overflow-y-auto">
+                  {audioRooms.map(room => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      onJoin={handleJoinRoom}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* TAB 3: DIRECT MESSAGES & FRIENDS (الرسائل) */}
         {activeTab === 'messages' && (
@@ -790,25 +1027,325 @@ export default function App() {
           )
         )}
 
-        {/* TAB 4: NOTIFICATIONS (الإشعارات) */}
-        {activeTab === 'notifications' && (
+        {/* TAB 4: GAMES (قسم الألعاب - شبكة مكونة من 10 كروت مربعة أنيقة) */}
+        {activeTab === 'games' && (
           currentUser ? (
-            <NotificationsView
-              currentUser={currentUser}
-              onRefreshUnreadCount={() => fetchUnreadCount(currentUser.id)}
-            />
+            <div className="flex flex-col gap-3.5 pb-20 dir-rtl max-w-xl mx-auto w-full">
+              {/* Header Title */}
+              <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-gradient-to-r from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 shadow-md text-amber-950">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800 text-amber-200 border border-amber-400 flex items-center justify-center text-lg shadow">
+                    🎮
+                  </div>
+                  <div className="flex flex-col">
+                    <h2 className="text-xs sm:text-sm font-black text-amber-950">صالة الألعاب التنافسية</h2>
+                    <span className="text-[9px] text-amber-900 font-bold">10 ألعاب حصرية ومباشرة للربح والتحدي</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-amber-200/90 px-2.5 py-1 rounded-xl border border-amber-600/60 shadow-inner">
+                  <Gem className="w-3.5 h-3.5 text-amber-700 animate-pulse" />
+                  <span>{(currentUser.diamonds || 0).toLocaleString()} 💎</span>
+                </div>
+              </div>
+
+              {/* 10 SQUARE GAME CARDS GRID (2 Columns) */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
+                
+                {/* CARD 1: مزرعة الحظ (فواكه ولحوم) */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    مباشر 🔥
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-700 via-emerald-600 to-emerald-800 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🎡
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      مزرعة الحظ
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-emerald-800 block truncate mt-0.5">
+                      فواكه ولحوم 🌾
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-800 text-amber-100 text-[10px] font-black border border-amber-300 shadow group-hover:from-emerald-600 group-hover:to-emerald-700 transition-all flex items-center justify-center gap-1">
+                    <span>العب الآن</span>
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 2: عجلة التحدي 1v1 */}
+                <div
+                  onClick={() => setIsLuckyWheelModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-600 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    تحدي 1v1 🏆
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-600 via-yellow-500 to-amber-700 text-amber-950 border-2 border-amber-300 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    ⚔️
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      عجلة التحدي
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-amber-900 block truncate mt-0.5">
+                      مواجهة 1 ضد 1 🎡
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-700 text-amber-950 text-[10px] font-black border border-amber-300 shadow group-hover:from-amber-500 group-hover:to-amber-600 transition-all flex items-center justify-center gap-1">
+                    <span>دخول التحدي</span>
+                    <Trophy className="w-3 h-3 text-amber-950" />
+                  </div>
+                </div>
+
+                {/* CARD 3: سباق الخيول الملكي */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-purple-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    جديد ✨
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-purple-800 via-purple-700 to-indigo-900 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🏇
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      سباق الخيول
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-purple-900 block truncate mt-0.5">
+                      تحدي المضمار الملكي
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-slate-900 text-amber-300 text-[10px] font-black border border-amber-400/60 shadow group-hover:bg-slate-800 transition-all flex items-center justify-center gap-1">
+                    <span>السباق المباشر</span>
+                    <Crown className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 4: صندوق الحظ الأسطوري */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-rose-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    جوائز 🎁
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-rose-700 via-rose-600 to-pink-800 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    📦
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      صندوق الحظ
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-rose-900 block truncate mt-0.5">
+                      الكنز الأسطوري
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-rose-700 text-amber-100 text-[10px] font-black border border-amber-300 shadow group-hover:bg-rose-600 transition-all flex items-center justify-center gap-1">
+                    <span>فتح الصندوق</span>
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 5: نرد الملوك */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-sky-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    شعبي 🌟
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-sky-700 via-sky-600 to-blue-800 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🎲
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      نرد الملوك
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-sky-900 block truncate mt-0.5">
+                      توقع رقم النرد
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-sky-700 text-amber-100 text-[10px] font-black border border-amber-300 shadow group-hover:bg-sky-600 transition-all flex items-center justify-center gap-1">
+                    <span>رمي النرد</span>
+                    <Flame className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 6: الماسة المفقودة */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-teal-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    تحدي 🎯
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-teal-700 via-teal-600 to-emerald-900 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    💎
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      الماسة المفقودة
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-teal-900 block truncate mt-0.5">
+                      البحث في الخزينة
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-teal-700 text-amber-100 text-[10px] font-black border border-amber-300 shadow group-hover:bg-teal-600 transition-all flex items-center justify-center gap-1">
+                    <span>بدء البحث</span>
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 7: عالم الفواكه x50 */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-red-600 text-white text-[8.5px] font-black border border-amber-300 shadow">
+                    مضاعف x50 ⚡
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-red-600 via-rose-600 to-red-800 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🍎
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      عالم الفواكه
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-red-900 block truncate mt-0.5">
+                      السلات الفاخرة
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-red-600 text-white text-[10px] font-black border border-amber-300 shadow group-hover:bg-red-500 transition-all flex items-center justify-center gap-1">
+                    <span>جمع السلات</span>
+                    <Zap className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 8: برج الحظ التنافسي */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    تحدي البرج 🏆
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-700 via-yellow-600 to-amber-900 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🏰
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      برج الحظ
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-amber-900 block truncate mt-0.5">
+                      تسلق الطبقات
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-amber-700 text-amber-100 text-[10px] font-black border border-amber-300 shadow group-hover:bg-amber-600 transition-all flex items-center justify-center gap-1">
+                    <span>صعود البرج</span>
+                    <Crown className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+                {/* CARD 9: عجلة الحظ الذهبية */}
+                <div
+                  onClick={() => setIsLuckyFarmModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-yellow-600 text-amber-950 text-[8.5px] font-black border border-amber-300 shadow">
+                    ذهبي 👑
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-yellow-500 via-amber-400 to-yellow-700 text-amber-950 border-2 border-amber-300 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🌟
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      العجلة الذهبية
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-amber-900 block truncate mt-0.5">
+                      مكافآت مجانية
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-amber-500 text-amber-950 text-[10px] font-black border border-amber-600 shadow group-hover:bg-amber-400 transition-all flex items-center justify-center gap-1">
+                    <span>دوران اليوم</span>
+                    <Sparkles className="w-3 h-3 text-amber-950" />
+                  </div>
+                </div>
+
+                {/* CARD 10: تحدي الفرسان المباشر */}
+                <div
+                  onClick={() => setIsLuckyWheelModalOpen(true)}
+                  className="group relative bg-gradient-to-br from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-2 border-amber-600/70 hover:border-amber-500 rounded-3xl p-3 flex flex-col items-center justify-between text-center shadow-lg hover:shadow-2xl active:scale-95 transition-all cursor-pointer aspect-square overflow-hidden"
+                >
+                  <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-indigo-700 text-amber-100 text-[8.5px] font-black border border-amber-300 shadow">
+                    بطولات ⚔️
+                  </span>
+
+                  <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-indigo-800 via-indigo-700 to-slate-900 text-amber-200 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-4xl shadow-md group-hover:scale-110 transition-transform mt-2">
+                    🛡️
+                  </div>
+
+                  <div className="my-1 text-center w-full">
+                    <h3 className="font-black text-xs sm:text-sm text-amber-950 truncate leading-tight">
+                      تحدي الفرسان
+                    </h3>
+                    <span className="text-[9px] sm:text-[9.5px] font-extrabold text-indigo-900 block truncate mt-0.5">
+                      المواجهات الحاسمة
+                    </span>
+                  </div>
+
+                  <div className="w-full py-1 rounded-xl bg-indigo-800 text-amber-100 text-[10px] font-black border border-amber-300 shadow group-hover:bg-indigo-700 transition-all flex items-center justify-center gap-1">
+                    <span>دخول الحلبة</span>
+                    <Shield className="w-3 h-3 text-amber-300" />
+                  </div>
+                </div>
+
+              </div>
+            </div>
           ) : (
-            <div className="py-20 text-center flex flex-col items-center justify-center gap-4 bg-slate-900/40 rounded-3xl border border-slate-800 p-6 max-w-md mx-auto my-8">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-                <Sparkles className="w-7 h-7" />
+            <div className="py-20 text-center flex flex-col items-center justify-center gap-4 bg-[#fffbeb]/90 rounded-3xl border-2 border-amber-600/60 p-6 max-w-md mx-auto my-8 text-amber-950 shadow-xl">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-600/40 text-emerald-800 flex items-center justify-center">
+                <Gamepad2 className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base text-slate-100">مركز الإشعارات</h3>
-                <p className="text-xs text-slate-400 mt-1">سجّل دخولك لمتابعة إشعارات الهدايا، طلبات الصداقة وتحديثات الغرف.</p>
+                <h3 className="font-extrabold text-base text-amber-950">قسم الألعاب التنافسية</h3>
+                <p className="text-xs text-amber-900 mt-1 font-bold">سجّل دخولك لدخول جولات مزرعة الحظ وعجلة الحظ والمنافسة على الماسات.</p>
               </div>
               <button
                 onClick={() => setIsAuthOpen(true)}
-                className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-800 hover:from-emerald-600 hover:to-emerald-700 text-amber-100 font-black text-xs shadow-lg border border-amber-300 active:scale-95 transition-all cursor-pointer"
               >
                 تسجيل الدخول / إنشاء حساب
               </button>
@@ -856,21 +1393,21 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating Action Button (+ إنشاء غرفة) on Home and Rooms */}
-      {(activeTab === 'home' || activeTab === 'rooms') && (
-        <div className="fixed bottom-20 right-4 z-40">
-          <button
-            onClick={() => {
-              if (!currentUser) setIsAuthOpen(true);
-              else setIsCreateRoomOpen(true);
-            }}
-            className="flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-2xl shadow-amber-500/40 active:scale-95 transition-all group"
-          >
-            <Plus className="w-5 h-5 stroke-[3px] group-hover:rotate-90 transition-transform" />
-            <span className="hidden sm:inline">إنشاء غرفة</span>
-          </button>
-        </div>
-      )}
+      {/* Floating Admin Button for ADMIN / OWNER roles */}
+      <FloatingAdminButton
+        currentUser={currentUser}
+        onOpenAdminModal={handleOpenAdminWithTab}
+      />
+
+      {/* Floating Stealth Mode Toggle for OWNER role */}
+      <OwnerStealthFloatingButton
+        currentUser={currentUser}
+        isStealthMode={isStealthMode}
+        onToggleStealthMode={(newMode) => {
+          setIsStealthMode(newMode);
+          localStorage.setItem('hekawy_owner_stealth_mode', String(newMode));
+        }}
+      />
 
       {/* Minimized Live Room Floating Bar (Allows user to stay in room while exploring app) */}
       {activeRoom && currentUser && isRoomMinimized && (
@@ -942,19 +1479,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Floating Admin Button for ADMIN / OWNER roles */}
-      <FloatingAdminButton
-        currentUser={currentUser}
-        onOpenAdminModal={handleOpenAdminWithTab}
-      />
-
-      {/* Fixed Bottom Navigation Tabs */}
-      <BottomNavigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        unreadNotifsCount={unreadNotifsCount}
-      />
-
       {/* GLOBAL MODALS */}
       {currentUser && (
         <>
@@ -962,6 +1486,7 @@ export default function App() {
             isOpen={isCreateRoomOpen}
             onClose={() => setIsCreateRoomOpen(false)}
             currentUser={currentUser}
+            defaultMode={createRoomMode}
             onRoomCreated={handleRoomCreated}
           />
 
@@ -984,6 +1509,7 @@ export default function App() {
             onClose={() => setIsFramesOpen(false)}
             currentUser={currentUser}
             onUserUpdated={setCurrentUser}
+            onOpenRechargeModal={() => setIsWalletOpen(true)}
           />
 
           <EntrancesShopModal
@@ -1040,6 +1566,35 @@ export default function App() {
             currentUser={currentUser}
             onUserUpdated={setCurrentUser}
           />
+
+          {/* Lucky Farm Wheel Game Popup Modal Overlay */}
+          {isLuckyFarmModalOpen && (
+            <div className="fixed inset-0 z-50 bg-amber-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative max-w-md w-full max-h-[96vh] overflow-y-auto rounded-3xl bg-gradient-to-b from-[#fffbeb] via-[#fef3c7] to-[#fde68a] border-4 border-amber-600 shadow-2xl p-1">
+                <LuckyFarmArena
+                  currentUser={currentUser}
+                  onUserUpdated={setCurrentUser}
+                  onOpenWallet={() => setIsWalletOpen(true)}
+                  onExitGame={() => setIsLuckyFarmModalOpen(false)}
+                  isEmbeddedInRoom={false}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Lucky Wheel 1v1 Game Popup Modal Overlay */}
+          {isLuckyWheelModalOpen && (
+            <div className="fixed inset-0 z-50 bg-amber-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative max-w-md w-full max-h-[96vh] overflow-y-auto rounded-3xl bg-[#fffbeb] border-4 border-amber-600 shadow-2xl p-1">
+                <LuckyWheelArena
+                  currentUser={currentUser}
+                  onUserUpdated={setCurrentUser}
+                  onOpenWallet={() => setIsWalletOpen(true)}
+                  onExitGame={() => setIsLuckyWheelModalOpen(false)}
+                />
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -1072,8 +1627,8 @@ export default function App() {
         />
       )}
 
-      {/* Owner Stealth Mode Floating Button */}
-      {currentUser && isUserOwner(currentUser) && (
+      {/* Owner Stealth Mode Floating Button (Only rendered on non-home tabs/rooms) */}
+      {currentUser && isUserOwner(currentUser) && activeTab !== 'home' && (
         <OwnerStealthFloatingButton
           currentUser={currentUser}
           isStealthMode={isStealthMode}

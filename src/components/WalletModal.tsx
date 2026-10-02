@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { User, WalletTransaction, isUserOwner } from '../types';
+import { User, WalletTransaction, isUserOwner, OFFICIAL_COIN_PACKAGES, StorePackage } from '../types';
 import { API } from '../services/api';
 import { soundEffects } from '../services/soundEffects';
-import { OwnerFreeRechargeModal } from './OwnerFreeRechargeModal';
+import { HostWithdrawalSection } from './HostWithdrawalSection';
 import confetti from 'canvas-confetti';
 import {
   Coins,
@@ -15,10 +15,13 @@ import {
   Crown,
   ShieldCheck,
   Wallet,
-  Phone,
   Copy,
+  CreditCard,
+  Headphones,
+  Sparkles,
+  Zap,
   Check,
-  ExternalLink
+  ShoppingBag
 } from 'lucide-react';
 
 interface WalletModalProps {
@@ -51,10 +54,13 @@ export const WalletModal: React.FC<WalletModalProps> = ({
   const isOwner = isUserOwner(currentUser);
   const isAgent = currentUser.isShippingAgent === true || currentUser.role === 'AGENT';
 
-  const [activeTab, setActiveTab] = useState<'balance' | 'convert' | 'agencies' | 'history'>('balance');
+  const [activeTab, setActiveTab] = useState<'packages' | 'balance' | 'withdraw' | 'convert' | 'agencies' | 'history'>('packages');
 
   // Convert tab state
   const [convertAmount, setConvertAmount] = useState<string>('100');
+
+  // Customer Service & Certified Agents Modal State
+  const [isCustomerServiceModalOpen, setIsCustomerServiceModalOpen] = useState(false);
 
   // Agencies tab state
   const [shippingAgents, setShippingAgents] = useState<ShippingAgentItem[]>([]);
@@ -65,7 +71,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [isFreeRechargeOpen, setIsFreeRechargeOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && currentUser) {
@@ -122,20 +127,20 @@ export const WalletModal: React.FC<WalletModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200" dir="rtl">
       <div
-        className="w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl p-5 shadow-2xl flex flex-col gap-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+        className="w-full max-w-xl bg-gradient-to-b from-[#1c0d02] via-[#0b2416] to-[#04140b] border-3 border-[#facc15] rounded-3xl p-4 sm:p-5 shadow-[0_12px_40px_rgba(217,119,6,0.45)] flex flex-col gap-4 max-h-[92vh] overflow-y-auto animate-in zoom-in-95 duration-200 text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="flex items-center justify-between border-b border-amber-500/30 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Wallet className="w-5 h-5" />
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-[#d97706] via-[#fbbf24] to-[#fef08a] text-amber-950 shadow-md border border-amber-200">
+              <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h2 className="font-black text-base text-slate-100">المحفظة والرصيد</h2>
+                <h2 className="font-black text-base text-amber-200">متجر شحن الكونز الفاخر</h2>
                 {isOwner ? (
                   <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     <Crown className="w-3 h-3 text-amber-400" />
@@ -144,31 +149,53 @@ export const WalletModal: React.FC<WalletModalProps> = ({
                 ) : isAgent ? (
                   <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
-                    وكيل شحن معتمد
+                    وكيل معتمد
                   </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                    شحن خارجي 🛡️
-                  </span>
-                )}
+                ) : null}
               </div>
-              <p className="text-[11px] text-slate-400">إدارة الكونز، الماسات وسجل العمليات المالية</p>
+              <p className="text-[11px] text-amber-100/70">الباقات الرسمية والأسعار الفورية</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1.5 rounded-full hover:bg-amber-500/20 text-amber-300 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* TOP GOLDEN PROMINENT AGENTS BUTTON */}
+        <button
+          onClick={() => setIsCustomerServiceModalOpen(true)}
+          className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-[#d97706] via-[#f59e0b] to-[#d97706] border-2 border-[#fef08a] shadow-[0_6px_22px_rgba(217,119,6,0.45)] text-amber-950 font-black text-xs sm:text-sm flex items-center justify-between gap-2 hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer group"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-[#022612] text-amber-300 border border-amber-400/50 shadow-sm shrink-0">
+              <Headphones className="w-5 h-5" />
+            </div>
+            <div className="text-right">
+              <span className="block font-black text-amber-950 text-xs sm:text-sm leading-tight">
+                وكلاء الشحن المعتمدين - عروض حصرية 👑
+              </span>
+              <span className="block text-[10px] text-amber-900 font-bold -mt-0.5">
+                تواصل مع خدمة العملاء والوكيل المعتمد لاستلام رصيدك فورياً
+              </span>
+            </div>
+          </div>
+          <div className="px-3 py-1.5 rounded-xl bg-amber-950 text-amber-200 font-black text-[11px] flex items-center gap-1 border border-amber-300/40 shrink-0">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse" />
+            <span>طلب فوري</span>
+          </div>
+        </button>
+
         {/* Tab Selector */}
-        <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-2xl border border-slate-700/60">
+        <div className="flex items-center gap-1 bg-black/50 p-1 rounded-2xl border border-amber-500/30 overflow-x-auto scrollbar-none">
           {[
-            { id: 'balance' as const, label: 'الرصيد', icon: Coins },
+            { id: 'packages' as const, label: 'باقات الكونز', icon: Zap },
+            { id: 'balance' as const, label: 'محفظتي', icon: Coins },
+            { id: 'withdraw' as const, label: 'سحب الأرباح', icon: CreditCard },
             { id: 'convert' as const, label: 'تحويل العملات', icon: ArrowRightLeft },
-            { id: 'agencies' as const, label: 'وكالات الشحن', icon: ShieldCheck },
+            { id: 'agencies' as const, label: 'الوكلاء المعتمدون', icon: ShieldCheck },
             { id: 'history' as const, label: 'سجل العمليات', icon: History }
           ].map(tab => {
             const Icon = tab.icon;
@@ -181,14 +208,14 @@ export const WalletModal: React.FC<WalletModalProps> = ({
                   setErrorMsg(null);
                   setSuccessMsg(null);
                 }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-black'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-gradient-to-r from-[#d97706] to-[#f59e0b] text-white shadow-md font-black border border-amber-200'
+                    : 'text-amber-200/70 hover:text-amber-200 hover:bg-amber-500/10'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -196,104 +223,133 @@ export const WalletModal: React.FC<WalletModalProps> = ({
 
         {/* Feedback Messages */}
         {errorMsg && (
-          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3 rounded-2xl bg-rose-950/80 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span>{errorMsg}</span>
           </div>
         )}
         {successMsg && (
-          <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3 rounded-2xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{successMsg}</span>
           </div>
         )}
 
-        {/* TAB 1: BALANCE CARDS */}
+        {/* TAB 1: OFFICIAL COIN STORE PACKAGES (3D LUXURY CARDS) */}
+        {activeTab === 'packages' && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between pb-1 border-b border-amber-500/20">
+              <span className="text-xs font-black text-amber-200">باقات الكونز الرسمية المتاحة:</span>
+              <span className="text-[10px] text-amber-300 font-mono">الأسعار بالدولار والعملة المحلية</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {OFFICIAL_COIN_PACKAGES.map((pkg: StorePackage) => (
+                <div
+                  key={pkg.id}
+                  className="p-4 rounded-2xl bg-gradient-to-b from-[#241003] via-[#142e1b] to-[#06180e] border-2 border-[#facc15] flex flex-col justify-between gap-3 shadow-[0_6px_20px_rgba(217,119,6,0.25)] relative overflow-hidden group hover:brightness-105 transition-all"
+                >
+                  {/* Glowing Corner Badge */}
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-[radial-gradient(circle_at_top_right,_rgba(251,191,36,0.3),_transparent_70%)] pointer-events-none" />
+
+                  {/* Coins Header */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#d97706] via-[#fbbf24] to-[#fef08a] text-amber-950 flex items-center justify-center font-black text-lg shadow-sm border border-yellow-200 shrink-0">
+                        🪙
+                      </div>
+                      <div>
+                        <h3 className="font-black text-sm text-amber-100 font-mono tracking-wide">
+                          {pkg.coins.toLocaleString()} كوينز
+                        </h3>
+                        <span className="text-[10px] text-emerald-400 font-extrabold block">تسليم فوري مباشر</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price Tags */}
+                  <div className="p-2.5 rounded-xl bg-black/50 border border-amber-500/30 flex items-center justify-between font-mono">
+                    <div className="flex items-center gap-1 text-amber-300 font-black text-sm">
+                      <span>${pkg.priceUsd}</span>
+                    </div>
+                    <div className="text-[11px] font-extrabold text-amber-200/80 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-400/30">
+                      (~{pkg.approxEgp.toLocaleString()} EGP)
+                    </div>
+                  </div>
+
+                  {/* Order Button */}
+                  <button
+                    onClick={() => setIsCustomerServiceModalOpen(true)}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#d97706] via-[#f59e0b] to-[#d97706] border border-[#fef08a] text-amber-950 font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95 transition-all"
+                  >
+                    <Headphones className="w-3.5 h-3.5" />
+                    <span>شحن عبر الوكيل المعتمد</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: BALANCE CARDS */}
         {activeTab === 'balance' && (
           <div className="flex flex-col gap-3">
-            {/* Exclusive Owner Free Recharge Button */}
-            {isOwner && (
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/90 via-yellow-950/60 to-amber-950/90 border border-amber-500/50 flex items-center justify-between shadow-xl shadow-amber-500/10">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/30">
-                    <Crown className="w-5 h-5 fill-slate-950" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-amber-300 flex items-center gap-1">
-                      <span>شحن المَسّات مجاناً</span>
-                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30">
-                        خاص بالمالك
-                      </span>
-                    </h4>
-                    <p className="text-[10px] text-amber-200/80">إضافة مَسّات إلى رصيد المالك دون دفع</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsFreeRechargeOpen(true)}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5"
-                >
-                  <Crown className="w-3.5 h-3.5 fill-slate-950" />
-                  <span>👑 شحن المَسّات — المالك</span>
-                </button>
-              </div>
-            )}
-
             <div className="grid grid-cols-2 gap-3">
               {/* Coins Card */}
-              <div className="bg-gradient-to-br from-amber-950/80 to-amber-900/40 border border-amber-500/30 rounded-2xl p-4 flex flex-col justify-between">
+              <div className="bg-gradient-to-br from-[#1c0d02] via-[#2a1303] to-[#042612] border-2 border-amber-500/40 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-300">الكونز (Coins)</span>
+                  <span className="text-xs font-black text-amber-300">رصيد الكونز (Coins)</span>
                   <Coins className="w-5 h-5 text-amber-400" />
                 </div>
                 <div className="my-2">
-                  <span className="text-2xl font-black text-amber-200">
-                    {currentUser.coins.toLocaleString('ar-EG')}
+                  <span className="text-2xl font-black text-amber-200 font-mono">
+                    {currentUser.coins.toLocaleString()}
                   </span>
                 </div>
                 <button
                   onClick={() => setActiveTab('convert')}
-                  className="text-[11px] font-bold text-amber-400 hover:underline text-right"
+                  className="text-[11px] font-bold text-amber-400 hover:underline text-right cursor-pointer"
                 >
                   تحويل إلى ماسات ←
                 </button>
               </div>
 
               {/* Diamonds Card */}
-              <div className="bg-gradient-to-br from-sky-950/80 to-sky-900/40 border border-sky-500/30 rounded-2xl p-4 flex flex-col justify-between">
+              <div className="bg-gradient-to-br from-[#021f38] via-[#043358] to-[#011424] border-2 border-sky-500/40 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-300">الماسات (Diamonds)</span>
+                  <span className="text-xs font-black text-sky-300">رصيد الماسات (Diamonds)</span>
                   <Gem className="w-5 h-5 text-sky-400" />
                 </div>
                 <div className="my-2">
-                  <span className="text-2xl font-black text-sky-200">
-                    {currentUser.diamonds.toLocaleString('ar-EG')}
+                  <span className="text-2xl font-black text-sky-200 font-mono">
+                    {currentUser.diamonds.toLocaleString()}
                   </span>
                 </div>
                 <button
-                  onClick={() => setActiveTab('agencies')}
-                  className="text-[11px] font-bold text-sky-400 hover:underline text-right"
+                  onClick={() => setActiveTab('packages')}
+                  className="text-[11px] font-bold text-sky-400 hover:underline text-right cursor-pointer"
                 >
-                  الشحن عبر وكيل ←
+                  عرض باقات المتجر ←
                 </button>
               </div>
             </div>
 
-            {/* Official Agency Policy Card */}
-            <div className="p-3.5 rounded-2xl bg-slate-800/80 border border-amber-500/30 text-xs text-slate-300 leading-relaxed space-y-2">
+            {/* Quick Info Box */}
+            <div className="p-3.5 rounded-2xl bg-[#042211] border border-amber-500/30 text-xs text-amber-100/90 leading-relaxed space-y-2">
               <div className="flex items-center gap-2 font-black text-amber-300 text-xs">
                 <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>سياسة الشحن الرسمي للتطبيق:</span>
+                <span>الشحن المعتمد والتسليم الفوري:</span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-normal">
-                تم اعتماد الشحن الخارجي فقط عن طريق <b>«وكلاء الشحن المعتمدين»</b> للحفاظ على أمان معاملاتك وسرعة التغذية. الشحن الداخلي وبوابات الدفع الإلكترونية المباشرة معطلة تماماً لتوفير أعلى مستويات الأمان.
+              <p className="text-[11px] text-amber-100/80 leading-normal">
+                تأكد من شحن حسابك عبر <b>وكلاء الشحن المعتمدين</b> للحصول على الرصيد فورياً برقم مرجعي إلكتروني رسمي.
               </p>
-              <div className="pt-1 flex items-center justify-between border-t border-slate-700/60">
+              <div className="pt-2 flex items-center justify-between border-t border-amber-500/20">
                 <button
-                  onClick={() => setActiveTab('agencies')}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1 transition-all"
+                  onClick={() => setActiveTab('packages')}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#d97706] to-[#f59e0b] text-white font-black text-xs flex items-center gap-1 cursor-pointer"
                 >
-                  <span>عرض وكالات الشحن المعتمدة</span>
-                  <ExternalLink className="w-3 h-3" />
+                  <span>استعراض باقات المتجر</span>
+                  <Zap className="w-3.5 h-3.5" />
                 </button>
 
                 {(isOwner || isAgent) && onOpenShippingAgent && (
@@ -302,10 +358,9 @@ export const WalletModal: React.FC<WalletModalProps> = ({
                       onClose();
                       onOpenShippingAgent();
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs flex items-center gap-1 transition-all"
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-xs flex items-center gap-1 cursor-pointer"
                   >
-                    <span>فتح لوحة الوكالة</span>
-                    <Gem className="w-3 h-3" />
+                    <span>لوحة تحويل الوكالة 💎</span>
                   </button>
                 )}
               </div>
@@ -313,16 +368,27 @@ export const WalletModal: React.FC<WalletModalProps> = ({
           </div>
         )}
 
-        {/* TAB 2: CONVERT COINS TO DIAMONDS */}
+        {/* TAB 3: WITHDRAWAL */}
+        {activeTab === 'withdraw' && (
+          <div>
+            <HostWithdrawalSection
+              currentUser={currentUser}
+              onUserUpdated={onUserUpdated}
+              isOwnerAdmin={isOwner}
+            />
+          </div>
+        )}
+
+        {/* TAB 4: CONVERT */}
         {activeTab === 'convert' && (
           <div className="flex flex-col gap-3.5">
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-center justify-between">
-              <span>سعر التحويل الحالي:</span>
+              <span>سعر التحويل المعتمد:</span>
               <span className="font-black font-mono">100 كونز = 50 ماسة</span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-amber-200 mb-1.5">
                 الكمية المراد تحويلها من الكونز:
               </label>
               <input
@@ -331,120 +397,197 @@ export const WalletModal: React.FC<WalletModalProps> = ({
                 step="100"
                 value={convertAmount}
                 onChange={(e) => setConvertAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 focus:border-amber-400 focus:outline-none text-slate-100 font-bold text-base"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-amber-500/40 focus:border-amber-400 focus:outline-none text-amber-100 font-bold text-base font-mono"
               />
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between text-xs">
-              <span className="text-slate-400">ستحصل على:</span>
-              <span className="font-extrabold text-sky-300 text-sm">
-                {Math.floor(Number(convertAmount) / 2)} ماسة 💎
-              </span>
             </div>
 
             <button
               onClick={handleConvert}
-              disabled={isLoading || Number(convertAmount) <= 0 || Number(convertAmount) > currentUser.coins || Number(convertAmount) % 100 !== 0}
-              className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 text-slate-950 disabled:text-slate-500 font-extrabold text-sm shadow-lg shadow-amber-500/20 active:scale-98 transition-all"
+              disabled={isLoading || !convertAmount}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#d97706] to-[#f59e0b] text-white font-black text-xs shadow-md cursor-pointer active:scale-95 transition-transform"
             >
-              {isLoading ? 'جاري التحويل...' : 'تأكيد عملية التحويل'}
+              {isLoading ? 'جاري التحويل...' : 'تأكيد التحويل الآن 🔄'}
             </button>
           </div>
         )}
 
-        {/* TAB 3: SHIPPING AGENCIES LIST */}
+        {/* TAB 5: AGENCIES LIST */}
         {activeTab === 'agencies' && (
           <div className="flex flex-col gap-3">
-            <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-xs text-sky-200">
-              <span className="font-bold block text-sky-300 mb-0.5">كيف تشحن رصيدك عبر وكيل الشحن؟</span>
-              <span>تواصل مع أحد الوكلاء المعتمدين أدناه، وقدم له ID حسابك الرقمي لتقوم بالدفع الخارجي ويقوم الوكيل بشحن الماسات لحسابك مباشرة.</span>
+            <div className="text-xs text-amber-200/80">
+              قائمة وكلاء الشحن المعتمدين والموثقين رسمياً لتغذية المحفظة:
             </div>
 
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {shippingAgents.length === 0 ? (
-                <div className="text-center py-6 text-xs text-slate-500">جاري تحميل قائمة الوكلاء المعتمدين...</div>
-              ) : (
-                shippingAgents.map(agent => (
+            {shippingAgents.length === 0 ? (
+              <div className="py-8 text-center text-xs text-amber-200/60">
+                جاري جلب قائمة الوكلاء المعتمدين...
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {shippingAgents.map(ag => (
                   <div
-                    key={agent.id}
-                    className="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-between gap-3"
+                    key={ag.id}
+                    className="p-3 rounded-2xl bg-black/40 border border-amber-500/30 flex items-center justify-between gap-2"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <img
-                        src={agent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${agent.username}`}
-                        alt={agent.name}
-                        className="w-10 h-10 rounded-full border border-amber-500/40 object-cover"
+                        src={ag.avatar}
+                        alt={ag.name}
+                        className="w-10 h-10 rounded-full object-cover border border-amber-400"
                       />
                       <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-xs text-slate-100">{agent.name}</span>
-                          <span className="text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded-full">
-                            وكيل معتمد 🛡️
-                          </span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-extrabold text-xs text-amber-100">{ag.name}</span>
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         </div>
-                        <span className="text-[10px] text-slate-400 font-mono block">
-                          ID: <span className="text-amber-300 font-bold">{agent.numericId || agent.id}</span>
+                        <span className="text-[10px] text-amber-200/60 font-mono">
+                          ID: {ag.numericId || ag.id}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => handleCopyAgentId(agent.numericId || agent.id)}
-                        className="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1 transition-colors"
-                        title="نسخ ID الوكيل"
-                      >
-                        {copiedId === (agent.numericId || agent.id) ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            <span className="text-emerald-400">تم النسخ</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" />
-                            <span>نسخ ID</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleCopyAgentId(ag.numericId || ag.id)}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 text-xs font-bold flex items-center gap-1 cursor-pointer hover:bg-amber-500/30"
+                    >
+                      {copiedId === (ag.numericId || ag.id) ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>تم النسخ</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>نسخ الـ ID</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* TAB 4: TRANSACTION HISTORY */}
+        {/* TAB 6: HISTORY */}
         {activeTab === 'history' && (
-          <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
             {transactions.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-500">لا توجد عمليات سابقة حتى الآن.</div>
+              <div className="py-8 text-center text-xs text-amber-200/60">
+                لا توجد عمليات مالية سابقة في سجلك
+              </div>
             ) : (
               transactions.map(tx => (
-                <div key={tx.id} className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between text-xs">
+                <div
+                  key={tx.id}
+                  className="p-2.5 rounded-xl bg-black/40 border border-amber-500/20 flex items-center justify-between text-xs"
+                >
                   <div>
-                    <span className="font-bold text-slate-200 block">{tx.description}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {new Date(tx.createdAt).toLocaleDateString('ar-EG')} - {new Date(tx.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                    <span className="font-bold text-amber-200 block">{tx.description}</span>
+                    <span className="text-[9px] text-amber-200/60">
+                      {new Date(tx.createdAt).toLocaleString('ar-EG')}
                     </span>
                   </div>
-                  <span className={`font-extrabold ${tx.amount > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {tx.amount > 0 ? `+${tx.amount.toLocaleString('ar-EG')}` : tx.amount.toLocaleString('ar-EG')} {tx.type === 'COIN' ? 'كونز' : 'ماسة'}
+                  <span className={`font-mono font-black ${tx.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {tx.amount >= 0 ? `+${tx.amount}` : tx.amount} {tx.type === 'COIN' ? '🪙' : '💎'}
                   </span>
                 </div>
               ))
             )}
           </div>
         )}
-
-        {/* Owner Free Recharge Modal */}
-        <OwnerFreeRechargeModal
-          isOpen={isFreeRechargeOpen}
-          onClose={() => setIsFreeRechargeOpen(false)}
-          currentUser={currentUser}
-          onUserUpdated={onUserUpdated}
-        />
       </div>
+
+      {/* CUSTOMER SERVICE & CERTIFIED AGENTS POPUP MODAL */}
+      {isCustomerServiceModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200" dir="rtl">
+          <div className="w-full max-w-md bg-gradient-to-b from-[#1c0d02] via-[#082315] to-[#04140b] border-3 border-[#facc15] rounded-3xl p-5 shadow-[0_12px_40px_rgba(217,119,6,0.5)] flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-slate-100 relative">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-amber-500/30">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-amber-950 shadow-md">
+                  <Headphones className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-amber-200">وكلاء الشحن المعتمدين - عروض حصرية</h3>
+                  <p className="text-[10px] text-amber-100/70">مركز الدعم والعروض المباشرة</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCustomerServiceModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center cursor-pointer hover:bg-rose-600 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Info Message */}
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-400/30 text-amber-200 text-xs leading-relaxed space-y-2">
+              <p className="font-extrabold text-amber-300">
+                👑 للحصول على باقات الكونز بعروض حصرية وتسليم فوري:
+              </p>
+              <p className="text-[11px] text-amber-100/80">
+                يرجى تزويد الوكيل المعتمد بالـ ID الرقمي الخاص بك لشحن رصيدك في الحساب مباشرة وبشكل إلكتروني آمن.
+              </p>
+            </div>
+
+            {/* Agent Options */}
+            <div className="flex flex-col gap-2.5">
+              {shippingAgents.slice(0, 3).map(ag => (
+                <div
+                  key={ag.id}
+                  className="p-3 rounded-2xl bg-black/50 border border-amber-500/40 flex items-center justify-between gap-2 shadow-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={ag.avatar}
+                      alt={ag.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-amber-400"
+                    />
+                    <div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-black text-xs text-amber-100">{ag.name}</span>
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      </div>
+                      <span className="text-[10px] text-amber-300 font-mono">
+                        ID: {ag.numericId || ag.id}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleCopyAgentId(ag.numericId || ag.id)}
+                    className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#d97706] to-[#f59e0b] text-amber-950 font-black text-xs flex items-center gap-1 cursor-pointer active:scale-95 transition-transform shadow-sm"
+                  >
+                    {copiedId === (ag.numericId || ag.id) ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-amber-950" />
+                        <span>تم نسخ الـ ID</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>نسخ الـ ID</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setIsCustomerServiceModalOpen(false)}
+              className="w-full py-2.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/40 font-black text-xs cursor-pointer hover:bg-amber-500/30 transition-colors"
+            >
+              إغلاق النافذة
+            </button>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

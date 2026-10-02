@@ -1,3 +1,4 @@
+import { GoogleGenAI } from '@google/genai';
 import { ModerationCategory, ModerationAction, ModerationIncident, User } from '../src/types';
 
 export interface ModerationScanResult {
@@ -8,6 +9,26 @@ export interface ModerationScanResult {
   confidence: number;
   reason: string;
   details?: string;
+}
+
+let genAIClient: GoogleGenAI | null = null;
+
+function getGeminiClient(): GoogleGenAI | null {
+  if (!genAIClient && process.env.GEMINI_API_KEY) {
+    try {
+      genAIClient = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build'
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('GoogleGenAI initialization warning in moderationService:', err);
+    }
+  }
+  return genAIClient;
 }
 
 // Prohibited Arabic & English terms relating to male nudity, underwear, sexual solicitation, and illicit content
@@ -85,6 +106,68 @@ export class ServerModerationEngine {
   }
 
   /**
+   * AI-powered Deep Text Moderation using Gemini API (gemini-3.8-flash)
+   */
+  public async scanTextWithGemini(text: string): Promise<ModerationScanResult> {
+    const syncRes = this.scanText(text);
+    if (!syncRes.isSafe && syncRes.decision === 'VIOLATION') {
+      return syncRes;
+    }
+
+    const ai = getGeminiClient();
+    if (!ai || !text || text.trim().length < 2) {
+      return syncRes;
+    }
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `افحص النص التالي الصادر من مستخدم داخل غرف الدردشة التفاعلية:\n"${text}"` }]
+          }
+        ],
+        config: {
+          systemInstruction: `أنت محرك الذكاء الاصطناعي الفائق للرقابة وتصفية المحتوى لغرف البث والدردشة الصوتية في تطبيق "حكاوي".
+مهمتك: فحص النص المرفق واكتشاف المخالفات الصريحة بحسب القواعد التالية:
+1. التعري، كشف العورة، الألفاظ الخادشة للحياء، الإيحاءات الجنسية أو دعوات المقابلة بملابس غير لائقة.
+2. الشتائم، الألفاظ البذيئة، السب والقذف الفاحش، التهديد، الكراهية أو انتهاك الآداب العامة.
+
+أرجع النتيجة بتنسيق JSON حصراً كالتالي:
+{
+  "isViolation": boolean,
+  "category": "MALE_NUDITY" | "UNDERWEAR_EXPOSURE" | "GENITALIA_EXPOSURE" | "SEXUAL_CONTENT" | "EXCESSIVE_SKIN" | "PROFANITY_BAD_WORDS",
+  "reason": "سبب كشف المخالفة باللغة العربية باختصار",
+  "confidence": number
+}`,
+          responseMimeType: 'application/json'
+        }
+      });
+
+      const rawJson = response.text?.trim();
+      if (rawJson) {
+        const parsed = JSON.parse(rawJson);
+        if (parsed.isViolation) {
+          return {
+            isSafe: false,
+            decision: 'VIOLATION',
+            action: 'AUTO_BAN_PERMANENT',
+            category: parsed.category || 'PROFANITY_BAD_WORDS',
+            confidence: parsed.confidence || 0.95,
+            reason: parsed.reason || 'محتوى نصي مخالف لآداب وشروط المنصة (تم رصده بالذكاء الاصطناعي)',
+            details: `فحص الذكاء الاصطناعي للنص: "${text.substring(0, 40)}..."`
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Gemini text moderation check skipped or failed:', err);
+    }
+
+    return syncRes;
+  }
+
+  /**
    * Scans Image URL or Base64 / Canvas Data
    * Inspects metadata, known patterns, keywords in image URL, and heuristic indicators
    */
@@ -133,8 +216,6 @@ export class ServerModerationEngine {
 
     // 3. Base64 payload heuristics (e.g. from camera frame or user file upload)
     if (imageUrlOrData.startsWith('data:image')) {
-      // If skin tone ratio metadata was passed in query or payload (e.g. skinPercent)
-      // Check if it has a high skin ratio flag
       if (inputLower.includes('violation_flag:male_nudity') || inputLower.includes('nudity_detected=1')) {
         return {
           isSafe: false,
@@ -155,6 +236,89 @@ export class ServerModerationEngine {
       confidence: 0.05,
       reason: 'الصورة مجازة وفق معايير الحشمة المعتمدة'
     };
+  }
+
+  /**
+   * AI-powered Image / Avatar / Live Frame Moderation using Gemini API (gemini-3.8-flash)
+   */
+  public async scanImageWithGemini(
+    imageUrlOrData: string,
+    context?: { textContext?: string; userGender?: 'male' | 'female'; isLiveStream?: boolean }
+  ): Promise<ModerationScanResult> {
+    const syncRes = this.scanImage(imageUrlOrData, context);
+    if (!syncRes.isSafe && syncRes.decision === 'VIOLATION') {
+      return syncRes;
+    }
+
+    const ai = getGeminiClient();
+    if (!ai || !imageUrlOrData) {
+      return syncRes;
+    }
+
+    try {
+      let imagePart: any;
+      if (imageUrlOrData.startsWith('data:image')) {
+        const matches = imageUrlOrData.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+        if (matches) {
+          imagePart = {
+            inlineData: {
+              mimeType: matches[1],
+              data: matches[2]
+            }
+          };
+        }
+      }
+
+      if (!imagePart) {
+        return syncRes;
+      }
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: {
+          parts: [
+            imagePart,
+            { text: 'قم بفحص هذه الصورة الصادرة من حساب مستخدم في تطبيق حكاوي.' }
+          ]
+        },
+        config: {
+          systemInstruction: `أنت نظام الرقابة والذكاء الاصطناعي للسلامة وتصفية الصور في تطبيق "حكاوي".
+افحص الصورة بدقة شديدة بحثاً عن المخالفات التالية:
+1. العُري الصريح أو كشف العورة للرجال أو النساء.
+2. الظهور بدون قميص / عاري الصدر للرجال، أو الظهور بملابس داخلية (بوكسر / سروال داخلي / ملابس نوم مخلة).
+3. كشف المناطق الخاصة أو أي محتوى خادش للحياء أو صور إباحية أو جنسية.
+
+أرجع النتيجة كـ JSON حصراً كالتالي:
+{
+  "isViolation": boolean,
+  "category": "MALE_NUDITY" | "UNDERWEAR_EXPOSURE" | "GENITALIA_EXPOSURE" | "SEXUAL_CONTENT" | "EXCESSIVE_SKIN",
+  "reason": "سبب المخالفة باللغة العربية باختصار",
+  "confidence": number
+}`,
+          responseMimeType: 'application/json'
+        }
+      });
+
+      const rawJson = response.text?.trim();
+      if (rawJson) {
+        const parsed = JSON.parse(rawJson);
+        if (parsed.isViolation) {
+          return {
+            isSafe: false,
+            decision: 'VIOLATION',
+            action: 'AUTO_BAN_PERMANENT',
+            category: parsed.category || 'MALE_NUDITY',
+            confidence: parsed.confidence || 0.95,
+            reason: parsed.reason || 'تم رصد محتوى صورة أو بث مخل بالحياء والآداب العامة بالذكاء الاصطناعي',
+            details: `فحص الذكاء الاصطناعي للصور: ${parsed.reason}`
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Gemini image moderation check skipped or failed:', err);
+    }
+
+    return syncRes;
   }
 
   /**
@@ -202,3 +366,4 @@ export class ServerModerationEngine {
 }
 
 export const serverModerationEngine = new ServerModerationEngine();
+

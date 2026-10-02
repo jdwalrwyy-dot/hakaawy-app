@@ -34,6 +34,23 @@ export function getUserActiveRoleBadges(user?: any, fallbackRole?: UserRole): Ro
   const role = user?.role || user?.userRole || fallbackRole;
   const badges: RoleBadgeItem[] = [];
 
+  // 0. 💙🌸 الموثق (Verified User Badge)
+  if (user?.isVerified) {
+    const isFemale = String(user?.verifiedGender || user?.gender || '').toLowerCase() === 'female';
+    badges.push({
+      key: 'VERIFIED',
+      label: isFemale ? 'موثقة ♀️' : 'موثق ♂️',
+      emoji: isFemale ? '♀️' : '♂️',
+      icon: <ShieldCheck className={`w-3.5 h-3.5 shrink-0 ${isFemale ? 'text-pink-400' : 'text-blue-400'}`} />,
+      bgClass: isFemale
+        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 font-extrabold shadow-sm'
+        : 'bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold shadow-sm',
+      textClass: isFemale ? 'text-rose-300 font-extrabold' : 'text-blue-300 font-extrabold',
+      title: `حساب موثق وشارة مصداقية (${isFemale ? 'أنثى ♀️' : 'ذكر ♂️'})`,
+      priority: 1.5
+    });
+  }
+
   // 1. 👑 המالك (Owner)
   const isOwner = (
     isUserOwner(user) ||
@@ -329,4 +346,61 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({
     </span>
   );
 };
+
+export interface UserVerifiedBadgeProps {
+  user?: any;
+  gender?: string;
+  isVerified?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  showTextLabel?: boolean;
+  className?: string;
+}
+
+export const UserVerifiedBadge: React.FC<UserVerifiedBadgeProps> = ({
+  user,
+  gender,
+  isVerified,
+  size = 'sm',
+  showTextLabel = false,
+  className = ''
+}) => {
+  const verified = isVerified ?? user?.isVerified ?? false;
+  if (!verified) return null;
+
+  const rawGender = gender || user?.verifiedGender || user?.gender || 'male';
+  const isFemale = String(rawGender).toLowerCase() === 'female';
+
+  const badgeConfig = isFemale
+    ? {
+        symbol: '♀️',
+        label: 'موثقة ♀️',
+        bg: 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-rose-500/10',
+        text: 'text-rose-300 font-extrabold'
+      }
+    : {
+        symbol: '♂️',
+        label: 'موثق ♂️',
+        bg: 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-blue-500/10',
+        text: 'text-blue-300 font-extrabold'
+      };
+
+  const sizes = {
+    xs: 'text-[9px] px-1 py-0.2 gap-0.5 rounded',
+    sm: 'text-[10px] px-1.5 py-0.2 gap-1 rounded-md',
+    md: 'text-xs px-2 py-0.5 gap-1 rounded-lg',
+    lg: 'text-xs px-2.5 py-1 gap-1.5 rounded-xl'
+  };
+
+  return (
+    <span
+      title={`حساب موثق (${isFemale ? 'أنثى ♀️' : 'ذكر ♂️'})`}
+      className={`inline-flex items-center gap-0.5 shrink-0 font-black select-none ${sizes[size]} ${badgeConfig.bg} ${className}`}
+    >
+      <ShieldCheck className={`shrink-0 ${size === 'xs' ? 'w-2.5 h-2.5' : size === 'lg' ? 'w-4 h-4' : 'w-3 h-3'} ${isFemale ? 'text-rose-400' : 'text-blue-400'}`} />
+      <span>{badgeConfig.symbol}</span>
+      {showTextLabel && <span className={badgeConfig.text}>{badgeConfig.label}</span>}
+    </span>
+  );
+};
+
 

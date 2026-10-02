@@ -42,7 +42,14 @@ export interface User {
   name: string;
   username: string;
   avatar: string;
-  gender?: 'male' | 'female';
+  gender?: 'male' | 'female' | 'MALE' | 'FEMALE';
+  isVerified?: boolean;
+  verifiedGender?: 'male' | 'female' | 'MALE' | 'FEMALE';
+  verificationPhoto?: string;
+  livenessFrontPhoto?: string;
+  livenessRightPhoto?: string;
+  livenessLeftPhoto?: string;
+  verifiedAt?: string;
   phone?: string;
   email?: string;
   googleId?: string;
@@ -65,7 +72,13 @@ export interface User {
   referredBy?: string;
   isShippingAgent?: boolean;
   isBanned?: boolean;
+  status?: 'active' | 'banned' | string;
   banReason?: string;
+  violationCount?: number;
+  temporaryBanUntil?: number | null;
+  temporaryBanType?: '15m' | '1h' | '2h' | 'pending_admin_review' | 'perm';
+  isPendingAdminReview?: boolean;
+  isFrozen?: boolean;
   createdAt: string;
   isOnline?: boolean;
   isStealthMode?: boolean;
@@ -86,6 +99,40 @@ export const SHIPPING_PACKAGES: ShippingPackage[] = [
   { id: 'pkg_1000', priceEgp: 1000, diamonds: 1000000, label: '1,000 جنيه = 1,000,000 ماسة' }
 ];
 
+export interface StorePackage {
+  id: string;
+  priceUsd: number;
+  approxEgp: number;
+  coins: number;
+  label: string;
+}
+
+export const OFFICIAL_COIN_PACKAGES: StorePackage[] = [
+  { id: 'coin_pkg_50k', priceUsd: 3.99, approxEgp: 200, coins: 50000, label: '50,000 كوينز' },
+  { id: 'coin_pkg_100k', priceUsd: 7.99, approxEgp: 400, coins: 100000, label: '100,000 كوينز' },
+  { id: 'coin_pkg_250k', priceUsd: 19.99, approxEgp: 1000, coins: 250000, label: '250,000 كوينز' },
+  { id: 'coin_pkg_500k', priceUsd: 39.99, approxEgp: 2000, coins: 500000, label: '500,000 كوينز' },
+  { id: 'coin_pkg_1m', priceUsd: 79.99, approxEgp: 4000, coins: 1000000, label: '1,000,000 كوينز' },
+  { id: 'coin_pkg_2.5m', priceUsd: 199.99, approxEgp: 10000, coins: 2500000, label: '2,500,000 كوينز' }
+];
+
+// منطق تحويل الهدايا (كل 5 كوينز = 1 ماسة)
+export function sendGift(
+  sender: { coins: number },
+  receiver: { diamonds: number },
+  giftCostInCoins: number
+): { success: boolean; message?: string; earnedDiamonds?: number } {
+  if (sender.coins < giftCostInCoins) {
+    return { success: false, message: "رصيد الكوينز لا يكفي" };
+  }
+  
+  sender.coins -= giftCostInCoins;
+  const earnedDiamonds = Math.floor(giftCostInCoins / 5);
+  receiver.diamonds += earnedDiamonds;
+  
+  return { success: true, earnedDiamonds: earnedDiamonds };
+}
+
 export interface PublicUserProfile {
   id: string;
   numericId?: string;
@@ -93,7 +140,11 @@ export interface PublicUserProfile {
   name: string;
   username: string;
   avatar: string;
-  gender?: 'male' | 'female';
+  gender?: 'male' | 'female' | 'MALE' | 'FEMALE';
+  isVerified?: boolean;
+  verifiedGender?: 'male' | 'female' | 'MALE' | 'FEMALE';
+  verificationPhoto?: string;
+  verifiedAt?: string;
   email?: string;
   bio?: string;
   level: number;
@@ -120,7 +171,7 @@ export interface PublicUserProfile {
 export type RoomType = 'PUBLIC' | 'PRIVATE';
 export type RoomStatus = 'LIVE' | 'WAITING' | 'ENDED';
 export type RoomRole = 'HOST' | 'MODERATOR' | 'SPEAKER' | 'LISTENER';
-export type MicLayoutType = '2+10' | '10' | '15' | '2+15' | '5' | '8' | '4' | '12' | 'auto';
+export type MicLayoutType = '2+10' | '10' | '15' | '2+15' | '2+20' | '2+25' | '22' | '27' | '5' | '8' | '4' | '12' | 'auto';
 
 export interface Room {
   id: string;
@@ -133,6 +184,7 @@ export interface Room {
   hostAvatar: string;
   hostFrameId?: string;
   type: RoomType;
+  roomType?: 'audio' | 'video' | 'mixed';
   password?: string;
   status: RoomStatus;
   allowAudio: boolean;
@@ -144,6 +196,7 @@ export interface Room {
   endedAt?: string;
   micLayout?: MicLayoutType;
   seatsCount?: number;
+  requireHostApproval?: boolean;
 }
 
 export interface RoomMember {
@@ -151,7 +204,7 @@ export interface RoomMember {
   userId: string;
   userName: string;
   userAvatar: string;
-  userGender?: 'male' | 'female';
+  userGender?: 'male' | 'female' | 'MALE' | 'FEMALE';
   userFrameId?: string;
   userEntranceId?: string;
   roleInRoom: RoomRole;
@@ -167,7 +220,7 @@ export interface RoomSeat {
   userId: string | null;
   userName?: string;
   userAvatar?: string;
-  userGender?: 'male' | 'female';
+  userGender?: 'male' | 'female' | 'MALE' | 'FEMALE';
   userFrameId?: string;
   isMuted: boolean;
   isCameraOn: boolean;
@@ -185,6 +238,9 @@ export interface MicRequest {
   userId: string;
   userName: string;
   userAvatar: string;
+  userFrameId?: string;
+  customFrameUrl?: string | null;
+  userRole?: string;
   targetSeatIndex?: number;
   seatLabel?: string;
   requestedAt: string;
@@ -365,6 +421,7 @@ export interface Frame {
   id: string;
   nameAr: string;
   icon: string;
+  imageUrl?: string;
   previewGradient: string;
   borderStyle: string;
   diamondPrice: number;
@@ -403,16 +460,31 @@ export interface UserEntrance {
   acquiredAt: string;
 }
 
+export interface ReportDocument {
+  reportId: string;
+  reporterId: string;
+  reportedUserId: string;
+  reason: string;
+  roomId?: string;
+  details?: string;
+  timestamp: number;
+  status: 'pending' | 'reviewed' | 'banned' | 'PENDING' | 'RESOLVED' | 'DISMISSED';
+}
+
 export interface Report {
   id: string;
+  reportId?: string;
   reporterId: string;
-  reporterName: string;
+  reporterName?: string;
+  reportedUserId?: string;
   targetType: 'USER' | 'ROOM' | 'MESSAGE' | 'STREAM';
   targetId: string;
-  targetName: string;
+  targetName?: string;
   reason: string;
   details: string;
-  status: 'PENDING' | 'RESOLVED' | 'DISMISSED';
+  roomId?: string;
+  timestamp?: number;
+  status: 'PENDING' | 'RESOLVED' | 'DISMISSED' | 'pending' | 'reviewed' | 'banned';
   createdAt: string;
 }
 
@@ -441,7 +513,10 @@ export type ModerationAction =
   | 'AUTO_BAN_PERMANENT'
   | 'QUEUED_FOR_REVIEW'
   | 'AUTO_BLUR_WARN'
-  | 'ALLOWED';
+  | 'ALLOWED'
+  | 'TEMP_BAN_15M'
+  | 'TEMP_BAN_1H'
+  | 'TEMP_BAN_2H';
 
 export interface ModerationIncident {
   id: string;
@@ -513,6 +588,46 @@ export interface AdminStats {
 
 // --- HOSTS, AGENTS, AGENCIES & TARGETS SYSTEM ---
 
+export type WithdrawalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface HostWithdrawalRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userNumericId?: string;
+  role: 'HOST' | 'AGENT' | 'USER' | UserRole;
+  hostCode?: string;
+  agencyName?: string;
+  agencyCode?: string;
+
+  // Monthly Target & Earnings Detailed Report
+  monthPeriod: string; // e.g. "2026-09"
+  targetAchievedDiamonds: number;
+  targetAchievedTitle: string;
+  targetLiveMinutes: number;
+  targetActiveDays: number;
+
+  // Wallet & Gift breakdown
+  giftCoinsReceived: number;
+  diamondsConverted: number;
+
+  // Financial request details
+  requestedDiamonds: number;
+  requestedAmountUsdOrEgp: number;
+  currency: 'USD' | 'EGP' | 'SAR';
+  paymentMethod: string; // 'Vodafone Cash' | 'Instapay' | 'Bank Transfer' | 'USDT (TRC20)' | 'STC Pay' | 'Binance Pay'
+  paymentAccountDetails: string;
+
+  status: WithdrawalStatus;
+  requestedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  reviewedByName?: string;
+  rejectionReason?: string;
+  transactionRef?: string;
+}
+
 export type HostApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface HostApplication {
@@ -577,6 +692,39 @@ export interface Agency {
   totalDiamondsEarned: number;
   commissionPercentage: number;
   createdAt: string;
+}
+
+export interface HostAgencyRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userNumericId?: string;
+  phone: string;
+  agencyCode: string;
+  agencyId: string;
+  agencyName: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  createdAt: string;
+  reviewedAt?: string;
+}
+
+export interface AgencyDispute {
+  id: string;
+  hostUserId: string;
+  hostName: string;
+  hostAvatar: string;
+  hostNumericId?: string;
+  phone?: string;
+  agencyCode: string;
+  agencyName: string;
+  agencyOwnerUserId: string;
+  agencyOwnerName: string;
+  reason: string;
+  status: 'PENDING' | 'FORCE_RELEASED' | 'REJECTED';
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
 }
 
 export interface HostProfile {
@@ -687,4 +835,88 @@ export interface SystemGiftTierSettings {
   globalBannerDurationMs?: number;
   lastUpdated?: string;
 }
+
+export interface VerifiedUserRecord {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userNumericId?: string;
+  gender: 'male' | 'female' | 'MALE' | 'FEMALE';
+  verificationPhoto: string;
+  livenessFrontPhoto?: string;
+  livenessRightPhoto?: string;
+  livenessLeftPhoto?: string;
+  verifiedAt: string;
+  isVerified: boolean;
+  revokedAt?: string;
+  revokedBy?: string;
+}
+
+export interface LuckyWheelMatch {
+  matchId: string;
+  betAmount: number; // 100 | 10000 | 20000
+  status: 'WAITING_FOR_OPPONENT' | 'SPINNING' | 'FINISHED';
+  player1: {
+    id: string;
+    name: string;
+    avatar: string;
+    numericId?: string;
+    isBot: boolean;
+  };
+  player2?: {
+    id: string;
+    name: string;
+    avatar: string;
+    numericId?: string;
+    isBot: boolean;
+  };
+  winnerId?: string;
+  winningAngle?: number;
+  winnerPrize?: number;
+  commissionDeducted?: number;
+  createdAt: string;
+  finishedAt?: string;
+}
+
+export interface LuckyFarmItem {
+  id: string;
+  nameAr: string;
+  icon: string;
+  group: 'fruit' | 'meat';
+  multiplier: number;
+}
+
+export interface LuckyFarmWinner {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  winAmount: number;
+  itemName: string;
+  itemIcon: string;
+  timestamp: string;
+}
+
+export interface LuckyFarmGlobalWinBanner {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  winAmount: number;
+  itemName: string;
+  itemIcon: string;
+  timestamp: string;
+}
+
+export interface LuckyFarmRoundState {
+  roundId: string;
+  status: 'BETTING' | 'SPINNING' | 'RESULT';
+  remainingSeconds: number;
+  winningItemId: string | null;
+  totalBetsPerItem: Record<string, number>;
+  userBets: Record<string, number>; // itemId -> amount for current user
+  recentWinners: LuckyFarmWinner[];
+  latestBigWin?: LuckyFarmGlobalWinBanner | null;
+}
+
 

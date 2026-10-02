@@ -16,6 +16,7 @@ import {
   AdminStats,
   Report,
   AuditLog,
+  ModerationIncident,
   HostApplication,
   AgentApplication,
   Agency,
@@ -30,7 +31,14 @@ import {
   ReferralStats,
   MicRequest,
   ShippingRechargeLog,
-  OfficialMessageTarget
+  OfficialMessageTarget,
+  HostWithdrawalRequest,
+  VerifiedUserRecord,
+  LuckyWheelMatch,
+  HostAgencyRequest,
+  AgencyDispute,
+  LuckyFarmRoundState,
+  LuckyFarmGlobalWinBanner
 } from '../types';
 
 import { getOrCreateDeviceId } from '../utils/deviceId';
@@ -203,12 +211,17 @@ export const API = {
 
   // Rooms
   async getRooms(params?: { search?: string; category?: string }): Promise<Room[]> {
-    const query = new URLSearchParams();
-    if (params?.search) query.append('search', params.search);
-    if (params?.category) query.append('category', params.category);
-    const res = await fetch(`/api/rooms?${query.toString()}`);
-    const data = await parseJsonResponse(res);
-    return data.rooms || [];
+    try {
+      const query = new URLSearchParams();
+      if (params?.search) query.append('search', params.search);
+      if (params?.category) query.append('category', params.category);
+      const res = await fetch(`/api/rooms?${query.toString()}`);
+      if (!res.ok) return [];
+      const data = await parseJsonResponse(res);
+      return data.rooms || [];
+    } catch {
+      return [];
+    }
   },
 
   async getRoom(id: string): Promise<{ room: Room; seats: any[]; members: any[] }> {
@@ -230,6 +243,7 @@ export const API = {
     currentCategory?: string;
     tags?: string[];
     micLayout?: string;
+    requireHostApproval?: boolean;
   }): Promise<Room> {
     const res = await fetch('/api/rooms', {
       method: 'POST',
@@ -280,6 +294,7 @@ export const API = {
     description?: string;
     micLayout?: string;
     tags?: string[];
+    requireHostApproval?: boolean;
   }): Promise<{ room: Room; seats: any[] }> {
     const res = await fetch(`/api/rooms/${roomId}/settings`, {
       method: 'PUT',
@@ -383,6 +398,19 @@ export const API = {
     });
     const data = await parseJsonResponse(res);
     return !!data.success;
+  },
+
+  async pullUserToMic(roomId: string, hostId: string, targetUserId: string, seatIndex?: number): Promise<{ success: boolean; seatIndex?: number; error?: string }> {
+    const res = await fetch('/api/rooms/pull-mic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId, hostId, targetUserId, seatIndex })
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) {
+      return { success: false, error: data.error || 'تعذر سحب المستمع للمايك' };
+    }
+    return data;
   },
 
   // Gifts & Wallet
@@ -647,6 +675,7 @@ export const API = {
     targetName: string;
     reason: string;
     details?: string;
+    roomId?: string;
   }): Promise<{ success: boolean; message: string }> {
     const res = await fetch('/api/reports', {
       method: 'POST',
@@ -655,6 +684,68 @@ export const API = {
     });
     const data = await parseJsonResponse(res);
     if (!res.ok) throw new Error(data.error || 'تعذر إرسال البلاغ');
+    return data;
+  },
+
+  async submitUserReport(reporterId: string, reportedUserId: string, roomId?: string, reason?: string, details: string = ''): Promise<{ success: boolean; message: string }> {
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reporterId,
+        reportedUserId,
+        roomId,
+        reason: reason || 'محتوى غير لائق / سب وقذف',
+        details,
+        createdAt: new Date().toISOString(),
+        status: 'pending'
+      })
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) return { success: false, message: data.error || 'فشل إرسال البلاغ' };
+    return { success: true, message: data.message || 'تم إرسال البلاغ للإدارة للمراجعة' };
+  },
+
+  async blockUser(currentUserId: string, targetUserId: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch('/api/users/block', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentUserId, targetUserId })
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) return { success: false, message: data.error || 'تعذر إتمام الحظر' };
+    return { success: true, message: data.message || 'تم حظر المستخدم بنجاح' };
+  },
+
+  async applyUserPenalty(payload: {
+    roomId: string;
+    issuerId: string;
+    targetUserId: string;
+    penaltyType: '15m' | '1h' | '24h' | 'perm';
+    bannedUntil: number | null;
+    reason?: string;
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch('/api/rooms/penalty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشل تطبيق العقوبة');
+    return data;
+  },
+
+  async getUserRoomPenalty(roomId: string, userId: string): Promise<{
+    hasActivePenalty: boolean;
+    penalty?: {
+      penaltyType: '15m' | '1h' | '24h' | 'perm';
+      durationLabel: string;
+      bannedUntil: number | null;
+      reason: string;
+    } | null;
+  }> {
+    const res = await fetch(`/api/rooms/${roomId}/penalty/${userId}`);
+    const data = await parseJsonResponse(res);
     return data;
   },
 
@@ -772,6 +863,37 @@ export const API = {
     const data = await parseJsonResponse(res);
     if (!res.ok) throw new Error(data.error || 'غير مصرح');
     return data.incidents || [];
+  },
+
+  async getGraduatedViolatingUsers(adminId: string): Promise<{
+    user: User;
+    violationCount: number;
+    banStepLabel: string;
+    isPendingReview: boolean;
+    remainingSeconds: number;
+    incidents: ModerationIncident[];
+  }[]> {
+    const res = await fetch('/api/admin/moderation/violating-users', {
+      headers: { 'x-admin-id': adminId }
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'غير مصرح');
+    return data.violatingUsers || [];
+  },
+
+  async resolveGraduatedModerationAction(
+    adminId: string,
+    targetUserId: string,
+    action: 'PERMANENT_BAN_FREEZE' | 'LIFT_BAN_RESET'
+  ): Promise<{ success: boolean; message: string; user?: User }> {
+    const res = await fetch('/api/admin/moderation/graduated-action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-id': adminId },
+      body: JSON.stringify({ adminId, targetUserId, action })
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة إجراء العقوبة الإدارية');
+    return data;
   },
 
   async resolveModerationIncident(
@@ -1158,18 +1280,56 @@ export const API = {
   },
 
   // Shipping Agent System
+  async transferCoinsAsAgent(
+    agentId: string,
+    targetUserIdentifier: string,
+    coinAmount: number
+  ): Promise<{ success: boolean; message: string; agentCoins?: number; targetUser?: Partial<User>; receipt?: ShippingRechargeLog }> {
+    const res = await fetch('/api/shipping-agent/transfer-coins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId, targetUserIdentifier, coinAmount })
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت عملية تحويل الكونز');
+    return data;
+  },
+
+  async supplyAgentCoins(
+    adminId: string,
+    agentUserId: string,
+    coinAmount: number
+  ): Promise<{ success: boolean; message: string; agent?: User }> {
+    const res = await fetch('/api/shipping-agent/supply-coins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': adminId
+      },
+      body: JSON.stringify({ agentUserId, coinAmount })
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة تزويد رصيد الوكيل');
+    return data;
+  },
+
   async assignShippingAgent(
-    ownerId: string,
+    adminId: string,
     targetUserId: string,
-    isAgent: boolean
+    isAgent: boolean,
+    country?: string,
+    phone?: string
   ): Promise<{ success: boolean; message: string; user?: User }> {
     const res = await fetch('/api/shipping-agent/assign', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-id': ownerId },
-      body: JSON.stringify({ targetUserId, isAgent })
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': adminId
+      },
+      body: JSON.stringify({ targetUserId, isAgent, country, phone })
     });
     const data = await parseJsonResponse(res);
-    if (!res.ok) throw new Error(data.error || 'تعذر تحديث صلاحية وكيل الشحن');
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة تعيين وكيل الشحن');
     return data;
   },
 
@@ -1202,5 +1362,266 @@ export const API = {
     const data = await parseJsonResponse(res);
     if (!res.ok) throw new Error(data.error || 'تعذر جلب سجلات الشحن');
     return data.logs || [];
+  },
+
+  // Host & Agent Withdrawal Requests API
+  async submitWithdrawalRequest(payload: {
+    userId: string;
+    requestedDiamonds: number;
+    paymentMethod: string;
+    paymentAccountDetails: string;
+    overrideDateCheck?: boolean;
+  }): Promise<{ success: boolean; message: string; request?: HostWithdrawalRequest; user?: User }> {
+    const res = await fetch('/api/hosts/withdraw-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر تقديم طلب السحب');
+    return data;
+  },
+
+  async getUserWithdrawalRequests(userId: string): Promise<HostWithdrawalRequest[]> {
+    const res = await fetch(`/api/hosts/withdraw-requests/${userId}`);
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب طلبات السحب');
+    return data.requests || [];
+  },
+
+  async getAdminWithdrawalRequests(adminId: string): Promise<HostWithdrawalRequest[]> {
+    const res = await fetch('/api/admin/withdraw-requests', {
+      headers: { 'x-admin-id': adminId }
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب طلبات السحب الإدارية');
+    return data.requests || [];
+  },
+
+  async reviewWithdrawalRequest(payload: {
+    adminId: string;
+    requestId: string;
+    action: 'APPROVE' | 'REJECT';
+    rejectionReason?: string;
+  }): Promise<{ success: boolean; message: string; request?: HostWithdrawalRequest; user?: User }> {
+    const res = await fetch('/api/admin/withdraw-requests/review', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': payload.adminId
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة طلب السحب');
+    return data;
+  },
+
+  // Instant Verification & Admin Moderation API
+  async submitInstantVerification(payload: {
+    userId: string;
+    gender: 'male' | 'female' | 'MALE' | 'FEMALE';
+    verificationPhoto: string;
+    livenessFrontPhoto?: string;
+    livenessRightPhoto?: string;
+    livenessLeftPhoto?: string;
+  }): Promise<{ success: boolean; message: string; user?: User }> {
+    const res = await fetch('/api/users/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر توثيق الحساب');
+    return data;
+  },
+
+  async getAdminVerifiedUsersLog(adminId: string): Promise<VerifiedUserRecord[]> {
+    const res = await fetch('/api/admin/verified-users', {
+      headers: { 'x-admin-id': adminId }
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب سجل الموثقين الجدد');
+    return data.logs || [];
+  },
+
+  async revokeVerification(payload: {
+    adminId: string;
+    targetUserId: string;
+  }): Promise<{ success: boolean; message: string; user?: User }> {
+    const res = await fetch('/api/admin/verified-users/revoke', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': payload.adminId
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة سحب التوثيق');
+    return data;
+  },
+
+  async joinLuckyWheelMatch(payload: {
+    userId: string;
+    betAmount: number;
+  }): Promise<{ success: boolean; match: LuckyWheelMatch; userDiamonds?: number }> {
+    const res = await fetch('/api/games/lucky-wheel/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر الانضمام لجولة عجلة الحظ');
+    return data;
+  },
+
+  async getLuckyWheelMatch(matchId: string): Promise<{ match: LuckyWheelMatch }> {
+    const res = await fetch(`/api/games/lucky-wheel/match/${matchId}`);
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب تفاصيل الجولة');
+    return data;
+  },
+
+  async banVerifiedUser(payload: {
+    adminId: string;
+    targetUserId: string;
+    banReason?: string;
+  }): Promise<{ success: boolean; message: string; user?: User }> {
+    const res = await fetch('/api/admin/verified-users/ban', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': payload.adminId
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة حظر الحساب');
+    return data;
+  },
+
+  // Host-Agency Automated System API Methods
+  async submitHostAgencyJoinRequest(payload: {
+    userId: string;
+    agencyCode: string;
+    phone: string;
+  }): Promise<{ success: boolean; message: string; request?: HostAgencyRequest }> {
+    const res = await fetch('/api/agencies/join-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر إرسال طلب الانضمام للوكالة');
+    return data;
+  },
+
+  async getAgencyHostRequests(userId: string): Promise<HostAgencyRequest[]> {
+    const res = await fetch(`/api/agencies/my-agency-requests/${userId}`);
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب طلبات الانضمام للوكالة');
+    return data.requests || [];
+  },
+
+  async reviewHostAgencyRequest(payload: {
+    agencyOwnerUserId: string;
+    requestId: string;
+    action: 'ACCEPTED' | 'REJECTED';
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch('/api/agencies/requests/review', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة طلب الانضمام');
+    return data;
+  },
+
+  async getAgencyHostsList(userId: string): Promise<any[]> {
+    const res = await fetch(`/api/agencies/my-hosts/${userId}`);
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب قائمة المضيفين للوكالة');
+    return data.hosts || [];
+  },
+
+  async terminateHostAgencyContract(payload: {
+    agencyOwnerUserId: string;
+    hostUserId: string;
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch('/api/agencies/terminate-host', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة فك الارتباط الودي');
+    return data;
+  },
+
+  async submitAgencyDispute(payload: {
+    hostUserId: string;
+    reason: string;
+  }): Promise<{ success: boolean; message: string; dispute?: AgencyDispute }> {
+    const res = await fetch('/api/agencies/submit-dispute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر رفع الشكوى/النزاع للإدارة');
+    return data;
+  },
+
+  async getAdminAgencyDisputes(adminId: string): Promise<AgencyDispute[]> {
+    const res = await fetch('/api/admin/agency-disputes', {
+      headers: { 'x-admin-id': adminId }
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب سجل نزاعات الوكالات');
+    return data.disputes || [];
+  },
+
+  async resolveAgencyDispute(payload: {
+    ownerId: string;
+    disputeId: string;
+    action: 'FORCE_RELEASE' | 'REJECT';
+  }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch('/api/admin/agency-disputes/resolve', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-id': payload.ownerId
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشلت معالجة النزاع الإجباري');
+    return data;
+  },
+
+  // Lucky Farm Game API
+  async getLuckyFarmState(userId?: string): Promise<LuckyFarmRoundState> {
+    const url = userId ? `/api/games/lucky-farm/state?userId=${encodeURIComponent(userId)}` : '/api/games/lucky-farm/state';
+    const res = await fetch(url);
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'تعذر جلب حالة لعبة مزرعة الحظ');
+    return data.state;
+  },
+
+  async placeLuckyFarmBet(payload: {
+    userId: string;
+    itemId: string;
+    amount: number;
+  }): Promise<{ success: boolean; state: LuckyFarmRoundState; userDiamonds: number }> {
+    const res = await fetch('/api/games/lucky-farm/bet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'فشل وضع الرهان في مزرعة الحظ');
+    return data;
   }
 };

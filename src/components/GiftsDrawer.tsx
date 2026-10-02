@@ -41,12 +41,6 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<GiftCategoryTab>('all');
 
-  const isOwner = currentUser.role === 'OWNER' ||
-    currentUser.isOwner === true ||
-    currentUser.is_owner === true ||
-    currentUser.id === 'user_admin' ||
-    currentUser.username?.toLowerCase() === 'jdwalrwyy';
-  
   // Recipient selection
   const [localReceiverId, setLocalReceiverId] = useState<string>(hostUser.id);
   const activeReceiverId = controlledReceiverId || localReceiverId;
@@ -57,11 +51,11 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
   // Tap & Combo state
   const [comboCount, setComboCount] = useState<number>(0);
   const [isSending, setIsSending] = useState(false);
-  
+
   // Long-press charge state
   const [isCharging, setIsCharging] = useState(false);
   const [chargedCount, setChargedCount] = useState<number>(0);
-  
+
   // Feedback
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -88,7 +82,6 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
       setComboCount(0);
       setSelectedMultiplier(1);
     } else {
-      // Clear timers on close
       if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
       if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
       if (chargeIntervalRef.current) clearInterval(chargeIntervalRef.current);
@@ -106,7 +99,7 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
 
   // Build list of active potential recipients in the room (Host + Seated Users)
   const potentialReceivers: { id: string; name: string; avatar: string; badge: string; gender?: 'male' | 'female' }[] = [];
-  
+
   // Host first
   potentialReceivers.push({
     id: hostUser.id,
@@ -115,7 +108,7 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
     badge: '👑 المضيف'
   });
 
-  // Seated users (Microphones 1 to 8)
+  // Seated users (Microphones 1 to N)
   roomSeats.forEach(s => {
     if (s.userId && s.userId !== hostUser.id) {
       potentialReceivers.push({
@@ -128,11 +121,9 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
     }
   });
 
-  // If there are multiple people on mic, allow "All Mics" option
   const isAllMicsSelected = activeReceiverId === 'ALL_MICS';
   const allMicsTargetIds = potentialReceivers.filter(r => r.id !== currentUser.id).map(r => r.id);
 
-  // Active receiver object
   const activeReceiverObj = useMemo(() => {
     if (isAllMicsSelected) {
       return { id: 'ALL_MICS', name: `جميع المايكات (${allMicsTargetIds.length})`, avatar: '', badge: '🌟 الكل' };
@@ -172,11 +163,22 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
   const executeSendGiftBatch = async (gift: Gift, countToSend: number, targetId: string) => {
     if (countToSend <= 0 || !gift || isSending) return;
 
-    const totalCost = gift.diamondCost * countToSend * recipientsMultiplier;
-    if (currentUser.diamonds < totalCost) {
-      setErrorMsg('رصيد الماسات غير كافٍ');
-      soundEffects.playError();
-      return;
+    const isCoinGift = (gift as any).currency === 'COIN' || gift.diamondCost === 0;
+    const unitCost = isCoinGift ? ((gift as any).coinCost || gift.coinReward || 10) : gift.diamondCost;
+    const totalCost = unitCost * countToSend * recipientsMultiplier;
+
+    if (isCoinGift) {
+      if ((currentUser.coins || 0) < totalCost) {
+        setErrorMsg('رصيدك غير كافٍ، يرجى الشحن');
+        soundEffects.playError();
+        return;
+      }
+    } else {
+      if ((currentUser.diamonds || 0) < totalCost) {
+        setErrorMsg('رصيدك غير كافٍ، يرجى الشحن');
+        soundEffects.playError();
+        return;
+      }
     }
 
     setIsSending(true);
@@ -198,8 +200,12 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
 
           if (res.user) {
             latestUser = res.user;
-          } else if (res.senderNewDiamonds !== undefined) {
-            latestUser = { ...latestUser, diamonds: res.senderNewDiamonds };
+          } else if (res.senderNewDiamonds !== undefined || res.senderNewCoins !== undefined) {
+            latestUser = {
+              ...latestUser,
+              ...(res.senderNewDiamonds !== undefined && { diamonds: res.senderNewDiamonds }),
+              ...(res.senderNewCoins !== undefined && { coins: res.senderNewCoins })
+            };
           }
         }
 
@@ -230,11 +236,14 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
           idempotencyKey
         });
 
-        // Immediately update diamonds balance in app state
         if (res.user && onUserUpdated) {
           onUserUpdated(res.user);
-        } else if (res.senderNewDiamonds !== undefined && onUserUpdated) {
-          onUserUpdated({ ...currentUser, diamonds: res.senderNewDiamonds });
+        } else if ((res.senderNewDiamonds !== undefined || res.senderNewCoins !== undefined) && onUserUpdated) {
+          onUserUpdated({
+            ...currentUser,
+            ...(res.senderNewDiamonds !== undefined && { diamonds: res.senderNewDiamonds }),
+            ...(res.senderNewCoins !== undefined && { coins: res.senderNewCoins })
+          });
         }
 
         soundEffects.playGiftSound((gift as any).tierLevel || 'STANDARD', (gift.diamondCost || 0) * countToSend, gift.soundKey);
@@ -253,13 +262,12 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
         }
       }
 
-      // Auto-clear success message after 2.5s
       setTimeout(() => {
         setSuccessMsg(null);
       }, 2500);
 
     } catch (err: any) {
-      setErrorMsg(err?.message || 'تعذر إرسال الهدية. يرجى المحاولة لاحقاً');
+      setErrorMsg(err?.message || 'رصيدك غير كافٍ، يرجى الشحن');
       soundEffects.playError();
     } finally {
       setIsSending(false);
@@ -268,13 +276,11 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
     }
   };
 
-  // Direct Send Single / Multiplier click
   const handleQuickSend = (count: number) => {
     if (!selectedGift) return;
     executeSendGiftBatch(selectedGift, count, activeReceiverId);
   };
 
-  // Tap or Fast Combo Click
   const handleTap = () => {
     if (!selectedGift || isSending) return;
 
@@ -286,14 +292,12 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
     setComboCount(pendingTapsRef.current);
     soundEffects.playPop();
 
-    // Debounce fast taps: after 450ms of quiet, send the accumulated combo batch
     comboTimerRef.current = setTimeout(() => {
       const finalCount = pendingTapsRef.current;
       executeSendGiftBatch(selectedGift, finalCount, activeReceiverId);
     }, 450);
   };
 
-  // Long press / Charge logic
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!selectedGift || isSending) return;
     isLongPressRef.current = false;
@@ -353,259 +357,254 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
 
   return (
     <>
-      {/* Semi-transparent backdrop - lets upper 8 mics and room view stay visible and clear */}
+      {/* Semi-transparent backdrop */}
       <div
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px] transition-opacity"
         onClick={onClose}
       />
 
-      {/* Compact Bottom Sheet Overlay (Sitting cleanly at bottom without covering room or 8 mic seats) */}
+      {/* Main Gifts Window Container with Exact Proportions: 10% Sleek Header, 75% Gift Grid, 15% Bottom Control Bar */}
       <div
-        className="fixed bottom-0 inset-x-0 z-50 max-w-lg mx-auto bg-slate-900/98 backdrop-blur-2xl border-t-2 border-amber-500/40 rounded-t-3xl shadow-[0_-10px_35px_rgba(0,0,0,0.8)] p-3 sm:p-4 flex flex-col gap-2.5 max-h-[58vh] sm:max-h-[480px] overflow-hidden animate-in slide-in-from-bottom duration-200 select-none"
+        className="fixed bottom-0 inset-x-0 z-50 max-w-lg mx-auto bg-slate-950/98 backdrop-blur-2xl border-t-2 border-amber-500/40 rounded-t-3xl shadow-[0_-10px_35px_rgba(0,0,0,0.9)] p-2.5 sm:p-3 flex flex-col h-[62vh] max-h-[500px] overflow-hidden animate-in slide-in-from-bottom duration-200 select-none"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
       >
         {/* Drag Handle Bar */}
         <div
-          className="w-10 h-1 bg-slate-700/80 hover:bg-amber-400/80 rounded-full mx-auto cursor-pointer transition-colors"
+          className="w-10 h-1 bg-slate-700/80 hover:bg-amber-400/80 rounded-full mx-auto cursor-pointer transition-colors shrink-0 mb-1"
           onClick={onClose}
           title="إغلاق اللوحة"
         />
 
-        {/* Header Bar: Title + Diamonds Balance & Recharge */}
-        <div className="flex items-center justify-between border-b border-slate-800/90 pb-2">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-xl bg-gradient-to-tr from-amber-500/20 to-yellow-400/10 text-amber-400 border border-amber-500/30">
-              <GiftIcon className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h3 className="font-extrabold text-xs sm:text-sm text-slate-100">إرسال الهدايا</h3>
+        {/* 1. COMPACT SLEEK HEADER (10% Height): Max 36px-40px per row, ultra-thin padding <= 4px */}
+        <div className="shrink-0 flex flex-col gap-1 border-b border-slate-800/90 pb-1.5">
+          {/* Top Row: Title + Recipient Chips + Balance & Close */}
+          <div className="flex items-center justify-between gap-1.5 min-h-[36px]">
+            <div className="flex items-center gap-1.5">
+              <div className="p-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0">
+                <GiftIcon className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-extrabold text-xs text-slate-100 whitespace-nowrap">متجر الهدايا</span>
                 {comboCount > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 text-[10px] font-black animate-bounce flex items-center gap-0.5 shadow-sm shadow-orange-500/50">
-                    <Flame className="w-3 h-3 fill-current" />
+                  <span className="px-1.5 py-0.2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-slate-950 text-[9px] font-black animate-bounce flex items-center gap-0.5">
+                    <Flame className="w-2.5 h-2.5 fill-current" />
                     <span>x{comboCount}</span>
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400">اختر المستلم والهدية • ضغطات سريعة لتكرار الإرسال</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Real-time Diamonds Balance (+ Top-up Button only for Owner) */}
-            <div
-              title="رصيدك من الماسات"
-              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900 border border-slate-700/80 text-sky-300 text-xs font-black shadow-sm"
-            >
-              <Gem className="w-3.5 h-3.5 text-sky-400" />
-              <span>{currentUser.diamonds.toLocaleString('ar-EG')}</span>
             </div>
 
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-              title="إغلاق"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+            {/* Recipient Chips (Compact Scroll) */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 max-w-[180px] sm:max-w-[240px]">
+              {potentialReceivers.map(rec => {
+                const isSelected = activeReceiverId === rec.id;
+                return (
+                  <button
+                    key={rec.id}
+                    onClick={() => handleSelectReceiver(rec.id)}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 font-black shadow-sm'
+                        : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60'
+                    }`}
+                  >
+                    <img
+                      src={rec.avatar}
+                      alt={rec.name}
+                      className="w-3.5 h-3.5 rounded-full object-cover shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="truncate max-w-[60px]">{rec.name}</span>
+                  </button>
+                );
+              })}
 
-        {/* Horizontal Recipient Selector Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none shrink-0">
-          <span className="text-[11px] text-amber-400 font-extrabold whitespace-nowrap ml-1">المستلم:</span>
+              {potentialReceivers.length > 1 && (
+                <button
+                  onClick={() => handleSelectReceiver('ALL_MICS')}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    isAllMicsSelected
+                      ? 'bg-amber-400 text-slate-950 font-black shadow-sm'
+                      : 'bg-purple-950/70 text-purple-300 border border-purple-500/40'
+                  }`}
+                >
+                  <Users className="w-3 h-3 text-purple-300" />
+                  <span>الكل ({allMicsTargetIds.length})</span>
+                </button>
+              )}
+            </div>
 
-          {potentialReceivers.map(rec => {
-            const isSelected = activeReceiverId === rec.id;
-            return (
-              <button
-                key={rec.id}
-                onClick={() => handleSelectReceiver(rec.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/25 scale-102 ring-2 ring-amber-300 font-black'
-                    : 'bg-slate-800/90 hover:bg-slate-800 text-slate-300 border border-slate-700/60'
-                }`}
-              >
-                <img
-                  src={rec.avatar}
-                  alt={rec.name}
-                  className="w-4 h-4 rounded-full object-cover shrink-0"
-                  referrerPolicy="no-referrer"
-                />
-                <span className="truncate max-w-[80px]">{rec.name}</span>
-                <span className={`text-[9px] px-1 rounded ${isSelected ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-slate-700/60 text-amber-300'}`}>
-                  {rec.badge}
-                </span>
-              </button>
-            );
-          })}
-
-          {/* All Mics Option */}
-          {potentialReceivers.length > 1 && (
-            <button
-              onClick={() => handleSelectReceiver('ALL_MICS')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
-                isAllMicsSelected
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/25 scale-102 ring-2 ring-amber-300 font-black'
-                  : 'bg-purple-950/70 hover:bg-purple-900/80 text-purple-300 border border-purple-500/40'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5 text-purple-300" />
-              <span>جميع المايكات ({allMicsTargetIds.length})</span>
-            </button>
-          )}
-        </div>
-
-        {/* Category Filter Tabs (Clean luxury styling, no emojis) */}
-        <div className="flex items-center justify-between gap-1 border-b border-slate-800/80 pb-1.5 shrink-0">
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
-            {[
-              { id: 'all' as const, label: 'الكل' },
-              { id: 'common' as const, label: 'كلاسيكية (5-100 💎)' },
-              { id: 'pretty' as const, label: 'مميزة (200-5K 💎)' },
-              { id: 'luxury' as const, label: 'فاخرة (8K-30K 💎)' },
-              { id: 'legendary' as const, label: 'أسطورية (40K-80K 💎)' },
-              { id: 'vip' as const, label: 'VIP النخبة (90K-100K 💎)' }
-            ].map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] sm:text-[11px] font-black transition-all whitespace-nowrap ${
-                  selectedCategory === cat.id
-                    ? cat.id === 'vip'
-                      ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 shadow-md shadow-amber-500/30 ring-2 ring-yellow-300'
-                      : cat.id === 'legendary'
-                      ? 'bg-gradient-to-r from-purple-700 to-amber-500 text-white shadow-md ring-1 ring-amber-400'
-                      : 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 bg-slate-800/50'
-                }`}
-              >
-                {cat.id === 'vip' && <Crown className="w-3 h-3 text-amber-300 fill-amber-300 shrink-0" />}
-                {cat.id === 'legendary' && <Sparkles className="w-3 h-3 text-amber-300 shrink-0" />}
-                <span>{cat.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <span className="text-[10px] text-slate-500 font-bold shrink-0 hidden sm:inline">
-            {filteredGifts.length} هدية
-          </span>
-        </div>
-
-        {/* Luxury Boutique Gifts Grid with 3D Presentation Showrooms */}
-        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto max-h-[195px] sm:max-h-[225px] p-1 scrollbar-thin">
-          {filteredGifts.map(gift => {
-            const isSelected = selectedGift?.id === gift.id;
-            const isVip = gift.diamondCost >= 90000 || gift.category === 'vip';
-            const isLegendary = (gift.diamondCost >= 40000 && gift.diamondCost < 90000) || gift.category === 'legendary';
-            const isLuxury = (gift.diamondCost >= 8000 && gift.diamondCost < 40000) || gift.category === 'luxury';
-            const isPretty = (gift.diamondCost >= 200 && gift.diamondCost < 8000) || gift.category === 'pretty';
-
-            return (
+            {/* Balance & Close */}
+            <div className="flex items-center gap-1 shrink-0">
               <div
-                key={gift.id}
-                onClick={() => {
-                  setSelectedGift(gift);
-                  setErrorMsg(null);
-                }}
-                className={`relative flex flex-col items-center justify-between p-1.5 rounded-2xl cursor-pointer transition-all min-h-[106px] group ${
-                  isSelected
-                    ? isVip
-                      ? 'bg-gradient-to-b from-purple-900/70 via-amber-950/50 to-slate-900 border-2 border-yellow-300 shadow-xl shadow-yellow-500/30 scale-102 ring-2 ring-yellow-400'
-                      : isLegendary
-                      ? 'bg-gradient-to-b from-amber-500/30 to-purple-950/50 border-2 border-amber-400 shadow-lg shadow-amber-500/25 scale-102 ring-2 ring-amber-400/50'
-                      : 'bg-gradient-to-b from-amber-500/25 to-yellow-500/10 border-2 border-amber-400 shadow-lg shadow-amber-500/25 scale-102 ring-2 ring-amber-400/40'
-                    : isVip
-                    ? 'bg-gradient-to-b from-purple-950/40 via-slate-900/90 to-slate-950 hover:bg-slate-800/90 border border-yellow-400/50 text-slate-200'
-                    : isLegendary
-                    ? 'bg-gradient-to-b from-slate-900 via-slate-900/90 to-amber-950/40 hover:bg-slate-800/90 border border-amber-500/40 text-slate-200'
-                    : isLuxury
-                    ? 'bg-slate-900/90 hover:bg-slate-800/90 border border-amber-500/30 text-slate-300'
-                    : 'bg-slate-900/80 hover:bg-slate-800/90 border border-slate-700/60 text-slate-300 hover:border-slate-500'
-                }`}
+                title="رصيدك من الماسات"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-700/80 text-sky-300 text-[11px] font-extrabold shadow-sm"
               >
-                {/* Sleek Vector Tier Badges (No Emojis) */}
-                {isVip && (
-                  <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 text-[8px] font-black shadow-md border border-white flex items-center gap-0.5">
-                    <Crown className="w-2.5 h-2.5 text-slate-950 fill-current" />
-                    <span>VIP</span>
-                  </span>
-                )}
-                {isLegendary && !isVip && (
-                  <span className="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-purple-600 text-amber-200 text-[8px] font-black shadow-md border border-amber-400/50 flex items-center gap-0.5">
-                    <Sparkles className="w-2.5 h-2.5 text-amber-300" />
-                    <span>أسطوري</span>
-                  </span>
-                )}
-                {isLuxury && (
-                  <span className="absolute -top-1.5 -right-1 px-1 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[8px] font-black border border-amber-500/40 flex items-center gap-0.5">
-                    <Trophy className="w-2 h-2 text-amber-400" />
-                    <span>فاخر</span>
-                  </span>
-                )}
+                <Gem className="w-3 h-3 text-sky-400" />
+                <span>{currentUser.diamonds.toLocaleString('ar-EG')}</span>
+              </div>
 
-                {/* 3D Realistic Showcase Podium & Model */}
-                <div className="relative w-full h-[52px] flex items-center justify-center group-hover:scale-108 transition-transform">
-                  {/* Subtle 3D Glass Pedestal Glow */}
-                  <div className="absolute inset-x-2 bottom-0 h-1.5 rounded-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent blur-[2px]" />
-                  <GiftVisualRenderer
-                    giftId={gift.id}
-                    icon={gift.icon}
-                    giftName={gift.nameAr}
-                    tier={isVip ? 'VIP' : isLegendary ? 'LEGENDARY' : isLuxury ? 'LUXURY' : isPretty ? 'PRETTY' : 'COMMON'}
-                    size="store"
-                    showAura={false}
-                  />
-                </div>
+              <button
+                onClick={onClose}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                title="إغلاق"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
 
-                {/* Gift Arabic Name & Diamond Cost */}
-                <div className="w-full flex flex-col items-center mt-1">
-                  <span className="text-[10px] font-black text-slate-100 text-center truncate w-full px-0.5 leading-tight">
-                    {gift.nameAr}
-                  </span>
+          {/* Category Filter Tabs (Sleek, compact row) */}
+          <div className="flex items-center justify-between gap-1 py-0.5">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+              {[
+                { id: 'all' as const, label: 'الكل' },
+                { id: 'common' as const, label: 'عادية (5-100 💎)' },
+                { id: 'pretty' as const, label: 'مميزة (200-5K 💎)' },
+                { id: 'luxury' as const, label: 'فاخرة (8K-30K 💎)' },
+                { id: 'legendary' as const, label: 'أسطورية (40K-80K 💎)' },
+                { id: 'vip' as const, label: 'VIP (90K-100K 💎)' }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black transition-all whitespace-nowrap cursor-pointer ${
+                    selectedCategory === cat.id
+                      ? cat.id === 'vip'
+                        ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 font-extrabold shadow-sm ring-1 ring-yellow-300'
+                        : cat.id === 'legendary'
+                        ? 'bg-gradient-to-r from-purple-700 to-amber-500 text-white font-extrabold shadow-sm'
+                        : 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 bg-slate-900/80'
+                  }`}
+                >
+                  {cat.id === 'vip' && <Crown className="w-2.5 h-2.5 text-amber-300 fill-amber-300 shrink-0" />}
+                  {cat.id === 'legendary' && <Sparkles className="w-2.5 h-2.5 text-amber-300 shrink-0" />}
+                  <span>{cat.label}</span>
+                </button>
+              ))}
+            </div>
 
-                  <div className="flex items-center gap-0.5 text-[9px] font-black text-sky-400 mt-0.5">
-                    <Gem className="w-2.5 h-2.5 text-sky-400" />
-                    <span>{gift.diamondCost.toLocaleString('ar-EG')}</span>
+            <span className="text-[9px] text-slate-500 font-bold shrink-0 hidden sm:inline">
+              {filteredGifts.length} هدية
+            </span>
+          </div>
+        </div>
+
+        {/* 2. GIFT CONTAINER & GRID (75% Height): Wide, open, neatly proportioned cards with pristine borders */}
+        <div className="flex-1 overflow-y-auto p-1 scrollbar-thin my-0.5">
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2 auto-rows-fr">
+            {filteredGifts.map(gift => {
+              const isSelected = selectedGift?.id === gift.id;
+              const isVip = gift.diamondCost >= 90000 || gift.category === 'vip';
+              const isLegendary = (gift.diamondCost >= 40000 && gift.diamondCost < 90000) || gift.category === 'legendary';
+              const isLuxury = (gift.diamondCost >= 8000 && gift.diamondCost < 40000) || gift.category === 'luxury';
+              const isPretty = (gift.diamondCost >= 200 && gift.diamondCost < 8000) || gift.category === 'pretty';
+
+              return (
+                <div
+                  key={gift.id}
+                  onClick={() => {
+                    setSelectedGift(gift);
+                    setErrorMsg(null);
+                  }}
+                  className={`relative flex flex-col items-center justify-between p-1.5 rounded-xl cursor-pointer transition-all min-h-[92px] group select-none ${
+                    isSelected
+                      ? isVip
+                        ? 'bg-gradient-to-b from-purple-900/80 via-amber-950/60 to-slate-900 border-2 border-yellow-300 shadow-md shadow-yellow-500/20 scale-102 ring-1 ring-yellow-400'
+                        : isLegendary
+                        ? 'bg-gradient-to-b from-amber-500/30 to-purple-950/60 border-2 border-amber-400 shadow-md shadow-amber-500/20 scale-102 ring-1 ring-amber-400'
+                        : 'bg-gradient-to-b from-amber-500/25 to-yellow-500/10 border-2 border-amber-400 shadow-md shadow-amber-500/20 scale-102 ring-1 ring-amber-400'
+                      : isVip
+                      ? 'bg-slate-900/90 hover:bg-slate-800/90 border border-yellow-400/40 text-slate-200'
+                      : isLegendary
+                      ? 'bg-slate-900/90 hover:bg-slate-800/90 border border-amber-500/40 text-slate-200'
+                      : isLuxury
+                      ? 'bg-slate-900/90 hover:bg-slate-800/90 border border-amber-500/30 text-slate-300'
+                      : 'bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800/90 text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  {/* Sleek Vector Tier Badges */}
+                  {isVip && (
+                    <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-amber-400 text-slate-950 text-[7px] font-black shadow-sm flex items-center gap-0.5">
+                      <Crown className="w-2 h-2 text-slate-950 fill-current" />
+                      <span>VIP</span>
+                    </span>
+                  )}
+                  {isLegendary && !isVip && (
+                    <span className="absolute top-1 right-1 px-1 py-0.2 rounded bg-purple-600 text-amber-200 text-[7px] font-black shadow-sm flex items-center gap-0.5">
+                      <Sparkles className="w-2 h-2 text-amber-300" />
+                      <span>أسطورة</span>
+                    </span>
+                  )}
+
+                  {/* Gift 3D Renderer / Image Showcase */}
+                  <div className="relative w-full h-[46px] flex items-center justify-center group-hover:scale-105 transition-transform mt-0.5">
+                    <GiftVisualRenderer
+                      giftId={gift.id}
+                      icon={gift.icon}
+                      giftName={gift.nameAr}
+                      tier={isVip ? 'VIP' : isLegendary ? 'LEGENDARY' : isLuxury ? 'LUXURY' : isPretty ? 'PRETTY' : 'COMMON'}
+                      size="store"
+                      showAura={false}
+                    />
+                  </div>
+
+                  {/* Gift Name & Price - Clear without clipping or overlap */}
+                  <div className="w-full flex flex-col items-center justify-end mt-1">
+                    <span className="text-[10px] font-black text-slate-100 text-center truncate w-full px-0.5 leading-tight">
+                      {gift.nameAr}
+                    </span>
+
+                    <div className="flex items-center gap-0.5 text-[9px] font-bold text-sky-400 mt-0.5">
+                      <Gem className="w-2.5 h-2.5 text-sky-400 shrink-0" />
+                      <span>{gift.diamondCost.toLocaleString('ar-EG')}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         {/* Feedback Messages */}
         {errorMsg && (
-          <div className="p-2 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[11px] font-bold flex items-center justify-between gap-2 shrink-0 animate-in fade-in">
+          <div className="p-1.5 px-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-[10px] font-bold flex items-center justify-between gap-1.5 shrink-0 animate-in fade-in">
             <div className="flex items-center gap-1.5 truncate">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
               <span className="truncate">{errorMsg}</span>
             </div>
+            {errorMsg.includes('رصيدك غير كافٍ') && (
+              <button
+                onClick={onOpenWallet}
+                className="px-2 py-0.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-[10px] shrink-0 transition-all shadow-sm cursor-pointer"
+              >
+                شحن الآن 💎
+              </button>
+            )}
           </div>
         )}
 
         {successMsg && (
-          <div className="p-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[11px] font-black flex items-center gap-1.5 shrink-0 animate-in fade-in">
-            <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+          <div className="p-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[10px] font-black flex items-center gap-1 shrink-0 animate-in fade-in">
+            <CheckCircle className="w-3 h-3 shrink-0 text-emerald-400" />
             <span className="truncate">{successMsg}</span>
           </div>
         )}
 
-        {/* Bottom Actions Bar (Multiplier Presets + Send Confirmation Button) */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/90 shrink-0">
+        {/* 3. BOTTOM CONTROL BAR (15% Height): Multiplier Presets + Interactive Send Button */}
+        <div className="shrink-0 flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-800/90">
           {/* Multiplier Presets */}
-          <div className="flex items-center gap-1 bg-slate-800/90 p-0.5 rounded-xl border border-slate-700/70 shrink-0">
+          <div className="flex items-center gap-0.5 bg-slate-800/90 p-0.5 rounded-xl border border-slate-700/70 shrink-0">
             {[1, 5, 10, 66, 99, 520].map(num => (
               <button
                 key={num}
                 onClick={() => setSelectedMultiplier(num)}
                 disabled={!selectedGift || isSending}
-                className={`px-1.5 sm:px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all ${
+                className={`px-1.5 py-1 rounded-lg text-[10px] font-black transition-all cursor-pointer ${
                   selectedMultiplier === num && comboCount === 0 && !isCharging
-                    ? 'bg-amber-400 text-slate-950 shadow-sm'
+                    ? 'bg-amber-400 text-slate-950 font-extrabold shadow-sm'
                     : 'text-slate-300 hover:text-amber-400 hover:bg-slate-700/60'
                 }`}
                 title={`تحديد الكمية x${num}`}
@@ -622,43 +621,43 @@ export const GiftsDrawer: React.FC<GiftsDrawerProps> = ({
             onPointerCancel={handlePointerUpOrCancel}
             onPointerLeave={handlePointerUpOrCancel}
             disabled={!selectedGift || isSending}
-            className={`relative overflow-hidden flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-2xl font-black text-xs sm:text-sm transition-all select-none touch-none cursor-pointer ${
+            className={`relative overflow-hidden flex-1 flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl font-black text-xs transition-all select-none touch-none cursor-pointer ${
               !isAffordable
                 ? 'bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300'
                 : isCharging
-                ? 'bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 text-slate-950 scale-102 ring-4 ring-amber-400 shadow-xl shadow-amber-500/40 animate-pulse'
+                ? 'bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 text-slate-950 scale-102 ring-2 ring-amber-400 shadow-lg shadow-amber-500/30 animate-pulse'
                 : comboCount > 0
-                ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 ring-2 ring-amber-400 shadow-lg'
-                : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/25 active:scale-95'
+                ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-950 ring-1 ring-amber-400 shadow-md'
+                : 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-md shadow-amber-500/20 active:scale-95'
             }`}
           >
             {isCharging ? (
-              <div className="flex items-center gap-1.5 animate-pulse">
-                <Zap className="w-4 h-4 text-slate-950 fill-current animate-bounce" />
-                <span>
-                  جارِ الشحن: x{chargedCount} ({totalCostPreview.toLocaleString('ar-EG')} 💎) • ارفع للإرسال!
+              <div className="flex items-center gap-1 animate-pulse truncate">
+                <Zap className="w-3.5 h-3.5 text-slate-950 fill-current animate-bounce shrink-0" />
+                <span className="truncate">
+                  جارِ الشحن: x{chargedCount} ({totalCostPreview.toLocaleString('ar-EG')} 💎)
                 </span>
               </div>
             ) : comboCount > 0 ? (
-              <div className="flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-orange-700 fill-current animate-bounce" />
-                <span>
+              <div className="flex items-center gap-1 truncate">
+                <Flame className="w-3.5 h-3.5 text-orange-700 fill-current animate-bounce shrink-0" />
+                <span className="truncate">
                   كومبو x{comboCount} ({totalCostPreview.toLocaleString('ar-EG')} 💎)
                 </span>
               </div>
             ) : isSending ? (
-              <span className="text-[11px] text-slate-900 flex items-center gap-1.5 font-bold">
-                <Sparkles className="w-3.5 h-3.5 animate-spin" />
-                <span>جارِ الإرسال والخصم...</span>
+              <span className="text-[10px] text-slate-900 flex items-center gap-1 font-bold truncate">
+                <Sparkles className="w-3 h-3 animate-spin shrink-0" />
+                <span>جارِ الإرسال...</span>
               </span>
             ) : !isAffordable ? (
-              <div className="flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
-                <span>الرصيد غير كافٍ ({totalCostPreview.toLocaleString('ar-EG')} 💎)</span>
+              <div className="flex items-center gap-1 truncate">
+                <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />
+                <span className="truncate">الرصيد غير كافٍ ({totalCostPreview.toLocaleString('ar-EG')} 💎)</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 truncate">
-                <Send className="w-3.5 h-3.5 rotate-180 shrink-0" />
+              <div className="flex items-center gap-1 truncate">
+                <Send className="w-3 h-3 rotate-180 shrink-0" />
                 <span className="truncate">
                   إرسال إلى {activeReceiverObj.name}: {selectedGift?.nameAr} ({totalCostPreview.toLocaleString('ar-EG')} 💎)
                 </span>

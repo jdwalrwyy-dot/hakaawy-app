@@ -10,14 +10,14 @@ interface ReportModalProps {
   targetType: 'USER' | 'ROOM' | 'MESSAGE' | 'STREAM';
   targetId: string;
   targetName: string;
+  roomId?: string;
 }
 
 const REPORT_REASONS = [
-  'محتوى غير لائق أو مسيء',
-  'تنمر ومضايقات لفظية',
-  'انتحال شخصية أو حساب مزيف',
-  'احتيال أو طلب معلومات خاصة',
-  'سبام وإعلانات مزعجة',
+  'سب وشتم / ألفاظ غير لائقة',
+  'إزعاج ومضايقة',
+  'محتوى مسيء أو غير أخلاقي',
+  'انتحال شخصية أو احتيال',
   'أخرى'
 ];
 
@@ -27,7 +27,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   currentUser,
   targetType,
   targetId,
-  targetName
+  targetName,
+  roomId
 }) => {
   const [reason, setReason] = useState(REPORT_REASONS[0]);
   const [details, setDetails] = useState('');
@@ -46,7 +47,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         targetId,
         targetName,
         reason,
-        details: details.trim() || undefined
+        details: details.trim() || undefined,
+        roomId
       });
       setIsSuccess(true);
       setTimeout(() => {
@@ -84,8 +86,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         {isSuccess ? (
           <div className="py-8 flex flex-col items-center justify-center gap-2 text-center">
             <CheckCircle className="w-12 h-12 text-emerald-400 animate-bounce" />
-            <h3 className="font-bold text-slate-100 text-sm">تم إرسال البلاغ بنجاح</h3>
-            <p className="text-xs text-slate-400">سيقوم فريق الرقابة بمراجعة البلاغ واتخاذ الإجراء اللازم.</p>
+            <h3 className="font-bold text-slate-100 text-sm">تم استلام بلاغك وسيقوم فريق الإدارة بمراجعته فوراً</h3>
+            <p className="text-xs text-slate-400">شكراً لمساعدتك في الحفاظ على بيئة حكاوي الآمنة.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">

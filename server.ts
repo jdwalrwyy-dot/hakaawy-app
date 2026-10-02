@@ -10,7 +10,8 @@ const app = express();
 const server = http.createServer(app);
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- CORS & PREFLIGHT MIDDLEWARE ---
 app.use((req, res, next) => {
@@ -90,6 +91,12 @@ wss.on('connection', (ws: WebSocket) => {
         const user = db.getUserById(data.userId);
         if (user) {
           user.isOnline = true;
+          db.save();
+          broadcastAll({
+            type: 'user_presence_updated',
+            userId: user.id,
+            isOnline: true
+          });
         }
       }
 
@@ -114,7 +121,8 @@ wss.on('connection', (ws: WebSocket) => {
           room,
           seats,
           members: db.getRoomMembers(roomId, isOwner),
-          messages
+          messages,
+          micRequests: db.getMicRequests(roomId)
         }));
 
         if (!isStealthActive) {
@@ -331,13 +339,13 @@ wss.on('connection', (ws: WebSocket) => {
         const req = result.request;
         const room = db.getRoomById(roomId);
         if (room) {
-          // Notify room and host instantly
-          broadcastToRoom(roomId, {
+          // Broadcast to ALL connected clients so host and room members receive it instantly
+          broadcastAll({
             type: 'new_mic_request',
             roomId,
             request: req
           });
-          broadcastToRoom(roomId, {
+          broadcastAll({
             type: 'mic_requests_updated',
             roomId,
             requests: db.getMicRequests(roomId)
@@ -360,12 +368,12 @@ wss.on('connection', (ws: WebSocket) => {
         const { roomId, userId } = data;
         const cancelled = db.cancelMicRequest(roomId, userId);
         if (cancelled) {
-          broadcastToRoom(roomId, {
+          broadcastAll({
             type: 'mic_request_cancelled',
             roomId,
             userId
           });
-          broadcastToRoom(roomId, {
+          broadcastAll({
             type: 'mic_requests_updated',
             roomId,
             requests: db.getMicRequests(roomId)
@@ -391,7 +399,7 @@ wss.on('connection', (ws: WebSocket) => {
         const result = db.resolveMicRequest(requestId, status, targetSeatIndex);
         if (result.success && result.request) {
           const roomId = result.request.roomId;
-          broadcastToRoom(roomId, {
+          broadcastAll({
             type: 'seats_updated',
             roomId,
             seats: db.getRoomSeats(roomId),
@@ -399,8 +407,8 @@ wss.on('connection', (ws: WebSocket) => {
           });
           const assignedSeat = result.assignedSeatIndex !== undefined ? result.assignedSeatIndex : targetSeatIndex;
           const resolveMsg = status === 'ACCEPTED'
-            ? `تهانينا! وافق صاحب الغرفة على صعودك على المايك${assignedSeat !== undefined ? ` (المقعد ${assignedSeat + 1})` : ''} 🎙️`
-            : 'عذراً، اعتذر صاحب الغرفة عن قبول طلب الصعود للمايك في الوقت الحالي.';
+            ? 'تمت الموافقة على طلبك، تفضل بالصعود للمايك 🎙️'
+            : 'عذراً، اعتذر صاحب الغرفة عن قبول طلب المايك في الوقت الحالي.';
 
           // Broadcast to requesting user
           broadcastToUser(result.request.userId, {
@@ -413,8 +421,8 @@ wss.on('connection', (ws: WebSocket) => {
             message: resolveMsg
           });
 
-          // Also broadcast to room for robust real-time handling
-          broadcastToRoom(roomId, {
+          // Also broadcast to ALL clients for robust real-time handling
+          broadcastAll({
             type: 'mic_request_resolved',
             roomId,
             userId: result.request.userId,
@@ -425,11 +433,52 @@ wss.on('connection', (ws: WebSocket) => {
           });
 
           // Broadcast updated requests list to room
-          broadcastToRoom(roomId, {
+          broadcastAll({
             type: 'mic_requests_updated',
             roomId,
             requests: db.getMicRequests(roomId)
           });
+        }
+      }
+
+      if (type === 'pull_to_mic') {
+        const { roomId, hostId, targetUserId, seatIndex } = data;
+        const room = db.getRoomById(roomId);
+        const hostUser = db.getUserById(hostId);
+        const isOwnerOrHost = room?.hostId === hostId || db.isOwner(hostId) || hostUser?.role === 'ADMIN' || hostUser?.role === 'MODERATOR';
+
+        if (room && isOwnerOrHost && targetUserId) {
+          const seats = db.getRoomSeats(roomId);
+          let targetSeatIdx = seatIndex !== undefined && seatIndex >= 0 ? seatIndex : seats.findIndex(s => !s.userId && !s.isLocked);
+          if (targetSeatIdx !== -1) {
+            const assignRes = db.assignUserToSeat(roomId, targetSeatIdx, targetUserId);
+            if (assignRes.success) {
+              db.cancelMicRequest(roomId, targetUserId);
+
+              broadcastToRoom(roomId, {
+                type: 'seats_updated',
+                roomId,
+                seats: db.getRoomSeats(roomId),
+                members: db.getRoomMembers(roomId)
+              });
+
+              broadcastToRoom(roomId, {
+                type: 'mic_requests_updated',
+                roomId,
+                requests: db.getMicRequests(roomId)
+              });
+
+              broadcastToUser(targetUserId, {
+                type: 'mic_request_resolved',
+                roomId,
+                userId: targetUserId,
+                status: 'ACCEPTED',
+                seatIndex: targetSeatIdx,
+                seatLabel: `المقعد رقم ${targetSeatIdx + 1}`,
+                message: 'قام صاحب الغرفة بسحبك وإعطائك المايك للتحدث المباشر! 🎙️✨'
+              });
+            }
+          }
         }
       }
 
@@ -507,13 +556,14 @@ wss.on('connection', (ws: WebSocket) => {
       }
 
       if (type === 'update_room_settings') {
-        const { roomId, userId, title, coverImage, description, micLayout, tags } = data;
+        const { roomId, userId, title, coverImage, description, micLayout, tags, requireHostApproval } = data;
         const result = db.updateRoomSettings(roomId, userId, {
           title,
           coverImage,
           description,
           micLayout,
-          tags
+          tags,
+          requireHostApproval
         });
 
         if (result.success && result.room) {
@@ -633,6 +683,18 @@ wss.on('connection', (ws: WebSocket) => {
 
   ws.on('close', () => {
     const { userId, roomId } = clientInfo;
+    if (userId) {
+      const user = db.getUserById(userId);
+      if (user) {
+        user.isOnline = false;
+        db.save();
+        broadcastAll({
+          type: 'user_presence_updated',
+          userId: user.id,
+          isOnline: false
+        });
+      }
+    }
     if (userId && roomId) {
       playedRoomJoinEntrances.delete(`${roomId}:${userId}`);
       db.removeRoomMember(roomId, userId);
@@ -748,11 +810,11 @@ app.post('/api/auth/google', (req, res) => {
       referredBy: referredBy ? String(referredBy).trim() : undefined
     });
 
-    if (user.isBanned) {
-      return res.status(400).json({ error: `تم حظر هذا الحساب: ${user.banReason || 'مخالفة الشروط'}` });
+    if (user.isBanned || user.status === 'banned') {
+      return res.status(400).json({ error: 'تم حظر هذا الحساب نهائياً لمخالفة شروط الاستخدام' });
     }
 
-    // Bind device to user account in database
+    // Bind device to user account in database for telemetry
     db.bindDevice(deviceId, user.id, req.ip);
 
     const isOwner = db.isOwner(user.id) || user.role === 'OWNER' || user.isOwner === true || user.is_owner === true;
@@ -778,15 +840,10 @@ app.post('/api/auth/login', (req, res) => {
   if (id) {
     const user = db.getUserById(id);
     if (user) {
-      if (user.isBanned) {
-        return res.status(400).json({ error: `تم حظر هذا الحساب: ${user.banReason || 'مخالفة الشروط'}` });
+      if (user.isBanned || user.status === 'banned') {
+        return res.status(400).json({ error: 'تم حظر هذا الحساب نهائياً لمخالفة شروط الاستخدام' });
       }
 
-      // Check device binding
-      const accessCheck = db.validateDeviceAccess(deviceId, user.id);
-      if (!accessCheck.allowed) {
-        return res.status(400).json({ error: accessCheck.error || 'هذا الجهاز مرتبط بالفعل بحساب حكاوي آخر.' });
-      }
       db.bindDevice(deviceId, user.id, req.ip);
 
       // CRITICAL OWNER VERIFICATION:
@@ -808,23 +865,13 @@ app.post('/api/auth/login', (req, res) => {
     const cleanPhone = String(phone).trim();
     const user = db.getUserByPhone(cleanPhone);
     if (!user) {
-      // Check device binding even for phone lookup
-      const existingBinding = db.getDeviceBinding(deviceId);
-      if (existingBinding) {
-        return res.status(400).json({ error: 'هذا الجهاز مرتبط بالفعل بحساب حكاوي آخر.' });
-      }
       return res.status(404).json({ error: 'رقم الهاتف غير مسجل. يرجى إنشاء حساب جديد.' });
     }
 
-    if (user.isBanned) {
-      return res.status(400).json({ error: `تم حظر هذا الحساب: ${user.banReason || 'مخالفة الشروط'}` });
+    if (user.isBanned || user.status === 'banned') {
+      return res.status(400).json({ error: 'تم حظر هذا الحساب نهائياً لمخالفة شروط الاستخدام' });
     }
 
-    // Check device binding
-    const accessCheck = db.validateDeviceAccess(deviceId, user.id);
-    if (!accessCheck.allowed) {
-      return res.status(400).json({ error: accessCheck.error || 'هذا الجهاز مرتبط بالفعل بحساب حكاوي آخر.' });
-    }
     db.bindDevice(deviceId, user.id, req.ip);
 
     if (db.isOwner(user.id) || user.role === 'OWNER' || user.isOwner === true || user.is_owner === true) {
@@ -845,15 +892,10 @@ app.post('/api/auth/login', (req, res) => {
     const cleanUsername = String(username).trim().toLowerCase();
     const user = db.getUserByUsername(cleanUsername);
     if (user) {
-      if (user.isBanned) {
-        return res.status(400).json({ error: `تم حظر هذا الحساب: ${user.banReason || 'مخالفة الشروط'}` });
+      if (user.isBanned || user.status === 'banned') {
+        return res.status(400).json({ error: 'تم حظر هذا الحساب نهائياً لمخالفة شروط الاستخدام' });
       }
 
-      // Check device binding
-      const accessCheck = db.validateDeviceAccess(deviceId, user.id);
-      if (!accessCheck.allowed) {
-        return res.status(400).json({ error: accessCheck.error || 'هذا الجهاز مرتبط بالفعل بحساب حكاوي آخر.' });
-      }
       db.bindDevice(deviceId, user.id, req.ip);
 
       if (db.isOwner(user.id) || user.role === 'OWNER' || user.isOwner === true || user.is_owner === true) {
@@ -870,14 +912,9 @@ app.post('/api/auth/login', (req, res) => {
       return res.json({ success: true, user });
     }
 
-    const existingBinding = db.getDeviceBinding(deviceId);
-    if (existingBinding) {
-      return res.status(400).json({ error: 'هذا الجهاز مرتبط بالفعل بحساب حكاوي آخر.' });
-    }
     return res.status(404).json({ error: 'اسم المستخدم غير موجود' });
   }
 
-  // Strictly require credentials - Never fall back to default owner account!
   return res.status(401).json({ error: 'يرجى تسجيل الدخول أو إنشاء حساب جديد' });
 });
 
@@ -888,12 +925,6 @@ app.post('/api/auth/register', (req, res) => {
   }
 
   const deviceId = extractDeviceId(req, res);
-
-  // Strictly enforce 1 account per device on registration
-  const existingBinding = db.getDeviceBinding(deviceId);
-  if (existingBinding) {
-    return res.status(400).json({ error: 'هذا الجهاز مرتبط بالفعل بحساب حكاوي آخر.' });
-  }
 
   const cleanUsername = String(username).trim().toLowerCase();
   const existing = db.getUserByUsername(cleanUsername);
@@ -920,7 +951,6 @@ app.post('/api/auth/register', (req, res) => {
       bio: bio ? String(bio).trim() : undefined
     });
 
-    // Bind device to newly created account
     db.bindDevice(deviceId, user.id, req.ip);
 
     res.json({ success: true, user });
@@ -1180,6 +1210,11 @@ app.post('/api/rooms', (req, res) => {
   // Track daily task for creating/joining room
   db.incrementDailyTaskProgress(hostId, 'JOIN_ROOM');
 
+  broadcastAll({
+    type: 'room_created',
+    room
+  });
+
   res.json({ success: true, room });
 });
 
@@ -1193,7 +1228,7 @@ app.put('/api/rooms/:id/layout', (req, res) => {
 });
 
 app.put('/api/rooms/:id/settings', (req, res) => {
-  const { userId, title, coverImage, description, micLayout, tags } = req.body;
+  const { userId, title, coverImage, description, micLayout, tags, requireHostApproval } = req.body;
   if (!userId) return res.status(401).json({ error: 'معرف المستخدم مطلوب' });
 
   const user = db.getUserById(userId);
@@ -1242,7 +1277,8 @@ app.put('/api/rooms/:id/settings', (req, res) => {
     coverImage,
     description,
     micLayout,
-    tags
+    tags,
+    requireHostApproval
   });
 
   if (!result.success) {
@@ -1310,12 +1346,12 @@ app.post('/api/rooms/:id/mic-requests', (req, res) => {
 
   const room = db.getRoomById(req.params.id);
   if (room) {
-    broadcastToRoom(req.params.id, {
+    broadcastAll({
       type: 'new_mic_request',
       roomId: req.params.id,
       request: result.request
     });
-    broadcastToRoom(req.params.id, {
+    broadcastAll({
       type: 'mic_requests_updated',
       roomId: req.params.id,
       requests: db.getMicRequests(req.params.id)
@@ -1342,7 +1378,7 @@ app.post('/api/rooms/:id/mic-requests/:requestId/resolve', (req, res) => {
   }
 
   const roomId = result.request.roomId;
-  broadcastToRoom(roomId, {
+  broadcastAll({
     type: 'seats_updated',
     roomId,
     seats: db.getRoomSeats(roomId),
@@ -1364,7 +1400,7 @@ app.post('/api/rooms/:id/mic-requests/:requestId/resolve', (req, res) => {
     message: resolveMsg
   });
 
-  broadcastToRoom(roomId, {
+  broadcastAll({
     type: 'mic_request_resolved',
     roomId,
     userId: result.request.userId,
@@ -1374,7 +1410,7 @@ app.post('/api/rooms/:id/mic-requests/:requestId/resolve', (req, res) => {
     message: resolveMsg
   });
 
-  broadcastToRoom(roomId, {
+  broadcastAll({
     type: 'mic_requests_updated',
     roomId,
     requests: db.getMicRequests(roomId)
@@ -1485,11 +1521,13 @@ app.post('/api/gifts/send', (req, res) => {
     // Update real-time balance for sender & receiver
     broadcastToUser(senderId, {
       type: 'balance_update',
-      diamonds: result.senderNewDiamonds
+      diamonds: result.senderNewDiamonds,
+      coins: result.senderNewCoins
     });
     broadcastToUser(receiverId, {
       type: 'balance_update',
-      coins: result.receiverNewCoins
+      coins: result.receiverNewCoins,
+      diamonds: result.receiverNewDiamonds
     });
   }
 
@@ -1830,7 +1868,7 @@ app.post('/api/notifications/:id/read', (req, res) => {
 
 // --- AUTOMATED CONTENT MODERATION SYSTEM (STRICT ANTI-NUDITY & MALE DECENCY POLICY) ---
 
-app.post('/api/moderation/scan', (req, res) => {
+app.post('/api/moderation/scan', async (req, res) => {
   const {
     userId,
     targetType,
@@ -1861,19 +1899,20 @@ app.post('/api/moderation/scan', (req, res) => {
     });
   }
 
-  // 1. Text Scan
+  // 1. Text Scan (including Gemini AI scanning)
   if (text) {
-    const textScan = serverModerationEngine.scanText(String(text));
+    const textScan = await serverModerationEngine.scanTextWithGemini(String(text));
     if (!textScan.isSafe) {
       if (textScan.decision === 'VIOLATION') {
-        const banResult = db.autoBanForModeration({
+        const gradResult = db.processGraduatedModeration({
           userId,
           reason: textScan.reason,
           category: textScan.category || 'MALE_NUDITY',
           targetType: targetType || 'ROOM_TEXT',
           targetId,
           confidenceScore: textScan.confidence,
-          details: textScan.details
+          details: textScan.details,
+          roomId
         });
 
         // Broadcast real-time ban and censure to room
@@ -1888,7 +1927,14 @@ app.post('/api/moderation/scan', (req, res) => {
             type: 'user_auto_banned',
             userId,
             userName: user.name,
-            reason: textScan.reason
+            reason: textScan.reason,
+            banType: gradResult.banType,
+            remainingMinutes: gradResult.remainingMinutes
+          });
+          broadcastToRoom(roomId, {
+            type: 'seats_updated',
+            roomId,
+            seats: db.getRoomSeats(roomId)
           });
         }
 
@@ -1896,8 +1942,10 @@ app.post('/api/moderation/scan', (req, res) => {
           allowed: false,
           decision: 'VIOLATION',
           reason: textScan.reason,
-          action: 'AUTO_BAN_PERMANENT',
-          incident: banResult.incident
+          action: gradResult.incident.actionTaken,
+          banType: gradResult.banType,
+          remainingMinutes: gradResult.remainingMinutes,
+          incident: gradResult.incident
         });
       } else if (textScan.decision === 'NEEDS_REVIEW') {
         const incident = db.addModerationIncident({
@@ -1926,9 +1974,9 @@ app.post('/api/moderation/scan', (req, res) => {
     }
   }
 
-  // 2. Image / Media Scan
+  // 2. Image / Media Scan (including Gemini AI vision scanning)
   if (mediaUrl) {
-    const imgScan = serverModerationEngine.scanImage(String(mediaUrl), {
+    const imgScan = await serverModerationEngine.scanImageWithGemini(String(mediaUrl), {
       textContext: text,
       userGender: (user.gender as any) || 'male',
       isLiveStream: targetType === 'LIVE_STREAM'
@@ -1936,7 +1984,7 @@ app.post('/api/moderation/scan', (req, res) => {
 
     if (!imgScan.isSafe) {
       if (imgScan.decision === 'VIOLATION') {
-        const banResult = db.autoBanForModeration({
+        const gradResult = db.processGraduatedModeration({
           userId,
           reason: imgScan.reason,
           category: imgScan.category || 'MALE_NUDITY',
@@ -1944,7 +1992,8 @@ app.post('/api/moderation/scan', (req, res) => {
           targetId,
           mediaSnapshot: mediaUrl.length < 5000 ? mediaUrl : undefined,
           confidenceScore: imgScan.confidence,
-          details: imgScan.details
+          details: imgScan.details,
+          roomId
         });
 
         if (roomId) {
@@ -1958,7 +2007,14 @@ app.post('/api/moderation/scan', (req, res) => {
             type: 'user_auto_banned',
             userId,
             userName: user.name,
-            reason: imgScan.reason
+            reason: imgScan.reason,
+            banType: gradResult.banType,
+            remainingMinutes: gradResult.remainingMinutes
+          });
+          broadcastToRoom(roomId, {
+            type: 'seats_updated',
+            roomId,
+            seats: db.getRoomSeats(roomId)
           });
         }
 
@@ -1966,8 +2022,10 @@ app.post('/api/moderation/scan', (req, res) => {
           allowed: false,
           decision: 'VIOLATION',
           reason: imgScan.reason,
-          action: 'AUTO_BAN_PERMANENT',
-          incident: banResult.incident
+          action: gradResult.incident.actionTaken,
+          banType: gradResult.banType,
+          remainingMinutes: gradResult.remainingMinutes,
+          incident: gradResult.incident
         });
       } else if (imgScan.decision === 'NEEDS_REVIEW') {
         const incident = db.addModerationIncident({
@@ -2007,7 +2065,7 @@ app.post('/api/moderation/scan', (req, res) => {
 
     if (!streamScan.isSafe) {
       if (streamScan.decision === 'VIOLATION') {
-        const banResult = db.autoBanForModeration({
+        const gradResult = db.processGraduatedModeration({
           userId,
           reason: streamScan.reason,
           category: streamScan.category || 'MALE_NUDITY',
@@ -2015,7 +2073,8 @@ app.post('/api/moderation/scan', (req, res) => {
           targetId: roomId || targetId,
           mediaSnapshot: mediaUrl && mediaUrl.length < 5000 ? mediaUrl : undefined,
           confidenceScore: streamScan.confidence,
-          details: streamScan.details
+          details: streamScan.details,
+          roomId
         });
 
         if (roomId) {
@@ -2029,7 +2088,14 @@ app.post('/api/moderation/scan', (req, res) => {
             type: 'user_auto_banned',
             userId,
             userName: user.name,
-            reason: streamScan.reason
+            reason: streamScan.reason,
+            banType: gradResult.banType,
+            remainingMinutes: gradResult.remainingMinutes
+          });
+          broadcastToRoom(roomId, {
+            type: 'seats_updated',
+            roomId,
+            seats: db.getRoomSeats(roomId)
           });
         }
 
@@ -2037,8 +2103,10 @@ app.post('/api/moderation/scan', (req, res) => {
           allowed: false,
           decision: 'VIOLATION',
           reason: streamScan.reason,
-          action: 'AUTO_BAN_PERMANENT',
-          incident: banResult.incident
+          action: gradResult.incident.actionTaken,
+          banType: gradResult.banType,
+          remainingMinutes: gradResult.remainingMinutes,
+          incident: gradResult.incident
         });
       } else if (streamScan.decision === 'NEEDS_REVIEW') {
         return res.json({
@@ -2059,9 +2127,35 @@ app.post('/api/moderation/scan', (req, res) => {
   });
 });
 
-// Admin Moderation Incidents & Reviews
+// Admin Moderation Incidents & Reviews & Graduated Ban System
 app.get('/api/admin/moderation/incidents', requireAdmin, (req, res) => {
   res.json({ incidents: db.getModerationIncidents() });
+});
+
+app.get('/api/admin/moderation/violating-users', requireAdmin, (req, res) => {
+  res.json({ violatingUsers: db.getViolatingUsersList() });
+});
+
+app.post('/api/admin/moderation/graduated-action', requireAdmin, (req, res) => {
+  const { adminId, targetUserId, action } = req.body;
+  if (!targetUserId || !action) {
+    return res.status(400).json({ error: 'معرّف المستخدم والإجراء مطلوبان' });
+  }
+
+  try {
+    const result = db.resolveGraduatedModerationAction(adminId, targetUserId, action);
+    
+    // Broadcast real-time update to user socket
+    broadcastToUser(targetUserId, {
+      type: 'user_penalty_resolved',
+      action,
+      message: result.message
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'فشلت معالجة إجراء سلم العقوبات' });
+  }
 });
 
 app.post('/api/admin/moderation/resolve', requireAdmin, (req, res) => {
@@ -2080,12 +2174,87 @@ app.post('/api/admin/moderation/resolve', requireAdmin, (req, res) => {
 
 // Reports
 app.post('/api/reports', (req, res) => {
-  const { reporterId, targetType, targetId, targetName, reason, details } = req.body;
+  const { reporterId, reportedUserId, roomId, reason, details, targetType, targetId, targetName } = req.body;
   if (!reason) {
     return res.status(400).json({ error: 'سبب البلاغ مطلوب' });
   }
-  const report = db.addReport({ reporterId, targetType, targetId, targetName, reason, details });
-  res.json({ success: true, message: 'تم إرسال البلاغ وسيقوم فريق الإدارة بمراجعته فوراً', report });
+  const report = db.addReport({ reporterId, reportedUserId, roomId, reason, details, targetType, targetId, targetName });
+  res.json({ success: true, message: 'تم إرسال البلاغ للإدارة للمراجعة', report });
+});
+
+// User Blocking
+app.post('/api/users/block', (req, res) => {
+  const { currentUserId, targetUserId } = req.body;
+  if (!currentUserId || !targetUserId) {
+    return res.status(400).json({ error: 'البيانات غير مكتملة' });
+  }
+  const result = db.blockUser(currentUserId, targetUserId);
+  res.json(result);
+});
+
+// Room Penalties & Moderation System Store
+const activeRoomPenalties = new Map<string, {
+  roomId: string;
+  issuerId: string;
+  targetUserId: string;
+  penaltyType: '15m' | '1h' | '24h' | 'perm';
+  durationLabel: string;
+  bannedUntil: number | null;
+  reason: string;
+  issuedAt: number;
+}>();
+
+app.post('/api/rooms/penalty', (req, res) => {
+  const { roomId, issuerId, targetUserId, penaltyType, bannedUntil, reason } = req.body;
+  if (!roomId || !targetUserId || !penaltyType) {
+    return res.status(400).json({ error: 'بيانات العقوبة غير مكتملة' });
+  }
+
+  const durationLabels: Record<string, string> = {
+    '15m': '15 دقيقة',
+    '1h': 'ساعة واحدة',
+    '24h': '24 ساعة (يوم)',
+    'perm': 'حظر نهائي'
+  };
+
+  const penaltyObj = {
+    roomId,
+    issuerId,
+    targetUserId,
+    penaltyType,
+    durationLabel: durationLabels[penaltyType] || 'عقوبة إدارية',
+    bannedUntil: penaltyType === 'perm' ? null : Number(bannedUntil),
+    reason: reason || 'تم تعليق حسابك لمخالفة قواعد الغرفة',
+    issuedAt: Date.now()
+  };
+
+  const key = `${roomId}_${targetUserId}`;
+  activeRoomPenalties.set(key, penaltyObj);
+
+  // Broadcast real-time penalty event to room & user
+  broadcastToRoom(roomId, {
+    type: 'user_penalty_applied',
+    ...penaltyObj
+  });
+
+  res.json({ success: true, message: `تم تطبيق عقوبة (${penaltyObj.durationLabel}) بنجاح`, penalty: penaltyObj });
+});
+
+app.get('/api/rooms/:roomId/penalty/:userId', (req, res) => {
+  const { roomId, userId } = req.params;
+  const key = `${roomId}_${userId}`;
+  const penalty = activeRoomPenalties.get(key);
+
+  if (!penalty) {
+    return res.json({ hasActivePenalty: false, penalty: null });
+  }
+
+  if (penalty.penaltyType !== 'perm' && penalty.bannedUntil && Date.now() > penalty.bannedUntil) {
+    activeRoomPenalties.delete(key);
+    return res.json({ hasActivePenalty: false, penalty: null });
+  }
+
+  res.json({ hasActivePenalty: true, penalty });
 });
 
 // Admin Dashboard Routes (Enforce server-side role check)
@@ -2251,15 +2420,15 @@ app.get('/api/admin/audit-logs', requireAdmin, (req, res) => {
   res.json({ logs: db.getAuditLogs() });
 });
 
-// Admin Assign King Frame (Strictly Owner)
-app.post('/api/admin/frames/assign-king', requireOwner, (req, res) => {
-  const ownerId = (req.headers['x-owner-id'] as string) || (req.headers['x-admin-id'] as string) || req.body.ownerId || req.body.adminId;
+// Admin Assign King / Owner Frame
+app.post('/api/admin/frames/assign-king', requireAdmin, (req, res) => {
+  const adminId = (req.headers['x-admin-id'] as string) || (req.headers['x-owner-id'] as string) || req.body.adminId || req.body.ownerId;
   const { targetUserId } = req.body;
-  if (!ownerId || !targetUserId) {
-    return res.status(400).json({ error: 'بيانات المالك والمستخدم مطلوبة' });
+  if (!adminId || !targetUserId) {
+    return res.status(400).json({ error: 'بيانات المشرف والمستخدم مطلوبة' });
   }
 
-  const result = db.assignKingFrame(ownerId, targetUserId);
+  const result = db.assignKingFrame(adminId, targetUserId);
   if (!result.success) {
     return res.status(400).json({ error: result.message });
   }
@@ -2415,6 +2584,125 @@ app.post('/api/hosts/claim-target', (req, res) => {
   res.json(result);
 });
 
+// Submit Host / Agent Withdrawal Request
+app.post('/api/hosts/withdraw-request', (req, res) => {
+  const { userId, requestedDiamonds, paymentMethod, paymentAccountDetails, overrideDateCheck } = req.body;
+  if (!userId || !requestedDiamonds || !paymentMethod || !paymentAccountDetails) {
+    return res.status(400).json({ error: 'جميع بيانات طلب السحب مطلوبة (المبلغ، وسيلة الدفع، بريد/رقم الحساب)' });
+  }
+
+  const result = db.createWithdrawalRequest({
+    userId,
+    requestedDiamonds: Number(requestedDiamonds),
+    paymentMethod,
+    paymentAccountDetails,
+    overrideDateCheck: Boolean(overrideDateCheck)
+  });
+
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+
+  res.json(result);
+});
+
+// Get User's Withdrawal Requests
+app.get('/api/hosts/withdraw-requests/:userId', (req, res) => {
+  const requests = db.getWithdrawalRequests(req.params.userId);
+  res.json({ requests });
+});
+
+// Admin: Get All Withdrawal Requests
+app.get('/api/admin/withdraw-requests', requireAdmin, (req, res) => {
+  const requests = db.getWithdrawalRequests();
+  res.json({ requests });
+});
+
+// Admin: Review Withdrawal Request (Approve / Reject)
+app.post('/api/admin/withdraw-requests/review', requireAdmin, (req, res) => {
+  const { adminId, requestId, action, rejectionReason } = req.body;
+  if (!adminId || !requestId || !action) {
+    return res.status(400).json({ error: 'معلومات المراجعة والإجراء مطلوبة' });
+  }
+
+  try {
+    const result = db.reviewWithdrawalRequest(adminId, requestId, action, rejectionReason);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'فشلت معالجة طلب السحب' });
+  }
+});
+
+// --- INSTANT USER VERIFICATION & ADMIN POST-MODERATION ENDPOINTS ---
+
+// Instant User Verification Request
+app.post('/api/users/verify', (req, res) => {
+  const { userId, gender, verificationPhoto, livenessFrontPhoto, livenessRightPhoto, livenessLeftPhoto } = req.body;
+  if (!userId || !gender || (!verificationPhoto && !livenessFrontPhoto)) {
+    return res.status(400).json({ error: 'جميع بيانات التوثيق مطلوبة (الجنس وصور الفحص الحي للوجه)' });
+  }
+
+  const result = db.verifyUserInstant(userId, {
+    gender,
+    verificationPhoto: livenessFrontPhoto || verificationPhoto,
+    livenessFrontPhoto: livenessFrontPhoto || verificationPhoto,
+    livenessRightPhoto,
+    livenessLeftPhoto
+  });
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+
+  res.json(result);
+});
+
+// Admin: Get All Verified Users Log
+app.get('/api/admin/verified-users', requireAdmin, (req, res) => {
+  const logs = db.getVerifiedUsersLog();
+  res.json({ logs });
+});
+
+// Admin: Revoke Verification Badge
+app.post('/api/admin/verified-users/revoke', requireAdmin, (req, res) => {
+  const adminId = (req.headers['x-admin-id'] as string) || req.body.adminId;
+  const { targetUserId } = req.body;
+  if (!adminId || !targetUserId) {
+    return res.status(400).json({ error: 'معرّف الإداري والمستخدم مطلوبان' });
+  }
+
+  try {
+    const result = db.revokeUserVerification(adminId, targetUserId);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'فشلت معالجة سحب التوثيق' });
+  }
+});
+
+// Admin: Ban User & Revoke Verification
+app.post('/api/admin/verified-users/ban', requireAdmin, (req, res) => {
+  const adminId = (req.headers['x-admin-id'] as string) || req.body.adminId;
+  const { targetUserId, banReason } = req.body;
+  if (!adminId || !targetUserId) {
+    return res.status(400).json({ error: 'معرّف الإداري والمستخدم مطلوبان' });
+  }
+
+  try {
+    const result = db.banUserWithVerificationRevoke(adminId, targetUserId, banReason);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'فشلت معالجة حظر الحساب' });
+  }
+});
+
 // --- 2. AGENT ENDPOINTS ---
 
 // Apply as Agent
@@ -2474,6 +2762,102 @@ app.get('/api/agencies/code/:code', (req, res) => {
   });
 });
 
+// --- AUTOMATED HOST-AGENCY SYSTEM API ROUTES ---
+
+// 1. Host Registration via Agency Code
+app.post('/api/agencies/join-request', (req, res) => {
+  const { userId, agencyCode, phone } = req.body;
+  if (!userId || !agencyCode || !phone) {
+    return res.status(400).json({ error: 'معرّف المستخدم وكود الوكالة ورقم الهاتف حقول إجبارية' });
+  }
+
+  const result = db.createHostAgencyRequest({ userId, agencyCode, phone });
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+  res.json(result);
+});
+
+// 2. Get Pending Host Requests for Agency Owner
+app.get('/api/agencies/my-agency-requests/:userId', (req, res) => {
+  const requests = db.getAgencyHostRequests(req.params.userId);
+  res.json({ requests });
+});
+
+// 3. Agency Owner Review Request (Accept / Reject)
+app.post('/api/agencies/requests/review', (req, res) => {
+  const { agencyOwnerUserId, requestId, action } = req.body;
+  if (!agencyOwnerUserId || !requestId || !action) {
+    return res.status(400).json({ error: 'جميع بيانات مراجعة الطلب مطلوبة' });
+  }
+
+  const result = db.reviewHostAgencyRequest(agencyOwnerUserId, requestId, action);
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+  res.json(result);
+});
+
+// 4. Get Current Hosts for Agency Owner
+app.get('/api/agencies/my-hosts/:userId', (req, res) => {
+  const hosts = db.getAgencyHosts(req.params.userId);
+  res.json({ hosts });
+});
+
+// 5. Agency Owner Terminate Host Contract (Mutual Agreement)
+app.post('/api/agencies/terminate-host', (req, res) => {
+  const { agencyOwnerUserId, hostUserId } = req.body;
+  if (!agencyOwnerUserId || !hostUserId) {
+    return res.status(400).json({ error: 'معرّف مالك الوكالة والمضيف مطلوبان' });
+  }
+
+  const result = db.terminateHostAgencyContract(agencyOwnerUserId, hostUserId);
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+  res.json(result);
+});
+
+// 6. Host Submit Dispute for Force Leave
+app.post('/api/agencies/submit-dispute', (req, res) => {
+  const { hostUserId, reason } = req.body;
+  if (!hostUserId || !reason) {
+    return res.status(400).json({ error: 'معرّف المضيف وسبب الشكوى حقول إجبارية' });
+  }
+
+  const result = db.submitAgencyDispute(hostUserId, reason);
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+  res.json(result);
+});
+
+// 7. Super Admin / Owner: Get All Agency Disputes
+app.get('/api/admin/agency-disputes', requireAdmin, (req, res) => {
+  const disputes = db.getAgencyDisputes();
+  res.json({ disputes });
+});
+
+// 8. Super Admin / Owner: Resolve Dispute (Force Release / Reject)
+app.post('/api/admin/agency-disputes/resolve', requireOwner, (req, res) => {
+  const ownerId = (req.headers['x-admin-id'] as string) || req.body.ownerId;
+  const { disputeId, action } = req.body;
+
+  if (!ownerId || !disputeId || !action) {
+    return res.status(400).json({ error: 'بيانات معالجة النزاع مطلوبة' });
+  }
+
+  try {
+    const result = db.resolveAgencyDispute(ownerId, disputeId, action);
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'فشلت معالجة النزاع' });
+  }
+});
+
 // Public List of Active Target Configs
 app.get('/api/targets/configs', (req, res) => {
   res.json({ targetConfigs: db.getTargetConfigs() });
@@ -2481,16 +2865,58 @@ app.get('/api/targets/configs', (req, res) => {
 
 // --- 2.5 SHIPPING AGENT ROUTES ---
 app.post('/api/shipping-agent/assign', requireOwner, (req, res) => {
-  const { targetUserId, isAgent } = req.body;
+  const { targetUserId, isAgent, country, phone } = req.body;
   const ownerId = (req.headers['x-admin-id'] as string) || (req.body.adminId as string);
   try {
-    const result = db.setShippingAgent(ownerId, targetUserId, Boolean(isAgent));
+    const result = db.setShippingAgent(ownerId, targetUserId, Boolean(isAgent), country, phone);
     res.json(result);
   } catch (err: any) {
     res.status(400).json({ error: err.message || 'فشل تحديث حالة وكيل الشحن' });
   }
 });
 
+// Owner supplies agency coins to an agent
+app.post('/api/shipping-agent/supply-coins', requireOwner, (req, res) => {
+  const { agentUserId, coinAmount } = req.body;
+  const ownerId = (req.headers['x-admin-id'] as string) || (req.body.adminId as string);
+  try {
+    const result = db.supplyAgentCoins(ownerId, agentUserId, Number(coinAmount));
+    if (result.agent?.id) {
+      broadcastToUser(result.agent.id, { type: 'balance_update', coins: result.agent.coins });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'فشل تزويد رصيد الوكيل' });
+  }
+});
+
+// Agent transfers coins to target user
+app.post('/api/shipping-agent/transfer-coins', (req, res) => {
+  const { agentId, targetUserIdentifier, coinAmount } = req.body;
+  const callerHeaderId = (req.headers['x-user-id'] as string) || (req.headers['x-owner-id'] as string) || (req.headers['x-admin-id'] as string);
+  const effectiveAgentId = agentId || callerHeaderId;
+
+  if (!effectiveAgentId || !targetUserIdentifier || !coinAmount) {
+    return res.status(400).json({ error: 'جميع الحقول مطلوبة لإتمام عملية الشحن (معرّف الوكيل، معرّف المستلم، وعدد الكونز)' });
+  }
+
+  const result = db.agentTransferCoins(effectiveAgentId, targetUserIdentifier, Number(coinAmount));
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  // Real-time balance sync via WebSocket
+  if (result.agentCoins !== undefined) {
+    broadcastToUser(effectiveAgentId, { type: 'balance_update', coins: result.agentCoins });
+  }
+  if (result.targetUser?.id && result.targetUser.coins !== undefined) {
+    broadcastToUser(result.targetUser.id, { type: 'balance_update', coins: result.targetUser.coins });
+  }
+
+  res.json(result);
+});
+
+// Agent transfers diamonds/packages to target user
 app.post('/api/shipping-agent/transfer', (req, res) => {
   const { agentId, targetUserIdentifier, packageId } = req.body;
   const callerHeaderId = (req.headers['x-user-id'] as string) || (req.headers['x-owner-id'] as string) || (req.headers['x-admin-id'] as string);
@@ -2500,14 +2926,6 @@ app.post('/api/shipping-agent/transfer', (req, res) => {
     return res.status(400).json({ error: 'جميع الحقول مطلوبة لإتمام عملية الشحن' });
   }
 
-  // Strict Role/Permission Check: Restrict recharge to OWNER temporarily
-  if (!db.canUserRecharge(effectiveAgentId)) {
-    return res.status(400).json({
-      error: 'عملية مرفوضة: تم تعطيل صلاحية شحن الوكلاء مؤقتاً لجميع الحسابات. الشحن متاح حصرياً للمالك العام فقط.',
-      code: 'RECHARGE_RESTRICTED_TO_OWNER'
-    });
-  }
-
   const result = db.agentTransferDiamonds(effectiveAgentId, targetUserIdentifier, packageId);
   if (!result.success) {
     return res.status(400).json({ error: result.error });
@@ -2515,13 +2933,659 @@ app.post('/api/shipping-agent/transfer', (req, res) => {
 
   // Real-time balance sync via WebSocket
   if (result.agentDiamonds !== undefined) {
-    broadcastToUser(agentId, { type: 'balance_update', diamonds: result.agentDiamonds });
+    broadcastToUser(effectiveAgentId, { type: 'balance_update', diamonds: result.agentDiamonds });
   }
   if (result.targetUser?.id && result.targetUser.diamonds !== undefined) {
     broadcastToUser(result.targetUser.id, { type: 'balance_update', diamonds: result.targetUser.diamonds });
   }
 
   res.json(result);
+});
+
+// Pull user to mic by host/owner
+app.post('/api/rooms/pull-mic', (req, res) => {
+  const { roomId, hostId, targetUserId, seatIndex } = req.body;
+  if (!roomId || !hostId || !targetUserId) {
+    return res.status(400).json({ error: 'البيانات غير مكتملة لسحب المستمع للمايك' });
+  }
+
+  const room = db.getRoomById(roomId);
+  const hostUser = db.getUserById(hostId);
+  const isOwnerOrHost = room?.hostId === hostId || db.isOwner(hostId) || hostUser?.role === 'ADMIN' || hostUser?.role === 'MODERATOR';
+
+  if (!room || !isOwnerOrHost) {
+    return res.status(403).json({ error: 'ليس لديك صلاحية سحب المستخدمين للمايك (صاحب الغرفة والمشرف فقط)' });
+  }
+
+  const seats = db.getRoomSeats(roomId);
+  const targetSeatIdx = seatIndex !== undefined && Number(seatIndex) >= 0 ? Number(seatIndex) : seats.findIndex(s => !s.userId && !s.isLocked);
+  if (targetSeatIdx === -1) {
+    return res.status(400).json({ error: 'لا توجد مقاعد فارغة متاحة حالياً على المسرح' });
+  }
+
+  const assignRes = db.assignUserToSeat(roomId, targetSeatIdx, targetUserId);
+  if (!assignRes.success) {
+    return res.status(400).json({ error: assignRes.message || 'فشل سحب المستخدم للمايك' });
+  }
+
+  db.cancelMicRequest(roomId, targetUserId);
+
+  broadcastToRoom(roomId, {
+    type: 'seats_updated',
+    roomId,
+    seats: db.getRoomSeats(roomId),
+    members: db.getRoomMembers(roomId)
+  });
+
+  broadcastToRoom(roomId, {
+    type: 'mic_requests_updated',
+    roomId,
+    requests: db.getMicRequests(roomId)
+  });
+
+  broadcastToUser(targetUserId, {
+    type: 'mic_request_resolved',
+    roomId,
+    userId: targetUserId,
+    status: 'ACCEPTED',
+    seatIndex: targetSeatIdx,
+    seatLabel: `المقعد رقم ${targetSeatIdx + 1}`,
+    message: 'قام صاحب الغرفة بسحبك وإعطائك المايك للتحدث المباشر! 🎙️✨'
+  });
+
+  res.json({ success: true, seatIndex: targetSeatIdx });
+});
+
+// Official Payment Webhook Endpoint with Verification & Server-Side Atomic Balance Top-up
+// --- LUCKY WHEEL ARENA GAME ENDPOINTS ---
+
+const BOT_NAMES = [
+  'فارس الخليج 👑', 'أميرة الصمت ✨', 'صقر العرب 🦅', 'أسد الليل 🦁',
+  'ملكة الإحساس 💎', 'شبح الصحراء ⚡', 'نجم الليل 🌟', 'ملك التحدي 🏆',
+  'سلطانة 👑', 'عابر سبيل 🏹'
+];
+
+const BOT_AVATARS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=250',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&q=80&w=250'
+];
+
+interface ActiveMatchState {
+  matchId: string;
+  betAmount: number;
+  player1: { id: string; name: string; avatar: string; numericId?: string; isBot: boolean };
+  player2?: { id: string; name: string; avatar: string; numericId?: string; isBot: boolean };
+  status: 'WAITING_FOR_OPPONENT' | 'SPINNING' | 'FINISHED';
+  winnerId?: string;
+  winningAngle?: number;
+  winnerPrize?: number;
+  commissionDeducted?: number;
+  createdAt: number;
+}
+
+const luckyWheelMatches = new Map<string, ActiveMatchState>();
+const botTimeoutsMap = new Map<string, NodeJS.Timeout>();
+
+// Create or Join Match
+app.post('/api/games/lucky-wheel/join', (req, res) => {
+  const { userId, betAmount } = req.body;
+  const parsedBet = Number(betAmount);
+
+  const VALID_BETS = [100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000, 30000, 40000, 50000];
+  if (!userId || !VALID_BETS.includes(parsedBet)) {
+    return res.status(400).json({ error: 'فئة الرهان غير صالحة.' });
+  }
+
+  const user = db.getUserById(userId);
+  if (!user) {
+    return res.status(404).json({ error: 'المستخدم غير موجود' });
+  }
+
+  if ((user.diamonds || 0) < parsedBet) {
+    return res.status(400).json({ error: `رصيدك من الماسات (${user.diamonds || 0}) غير كافٍ للرهان بقيمة ${parsedBet.toLocaleString()} ماسة` });
+  }
+
+  // Deduct bet amount atomically from server side
+  user.diamonds = (user.diamonds || 0) - parsedBet;
+  db.addWalletTransaction(
+    user.id,
+    'DIAMOND',
+    -parsedBet,
+    user.diamonds,
+    `دخول جولة عجلة الحظ بقيمة ${parsedBet.toLocaleString()} ماسة`
+  );
+  db.save();
+
+  // Broadcast updated balance
+  broadcastToUser(user.id, { type: 'balance_update', diamonds: user.diamonds });
+
+  // Search for waiting human opponent with same bet
+  let existingMatch = Array.from(luckyWheelMatches.values()).find(
+    m => m.betAmount === parsedBet && m.status === 'WAITING_FOR_OPPONENT' && m.player1.id !== userId
+  );
+
+  if (existingMatch) {
+    // Join existing match - clear bot timeout if any
+    const existingTimeout = botTimeoutsMap.get(existingMatch.matchId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      botTimeoutsMap.delete(existingMatch.matchId);
+    }
+
+    existingMatch.player2 = {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      numericId: user.numericId,
+      isBot: false
+    };
+    existingMatch.status = 'SPINNING';
+
+    // Execute match logic
+    executeWheelSpin(existingMatch);
+
+    return res.json({
+      success: true,
+      match: existingMatch,
+      userDiamonds: user.diamonds
+    });
+  }
+
+  // Create new match
+  const matchId = `match_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const newMatch: ActiveMatchState = {
+    matchId,
+    betAmount: parsedBet,
+    player1: {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      numericId: user.numericId,
+      isBot: false
+    },
+    status: 'WAITING_FOR_OPPONENT',
+    createdAt: Date.now()
+  };
+
+  // Schedule 15-second Bot Trigger
+  const botTimer = setTimeout(() => {
+    botTimeoutsMap.delete(matchId);
+    if (newMatch.status === 'WAITING_FOR_OPPONENT') {
+      const randomBotName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+      const randomBotAvatar = BOT_AVATARS[Math.floor(Math.random() * BOT_AVATARS.length)];
+      const randomBotId = `bot_${Date.now()}`;
+
+      newMatch.player2 = {
+        id: randomBotId,
+        name: randomBotName,
+        avatar: randomBotAvatar,
+        numericId: String(Math.floor(100000 + Math.random() * 900000)),
+        isBot: true
+      };
+      newMatch.status = 'SPINNING';
+
+      executeWheelSpin(newMatch);
+    }
+  }, 15000); // 15 seconds exact
+
+  botTimeoutsMap.set(matchId, botTimer);
+  luckyWheelMatches.set(matchId, newMatch);
+
+  return res.json({
+    success: true,
+    match: newMatch,
+    userDiamonds: user.diamonds
+  });
+});
+
+// Helper function to execute wheel spin with algorithmic win rates and owner profit routing
+function executeWheelSpin(match: ActiveMatchState) {
+  const totalPot = match.betAmount * 2;
+  const isP1Human = !match.player1.isBot;
+  const isP2Human = match.player2 && !match.player2.isBot;
+
+  let winningPlayerId: string;
+
+  // Algorithmic Win Rate System
+  if (match.player1.isBot || (match.player2 && match.player2.isBot)) {
+    // Playing against Bot
+    const humanPlayer = isP1Human ? match.player1 : match.player2!;
+    const botPlayer = match.player1.isBot ? match.player1 : match.player2!;
+
+    // 80% Bot Win Rate, 20% Human Win Rate
+    // Give slightly higher win probability for small 100 diamond bets
+    let humanWinChance = 0.20; 
+    if (match.betAmount === 100) {
+      humanWinChance = 0.30; // 30% chance on small bets for encouragement
+    }
+
+    const roll = Math.random();
+    if (roll < humanWinChance) {
+      winningPlayerId = humanPlayer.id;
+    } else {
+      winningPlayerId = botPlayer.id;
+    }
+  } else {
+    // 2 Humans playing: 50% random
+    winningPlayerId = Math.random() < 0.5 ? match.player1.id : match.player2!.id;
+  }
+
+  // Calculate angle: Player 1 = 0deg to 180deg (top half), Player 2 = 180deg to 360deg (bottom half)
+  let winningAngle: number;
+  if (winningPlayerId === match.player1.id) {
+    winningAngle = 360 * 5 + (15 + Math.floor(Math.random() * 150)); // Landing in P1 sector
+  } else {
+    winningAngle = 360 * 5 + (195 + Math.floor(Math.random() * 150)); // Landing in P2 sector
+  }
+
+  // Owner Profit Routing
+  const ownerUser = db.getOwnerUser();
+  const isBotWinner = winningPlayerId.startsWith('bot_');
+
+  if (isBotWinner) {
+    // 100% of the pot goes to the Owner's Account (Super Admin)
+    if (ownerUser) {
+      ownerUser.diamonds = (ownerUser.diamonds || 0) + totalPot;
+      db.addWalletTransaction(
+        ownerUser.id,
+        'DIAMOND',
+        totalPot,
+        ownerUser.diamonds,
+        `أرباح جولة عجلة الحظ (فوز الروبوت) - رهان ${match.betAmount.toLocaleString()} ماسة`
+      );
+    }
+    match.winnerPrize = 0;
+    match.commissionDeducted = totalPot;
+  } else {
+    // Human Winner
+    const platformCommission = Math.floor(totalPot * 0.10); // 10% Platform fee
+    const netPrize = totalPot - platformCommission;
+
+    // Route 10% commission to Owner
+    if (ownerUser) {
+      ownerUser.diamonds = (ownerUser.diamonds || 0) + platformCommission;
+      db.addWalletTransaction(
+        ownerUser.id,
+        'DIAMOND',
+        platformCommission,
+        ownerUser.diamonds,
+        `عمولة المنصة 10% من جولة عجلة الحظ (#${match.matchId})`
+      );
+    }
+
+    // Award net prize to Human Winner
+    const winnerUser = db.getUserById(winningPlayerId);
+    if (winnerUser) {
+      winnerUser.diamonds = (winnerUser.diamonds || 0) + netPrize;
+      db.addWalletTransaction(
+        winnerUser.id,
+        'DIAMOND',
+        netPrize,
+        winnerUser.diamonds,
+        `جائزة الفوز بجولة عجلة الحظ (#${match.matchId})`
+      );
+      broadcastToUser(winnerUser.id, { type: 'balance_update', diamonds: winnerUser.diamonds });
+    }
+
+    match.winnerPrize = netPrize;
+    match.commissionDeducted = platformCommission;
+  }
+
+  match.winnerId = winningPlayerId;
+  match.winningAngle = winningAngle;
+  match.status = 'FINISHED';
+  db.save();
+}
+
+// Get Match Status
+app.get('/api/games/lucky-wheel/match/:matchId', (req, res) => {
+  const match = luckyWheelMatches.get(req.params.matchId);
+  if (!match) {
+    return res.status(404).json({ error: 'الجولة غير موجودة' });
+  }
+  return res.json({ match });
+});
+
+// ==========================================
+// GAME 2: LUCKY FARM (مزرعة الحظ - فواكه ولحوم)
+// ==========================================
+
+const LUCKY_FARM_ITEMS = [
+  { id: 'apple', nameAr: 'تفاح', icon: '🍎', group: 'fruit', multiplier: 2 },
+  { id: 'banana', nameAr: 'موز', icon: '🍌', group: 'fruit', multiplier: 3 },
+  { id: 'strawberry', nameAr: 'فراولة', icon: '🍓', group: 'fruit', multiplier: 4 },
+  { id: 'orange', nameAr: 'عنب', icon: '🍇', group: 'fruit', multiplier: 5 },
+  { id: 'chicken', nameAr: 'دجاجة', icon: '🐔', group: 'meat', multiplier: 8 },
+  { id: 'buffalo', nameAr: 'سمك', icon: '🐟', group: 'meat', multiplier: 10 },
+  { id: 'steak', nameAr: 'كريسبي', icon: '🍗', group: 'meat', multiplier: 15 },
+  { id: 'goat', nameAr: 'بقرة', icon: '🐄', group: 'meat', multiplier: 25 },
+];
+
+const luckyFarmState = {
+  roundId: `farm_round_${Date.now()}`,
+  status: 'BETTING' as 'BETTING' | 'SPINNING' | 'RESULT',
+  remainingSeconds: 15, // 15s betting
+  winningItemId: null as string | null,
+  totalBetsPerItem: {
+    apple: 0,
+    banana: 0,
+    strawberry: 0,
+    orange: 0,
+    chicken: 0,
+    buffalo: 0,
+    steak: 0,
+    goat: 0
+  } as Record<string, number>,
+  userBetsPerItem: {} as Record<string, Record<string, number>>, // userId -> itemId -> amount
+  recentWinners: [] as any[],
+  latestBigWin: null as any
+};
+
+// Global Server Timer Loop for Lucky Farm
+setInterval(() => {
+  luckyFarmState.remainingSeconds--;
+
+  // Handle stage transitions
+  if (luckyFarmState.remainingSeconds <= 0) {
+    if (luckyFarmState.status === 'BETTING') {
+      // Transition from BETTING (15s) to SPINNING (15s)
+      luckyFarmState.status = 'SPINNING';
+      luckyFarmState.remainingSeconds = 15;
+
+      // Smart Loss/Profit Algorithm (80% System Profit / 20% Random)
+      const overallTotalBets = Object.values(luckyFarmState.totalBetsPerItem).reduce((a, b) => a + b, 0);
+      
+      const itemProfits = LUCKY_FARM_ITEMS.map(item => {
+        const itemBets = luckyFarmState.totalBetsPerItem[item.id] || 0;
+        const totalPayout = itemBets * item.multiplier;
+        const netHouseProfit = overallTotalBets - totalPayout;
+        return { item, netHouseProfit, itemBets };
+      });
+
+      itemProfits.sort((a, b) => b.netHouseProfit - a.netHouseProfit);
+
+      let chosenItemId = itemProfits[0].item.id; // Max system profit item
+      const rand = Math.random();
+
+      if (rand >= 0.80) { // 20% chance to pick random item with bets or random overall
+        const itemsWithBets = itemProfits.filter(ip => ip.itemBets > 0);
+        if (itemsWithBets.length > 0) {
+          const randomIdx = Math.floor(Math.random() * itemsWithBets.length);
+          chosenItemId = itemsWithBets[randomIdx].item.id;
+        } else {
+          const randomIdx = Math.floor(Math.random() * LUCKY_FARM_ITEMS.length);
+          chosenItemId = LUCKY_FARM_ITEMS[randomIdx].id;
+        }
+      }
+
+      luckyFarmState.winningItemId = chosenItemId;
+
+      // Broadcast Spin Started
+      broadcastAll({
+        type: 'lucky_farm_spin_started',
+        roundId: luckyFarmState.roundId,
+        winningItemId: luckyFarmState.winningItemId,
+        durationSeconds: 15,
+        totalBetsPerItem: luckyFarmState.totalBetsPerItem
+      });
+
+    } else if (luckyFarmState.status === 'SPINNING') {
+      // Transition from SPINNING (15s) to RESULT (5s)
+      luckyFarmState.status = 'RESULT';
+      luckyFarmState.remainingSeconds = 5;
+
+      const winningItem = LUCKY_FARM_ITEMS.find(i => i.id === luckyFarmState.winningItemId);
+
+      if (winningItem && luckyFarmState.winningItemId) {
+        const winningItemId = luckyFarmState.winningItemId;
+
+        // Process payouts for all users who bet on winning item
+        for (const [userId, bets] of Object.entries(luckyFarmState.userBetsPerItem)) {
+          const betAmount = bets[winningItemId] || 0;
+          if (betAmount > 0) {
+            const winAmount = Math.floor(betAmount * winningItem.multiplier);
+            const user = db.getUserById(userId);
+            if (user) {
+              user.diamonds = (user.diamonds || 0) + winAmount;
+              db.addWalletTransaction(
+                user.id,
+                'DIAMOND',
+                winAmount,
+                user.diamonds,
+                `فوز في لعبة مزرعة الحظ (${winningItem.nameAr}) - رهان ${betAmount.toLocaleString()} ماسة`
+              );
+              broadcastToUser(user.id, { type: 'balance_update', diamonds: user.diamonds });
+
+              const winnerRecord = {
+                userId: user.id,
+                userName: user.name,
+                userAvatar: user.avatar,
+                winAmount,
+                itemName: winningItem.nameAr,
+                itemIcon: winningItem.icon,
+                timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+              };
+
+              luckyFarmState.recentWinners.unshift(winnerRecord);
+              if (luckyFarmState.recentWinners.length > 20) {
+                luckyFarmState.recentWinners.pop();
+              }
+
+              // Global Winner Banner Trigger for big wins (> 5,000 diamonds)
+              if (winAmount >= 5000) {
+                const bigWinBanner = {
+                  id: `bigwin_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                  userId: user.id,
+                  userName: user.name,
+                  userAvatar: user.avatar,
+                  winAmount,
+                  itemName: winningItem.nameAr,
+                  itemIcon: winningItem.icon,
+                  timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+                };
+
+                luckyFarmState.latestBigWin = bigWinBanner;
+
+                // Broadcast Big Win Banner to ALL connected users across ALL voice rooms
+                broadcastAll({
+                  type: 'lucky_farm_global_win',
+                  banner: bigWinBanner
+                });
+              }
+            }
+          }
+        }
+        db.save();
+      }
+
+      // Broadcast Result Event
+      broadcastAll({
+        type: 'lucky_farm_result',
+        roundId: luckyFarmState.roundId,
+        winningItemId: luckyFarmState.winningItemId,
+        winningItem: winningItem || null,
+        recentWinners: luckyFarmState.recentWinners.slice(0, 5)
+      });
+
+    } else if (luckyFarmState.status === 'RESULT') {
+      // Transition from RESULT (5s) to new BETTING round (15s)
+      luckyFarmState.status = 'BETTING';
+      luckyFarmState.remainingSeconds = 15;
+      luckyFarmState.roundId = `farm_round_${Date.now()}`;
+      luckyFarmState.winningItemId = null;
+      luckyFarmState.totalBetsPerItem = {
+        apple: 0,
+        banana: 0,
+        strawberry: 0,
+        orange: 0,
+        chicken: 0,
+        buffalo: 0,
+        steak: 0,
+        goat: 0
+      };
+      luckyFarmState.userBetsPerItem = {};
+
+      broadcastAll({
+        type: 'lucky_farm_betting_started',
+        roundId: luckyFarmState.roundId,
+        durationSeconds: 15
+      });
+    }
+  }
+
+  // Periodic tick broadcast
+  broadcastAll({
+    type: 'lucky_farm_tick',
+    status: luckyFarmState.status,
+    remainingSeconds: luckyFarmState.remainingSeconds,
+    roundId: luckyFarmState.roundId,
+    winningItemId: luckyFarmState.winningItemId,
+    totalBetsPerItem: luckyFarmState.totalBetsPerItem
+  });
+}, 1000);
+
+// Get Lucky Farm Current State
+app.get('/api/games/lucky-farm/state', (req, res) => {
+  const userId = req.query.userId as string;
+  const userBets = (userId && luckyFarmState.userBetsPerItem[userId]) ? luckyFarmState.userBetsPerItem[userId] : {};
+
+  return res.json({
+    success: true,
+    state: {
+      roundId: luckyFarmState.roundId,
+      status: luckyFarmState.status,
+      remainingSeconds: luckyFarmState.remainingSeconds,
+      winningItemId: luckyFarmState.winningItemId,
+      totalBetsPerItem: luckyFarmState.totalBetsPerItem,
+      userBets,
+      recentWinners: luckyFarmState.recentWinners,
+      latestBigWin: luckyFarmState.latestBigWin
+    }
+  });
+});
+
+// Place Lucky Farm Bet
+app.post('/api/games/lucky-farm/bet', (req, res) => {
+  const { userId, itemId, amount } = req.body;
+  const parsedAmount = Number(amount);
+
+  const VALID_BETS = [100, 200, 300, 400, 500, 1000, 2000, 3000, 4000, 5000, 10000, 20000, 30000, 40000, 50000];
+  const itemExists = LUCKY_FARM_ITEMS.some(i => i.id === itemId);
+
+  if (!userId || !itemExists || !VALID_BETS.includes(parsedAmount)) {
+    return res.status(400).json({ error: 'بيانات الرهان غير صالحة أو الصنف غير موجود' });
+  }
+
+  if (luckyFarmState.status !== 'BETTING') {
+    return res.status(400).json({ error: 'انتهى وقت الرهان لهذه الجولة، يرجى الانتظار للجولة القادمة!' });
+  }
+
+  const user = db.getUserById(userId);
+  if (!user) {
+    return res.status(404).json({ error: 'المستخدم غير موجود' });
+  }
+
+  if ((user.diamonds || 0) < parsedAmount) {
+    return res.status(400).json({ error: `رصيدك من الماسات (${(user.diamonds || 0).toLocaleString()}) لا يكفي للرهان بقيمة ${parsedAmount.toLocaleString()} ماسة` });
+  }
+
+  // Deduct bet from user
+  user.diamonds = (user.diamonds || 0) - parsedAmount;
+  db.addWalletTransaction(
+    user.id,
+    'DIAMOND',
+    -parsedAmount,
+    user.diamonds,
+    `رهان مزرعة الحظ (${itemId}) بقيمة ${parsedAmount.toLocaleString()} ماسة`
+  );
+  db.save();
+
+  // Record bet state
+  luckyFarmState.totalBetsPerItem[itemId] = (luckyFarmState.totalBetsPerItem[itemId] || 0) + parsedAmount;
+
+  if (!luckyFarmState.userBetsPerItem[user.id]) {
+    luckyFarmState.userBetsPerItem[user.id] = {};
+  }
+  luckyFarmState.userBetsPerItem[user.id][itemId] = (luckyFarmState.userBetsPerItem[user.id][itemId] || 0) + parsedAmount;
+
+  // Broadcast user balance update
+  broadcastToUser(user.id, { type: 'balance_update', diamonds: user.diamonds });
+
+  // Broadcast updated total bets to all clients
+  broadcastAll({
+    type: 'lucky_farm_bets_updated',
+    roundId: luckyFarmState.roundId,
+    totalBetsPerItem: luckyFarmState.totalBetsPerItem
+  });
+
+  return res.json({
+    success: true,
+    userDiamonds: user.diamonds,
+    state: {
+      roundId: luckyFarmState.roundId,
+      status: luckyFarmState.status,
+      remainingSeconds: luckyFarmState.remainingSeconds,
+      winningItemId: luckyFarmState.winningItemId,
+      totalBetsPerItem: luckyFarmState.totalBetsPerItem,
+      userBets: luckyFarmState.userBetsPerItem[user.id] || {},
+      recentWinners: luckyFarmState.recentWinners,
+      latestBigWin: luckyFarmState.latestBigWin
+    }
+  });
+});
+
+
+app.post('/api/payments/webhook', (req, res) => {
+  const { orderId, userId, diamonds, paymentGateway, status } = req.body;
+
+  if (!userId || !diamonds || status !== 'SUCCESS') {
+    return res.status(400).json({ error: 'بيانات بوابة الدفع غير مكتملة أو العملية غير ناجحة' });
+  }
+
+  const user = db.getUserById(userId);
+  if (!user) {
+    return res.status(404).json({ error: 'المستخدم غير موجود' });
+  }
+
+  const addedDiamonds = Number(diamonds);
+  if (isNaN(addedDiamonds) || addedDiamonds <= 0) {
+    return res.status(400).json({ error: 'كمية الماسات غير صالحة' });
+  }
+
+  // Server-side atomic balance addition
+  user.diamonds = (user.diamonds || 0) + addedDiamonds;
+  db.addXP(user.id, addedDiamonds, 'PAYMENT_GATEWAY_RECHARGE');
+  db.addWalletTransaction(
+    user.id,
+    'DIAMOND',
+    addedDiamonds,
+    user.diamonds,
+    `شحن عبر بوابة الدفع الرسمية (${paymentGateway || 'Official Gateway'}) - طلب #${orderId || Date.now()}`
+  );
+
+  db.addNotification({
+    userId: user.id,
+    title: 'نجاح عملية الشحن الرسمية 💎💳',
+    message: `تم شحن ${addedDiamonds.toLocaleString('ar-EG')} ماسة لحسابك بنجاح من خلال بوابة الدفع الرسمية.`,
+    type: 'ADMIN'
+  });
+
+  db.save();
+
+  // Sync real-time balance via WebSocket
+  broadcastToUser(user.id, {
+    type: 'balance_update',
+    diamonds: user.diamonds
+  });
+
+  return res.json({
+    success: true,
+    message: 'تمت معالجة إشعار بوابة الدفع وإضافة الماسات بنجاح',
+    newDiamonds: user.diamonds
+  });
 });
 
 // --- 3. ADMIN MANAGEMENT ROUTES FOR HOSTS & AGENTS (requireAdmin) ---

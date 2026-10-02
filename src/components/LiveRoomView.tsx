@@ -4,6 +4,7 @@ import { API } from '../services/api';
 import { socketService } from '../services/socketService';
 import { mediaStreamService } from '../services/mediaStreamService';
 import { soundEffects } from '../services/soundEffects';
+import { handleShareApp } from '../utils/shareUtils';
 import { MicStageLayout } from './MicStageLayout';
 import { GiftsDrawer } from './GiftsDrawer';
 import { PublicProfileModal } from './PublicProfileModal';
@@ -11,12 +12,17 @@ import { RoomSettingsModal } from './RoomSettingsModal';
 import { DirectMessagesView } from './DirectMessagesView';
 import { RoleBadge, UserRoleBadges } from './RoleBadge';
 import { GiftTrajectoryOverlay, GiftTrajectoryItem } from './GiftTrajectoryOverlay';
+import { ExpandedVideoSeatModal } from './ExpandedVideoSeatModal';
 import { RoomEntranceOverlay, RoomEntranceEventPayload } from './RoomEntranceOverlay';
 import { EntrancesShopModal } from './EntrancesShopModal';
+import { SoloLiveStreamView } from './SoloLiveStreamView';
+import { LuckyFarmArena } from './LuckyFarmArena';
+import { LuckyFarmGlobalWinBanner } from '../types';
 import {
   HostMicRequestNotification,
   HostMicRequestsModal,
-  UserRequestMicModal
+  UserRequestMicModal,
+  HostPullUserModal
 } from './MicRequestsManager';
 import {
   Mic,
@@ -32,6 +38,8 @@ import {
   Copy,
   Check,
   Shield,
+  ShieldAlert,
+  Clock,
   Volume2,
   VolumeX,
   FlipHorizontal,
@@ -111,11 +119,27 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
   const [pendingMicRequests, setPendingMicRequests] = useState<MicRequest[]>([]);
   const [incomingRequestForAlert, setIncomingRequestForAlert] = useState<MicRequest | null>(null);
   const [isHostMicRequestsModalOpen, setIsHostMicRequestsModalOpen] = useState(false);
+  const [isHostPullUserModalOpen, setIsHostPullUserModalOpen] = useState(false);
+  const [pullTargetSeatIndex, setPullTargetSeatIndex] = useState<number | undefined>(undefined);
   const [isUserMicRequestModalOpen, setIsUserMicRequestModalOpen] = useState(false);
   const [selectedTargetSeatForRequest, setSelectedTargetSeatForRequest] = useState<number | undefined>(undefined);
   const [myPendingRequest, setMyPendingRequest] = useState<MicRequest | null>(null);
   const [entranceEvent, setEntranceEvent] = useState<RoomEntranceEventPayload | null>(null);
   const [isEntrancesShopOpen, setIsEntrancesShopOpen] = useState(false);
+  const [expandedVideoSeat, setExpandedVideoSeat] = useState<RoomSeat | null>(null);
+  const [isExpandedVideoSeatOpen, setIsExpandedVideoSeatOpen] = useState(false);
+  const [isSoloLiveMode, setIsSoloLiveMode] = useState(false);
+  const [isLuckyFarmModalOpen, setIsLuckyFarmModalOpen] = useState(false);
+  const [globalGameBanner, setGlobalGameBanner] = useState<LuckyFarmGlobalWinBanner | null>(null);
+
+  // Active Penalty State & Timer
+  const [activePenalty, setActivePenalty] = useState<{
+    penaltyType: '15m' | '1h' | '24h' | 'perm';
+    durationLabel: string;
+    bannedUntil: number | null;
+    reason: string;
+  } | null>(null);
+  const [remainingPenaltySeconds, setRemainingPenaltySeconds] = useState<number>(0);
 
   const roomContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -242,6 +266,39 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
     };
   }, []);
 
+  // Penalty Live Countdown Timer Effect
+  useEffect(() => {
+    if (!activePenalty || activePenalty.penaltyType === 'perm' || !activePenalty.bannedUntil) {
+      setRemainingPenaltySeconds(0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diffSec = Math.max(0, Math.floor((activePenalty.bannedUntil! - now) / 1000));
+      setRemainingPenaltySeconds(diffSec);
+
+      if (diffSec <= 0) {
+        setActivePenalty(null);
+        alert('تم فتح الحظر تلقائياً، يمكنك الآن التحدث والمشاركة بحرية.');
+      }
+    };
+
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
+    return () => clearInterval(timerInterval);
+  }, [activePenalty]);
+
+  const formatCountdown = (totalSec: number) => {
+    const hours = Math.floor(totalSec / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    if (hours > 0) {
+      return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
   // Synchronize currentUser's seat name, avatar, and custom frame instantly when updated
   useEffect(() => {
     if (currentUser) {
@@ -272,11 +329,22 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
     }
     socketService.joinRoom(room.id, currentUser.id, isStealthActive);
 
-    // Initial fetch of room data & seats
+    // Initial fetch of room data & seats & active room penalty
     API.getRoom(room.id).then(data => {
       setCurrentRoom(data.room);
       setSeats(data.seats || []);
       setMembers(data.members || []);
+    }).catch(() => {});
+
+    API.getUserRoomPenalty(room.id, currentUser.id).then(res => {
+      if (res.hasActivePenalty && res.penalty) {
+        if (res.penalty.penaltyType === 'perm') {
+          alert('تم حظرك نهائياً من هذه الغرفة.');
+          handleSafeLeave();
+          return;
+        }
+        setActivePenalty(res.penalty);
+      }
     }).catch(() => {});
 
     // Listen to real-time room events
@@ -286,6 +354,7 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
         if (data.seats) setSeats(data.seats);
         if (data.members) setMembers(data.members);
         if (data.messages) setMessages(data.messages);
+        if (data.micRequests) setPendingMicRequests(data.micRequests);
       }
     });
 
@@ -383,6 +452,31 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
       }
     });
 
+    const unsubPenalty = socketService.on('user_penalty_applied', (data) => {
+      if (data.roomId === room.id) {
+        if (data.targetUserId === currentUser.id) {
+          if (data.penaltyType === 'perm') {
+            alert('⛔ تم حظرك نهائياً من هذه الغرفة بواسطة الإدارة.');
+            handleSafeLeave();
+            return;
+          }
+
+          // Leave mic seat if currently seated
+          const myCurSeat = seats.find(s => s.userId === currentUser.id);
+          if (myCurSeat) {
+            socketService.leaveSeat(room.id, myCurSeat.seatIndex);
+          }
+
+          setActivePenalty({
+            penaltyType: data.penaltyType,
+            durationLabel: data.durationLabel,
+            bannedUntil: data.bannedUntil,
+            reason: data.reason || 'تم تعليق حسابك لمخالفة قواعد الغرفة'
+          });
+        }
+      }
+    });
+
     const unsubAutoBan = socketService.on('user_auto_banned', (data) => {
       if (data.roomId === room.id) {
         if (data.userId === currentUser.id) {
@@ -425,31 +519,43 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
       }
     });
 
+    const unsubGlobalGameWin = socketService.on('lucky_farm_global_win', (data: any) => {
+      if (data.banner) {
+        setGlobalGameBanner(data.banner);
+        setTimeout(() => {
+          setGlobalGameBanner(null);
+        }, 10000);
+      }
+    });
+
     // Fetch pending mic requests from DB (preserved even if host was offline)
-    if (isHost || isModerator) {
-      API.getMicRequests(room.id).then(reqs => {
-        if (reqs && reqs.length > 0) {
-          setPendingMicRequests(reqs);
-        }
-      }).catch(err => console.warn('Error fetching mic requests:', err));
-    } else {
-      API.getMyMicRequestStatus(room.id, currentUser.id).then(req => {
-        if (req && req.status === 'PENDING') {
-          setMyPendingRequest(req);
-        }
-      }).catch(err => console.warn('Error fetching user mic request status:', err));
-    }
+    API.getMicRequests(room.id).then(reqs => {
+      if (reqs) {
+        setPendingMicRequests(reqs);
+      }
+    }).catch(err => console.warn('Error fetching mic requests:', err));
+
+    API.getMyMicRequestStatus(room.id, currentUser.id).then(req => {
+      if (req && req.status === 'PENDING') {
+        setMyPendingRequest(req);
+      }
+    }).catch(err => console.warn('Error fetching user mic request status:', err));
 
     const unsubMicReq = socketService.on('new_mic_request', (data) => {
-      if (data.roomId === room.id && isUserHostOrMod()) {
-        setPendingMicRequests(prev => [...prev.filter(r => r.id !== data.request.id), data.request]);
-        setIncomingRequestForAlert(data.request);
-        soundEffects.playNotification();
+      if (data.roomId === room.id && data.request) {
+        setPendingMicRequests(prev => [...prev.filter(r => r.id !== data.request.id && r.userId !== data.request.userId), data.request]);
+        
+        const hId = currentRoomRef.current?.hostId || room.hostId;
+        const isCurrentHostOrMod = hId === currentUser.id || currentUser.role === 'ADMIN' || currentUser.role === 'OWNER' || currentUser.role === 'MODERATOR' || isUserHostOrMod();
+        if (isCurrentHostOrMod) {
+          setIncomingRequestForAlert(data.request);
+          soundEffects.playNotification();
+        }
       }
     });
 
     const unsubMicReqsUpdated = socketService.on('mic_requests_updated', (data) => {
-      if (data.roomId === room.id && isUserHostOrMod()) {
+      if (data.roomId === room.id) {
         setPendingMicRequests(data.requests || []);
       }
     });
@@ -478,13 +584,19 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
     const unsubMicReqResolved = (data: any) => {
       if (data.roomId === room.id) {
+        if (data.userId) {
+          setPendingMicRequests(prev => prev.filter(r => r.userId !== data.userId));
+        }
+        if (incomingRequestForAlert?.userId === data.userId) {
+          setIncomingRequestForAlert(null);
+        }
         if (!data.userId || data.userId === currentUser.id) {
           setMyPendingRequest(null);
           if (data.status === 'ACCEPTED') {
             soundEffects.playMicOn();
             soundEffects.playNotification();
             handleStartMic(data.seatIndex);
-            alert(data.message || 'تهانينا! وافق صاحب الغرفة على صعودك على المايك 🎙️');
+            alert(data.message || 'تمت الموافقة على طلبك، تفضل بالصعود للمايك 🎙️');
           } else if (data.status === 'REJECTED') {
             alert(data.message || 'عذراً، اعتذر صاحب الغرفة عن قبول طلب المايك في الوقت الحالي.');
           }
@@ -596,6 +708,16 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
       console.warn('Microphone auto-start note:', e);
     }
   };
+
+  // Auto dismiss Toast alert for incoming mic request after 5 seconds
+  useEffect(() => {
+    if (incomingRequestForAlert) {
+      const timer = setTimeout(() => {
+        setIncomingRequestForAlert(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [incomingRequestForAlert]);
 
   // Real-time synchronization polling fallback for mic requests (every 2.5s)
   useEffect(() => {
@@ -738,11 +860,41 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
   // Request Mic Actions
   const handleOpenUserMicModal = (targetSeatIndex?: number) => {
+    // If room is in Open Mode (requireHostApproval is false), listener takes seat directly
+    if (currentRoom.requireHostApproval === false) {
+      let seatIdx = targetSeatIndex;
+      if (seatIdx === undefined) {
+        const freeSeat = seats.find(s => !s.userId && !s.isLocked);
+        seatIdx = freeSeat?.seatIndex;
+      }
+      if (seatIdx !== undefined) {
+        socketService.takeSeat(room.id, seatIdx, currentUser.id);
+        handleStartMic(seatIdx);
+        return;
+      } else {
+        alert('جميع المقاعد المعروضة مشغولة حالياً.');
+        return;
+      }
+    }
+
     setSelectedTargetSeatForRequest(targetSeatIndex);
     setIsUserMicRequestModalOpen(true);
   };
 
   const handleSubmitMicRequest = async (targetSeatIndex?: number) => {
+    if (currentRoom.requireHostApproval === false) {
+      let seatIdx = targetSeatIndex;
+      if (seatIdx === undefined) {
+        const freeSeat = seats.find(s => !s.userId && !s.isLocked);
+        seatIdx = freeSeat?.seatIndex;
+      }
+      if (seatIdx !== undefined) {
+        socketService.takeSeat(room.id, seatIdx, currentUser.id);
+        handleStartMic(seatIdx);
+        return;
+      }
+    }
+
     if (myPendingRequest && myPendingRequest.status === 'PENDING') {
       alert('لديك طلب صعود إلى المايك قيد الانتظار بالفعل.');
       return;
@@ -805,7 +957,17 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
     API.resolveMicRequest(room.id, requestId, 'REJECTED').catch(console.warn);
   };
 
-  // Click on empty seat to take it (or request if listener)
+  const handleOpenPullUserModal = (seatIndex?: number) => {
+    setPullTargetSeatIndex(seatIndex);
+    setIsHostPullUserModalOpen(true);
+  };
+
+  const handlePullUserToMic = (targetUserId: string, seatIndex?: number) => {
+    socketService.pullToMic(room.id, currentUser.id, targetUserId, seatIndex);
+    API.pullUserToMic(room.id, currentUser.id, targetUserId, seatIndex).catch(console.warn);
+  };
+
+  // Click on empty seat to take it (or pull listener if host)
   const handleSeatClick = (seat: RoomSeat) => {
     if (seat.userId === currentUser.id) {
       // Already on this seat -> option to leave seat
@@ -823,18 +985,29 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
     }
 
     if (seat.userId) {
-      // Clicked on an occupied seat -> Open the user's Public Profile Card!
-      setSelectedProfileUserId(seat.userId);
-      setIsProfileOpen(true);
+      if (seat.isCameraOn) {
+        setExpandedVideoSeat(seat);
+        setIsExpandedVideoSeatOpen(true);
+      } else {
+        setSelectedProfileUserId(seat.userId);
+        setIsProfileOpen(true);
+      }
       return;
     }
 
     if (isHost || isModerator) {
-      // Host or mod can directly sit
-      socketService.takeSeat(room.id, seat.seatIndex, currentUser.id);
+      // Host or Moderator clicking an empty seat opens the Pull User / Seat Management modal for that seat
+      handleOpenPullUserModal(seat.seatIndex);
     } else {
-      // Listener clicked on empty seat -> Open Request Mic Modal pre-selecting this seat!
-      handleOpenUserMicModal(seat.seatIndex);
+      // Listener clicked on empty seat
+      if (currentRoom.requireHostApproval === false) {
+        // Open mode -> Take seat directly & activate microphone
+        socketService.takeSeat(room.id, seat.seatIndex, currentUser.id);
+        handleStartMic(seat.seatIndex);
+      } else {
+        // Approval mode -> Open Request Mic Modal pre-selecting this seat
+        handleOpenUserMicModal(seat.seatIndex);
+      }
     }
   };
 
@@ -857,11 +1030,23 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
     setChatInput('');
   };
 
-  // Safe Leave Room (stops media tracks completely)
-  const handleSafeLeave = () => {
-    mediaStreamService.cleanupAllMedia();
-    socketService.leaveRoom(room.id, currentUser.id);
-    onLeaveRoom();
+  // Safe Leave Room (stops microphone/camera media tracks, leaves seat, and releases WebRTC audio)
+  const handleSafeLeave = async () => {
+    try {
+      // 1. Leave mic seat if user is currently seated
+      if (mySeat) {
+        socketService.leaveSeat(room.id, mySeat.seatIndex);
+      }
+      // 2. Stop microphone and camera tracks from browser/device immediately
+      mediaStreamService.cleanupAllMedia();
+      // 3. Leave socket audio room & channels
+      socketService.leaveRoom(room.id, currentUser.id);
+      console.log("تم كتم الميكروفون ومغادرة الغرفة بنجاح");
+    } catch (error) {
+      console.error("خطأ أثناء إغلاق الغرفة والميكروفون:", error);
+    } finally {
+      onLeaveRoom();
+    }
   };
 
   // Copy Room Share Link & Code
@@ -948,11 +1133,22 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
     reader.readAsDataURL(file);
   };
 
+  if (isSoloLiveMode) {
+    return (
+      <SoloLiveStreamView
+        room={currentRoom}
+        currentUser={currentUser}
+        onClose={() => setIsSoloLiveMode(false)}
+        onUserUpdated={onUserUpdated}
+      />
+    );
+  }
+
   return (
     <div
       ref={roomContainerRef}
       id="live-room-container"
-      className="relative h-screen max-h-screen w-full bg-slate-950 flex flex-col justify-between select-none overflow-hidden"
+      className="relative h-screen max-h-screen w-full bg-gradient-to-b from-[#fef3c7] via-[#fde68a] to-[#fcd34d] text-amber-950 font-sans flex flex-col justify-between select-none overflow-hidden"
     >
       {/* Real-time Dynamic Gift Trajectory Overlay (Sender Mic -> Continuous Slow Path -> Receiver Mic Center) */}
       <GiftTrajectoryOverlay
@@ -970,15 +1166,15 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
 
       {/* 3. ULTRA-COMPACT HEADER (Single ultra-thin, transparent line) */}
-      <div className="relative z-30 h-10 px-3 py-1 flex items-center justify-between gap-2 w-full shrink-0 bg-slate-950/50 backdrop-blur-md border-b border-slate-800/40 select-none">
+      <div className="relative z-30 h-10 px-3 py-1 flex items-center justify-between gap-2 w-full shrink-0 bg-gradient-to-r from-amber-300/90 via-amber-200/90 to-amber-300/90 backdrop-blur-md border-b-2 border-amber-600/60 shadow-md select-none text-amber-950">
         {/* Right Side (RTL): Viewers count + Host small avatar */}
         <div className="flex items-center gap-1.5 min-w-0">
           <button
             onClick={() => setIsMembersOpen(true)}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-amber-300 text-[10px] font-bold border border-slate-800 transition-all active:scale-95 cursor-pointer shadow-sm shrink-0"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#fffbeb] hover:bg-amber-100 text-amber-950 text-[10px] font-black border border-amber-600/60 transition-all active:scale-95 cursor-pointer shadow-sm shrink-0"
             title="المتواجدون في الغرفة"
           >
-            <Users className="w-3 h-3 text-amber-400" />
+            <Users className="w-3 h-3 text-emerald-700" />
             <span>{Math.max(1, members.length, currentRoom.viewerCount || 0, seats.filter(s => s.userId).length)}</span>
           </button>
 
@@ -987,16 +1183,16 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
               setSelectedProfileUserId(currentRoom.hostId);
               setIsProfileOpen(true);
             }}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-900/70 border border-slate-800/80 cursor-pointer hover:bg-slate-800/80 transition-colors shrink-0"
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#fffbeb] border border-amber-600/60 cursor-pointer hover:bg-amber-100 transition-colors shrink-0 shadow-sm"
             title="عرض ملف المضيف"
           >
             <img
               src={currentRoom.hostAvatar}
               alt={currentRoom.hostName}
-              className="w-5 h-5 rounded-full object-cover border border-amber-400/80 shrink-0"
+              className="w-5 h-5 rounded-full object-cover border border-amber-600 shrink-0"
               referrerPolicy="no-referrer"
             />
-            <span className="text-[10px] font-bold text-slate-200 truncate max-w-[65px] hidden xs:inline">
+            <span className="text-[10px] font-black text-amber-950 truncate max-w-[65px] hidden xs:inline">
               {currentRoom.hostName}
             </span>
           </div>
@@ -1004,25 +1200,42 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
         {/* Center: Room Name & ID Code */}
         <div className="flex flex-col items-center justify-center min-w-0 px-1">
-          <h1 className="text-xs font-black text-amber-300 truncate max-w-[140px] sm:max-w-[220px] leading-tight">
+          <h1 className="text-xs font-black text-amber-950 truncate max-w-[140px] sm:max-w-[220px] leading-tight">
             {currentRoom.title}
           </h1>
           <button
             onClick={handleCopyCode}
-            className="text-[9px] text-slate-400 hover:text-amber-300 font-mono flex items-center gap-0.5"
+            className="text-[9px] text-amber-900 hover:text-emerald-800 font-mono font-bold flex items-center gap-0.5"
             title="نسخ كود الغرفة"
           >
             <span>ID: {currentRoom.roomCode}</span>
-            {copiedCode ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5" />}
+            {copiedCode ? <Check className="w-2.5 h-2.5 text-emerald-700" /> : <Copy className="w-2.5 h-2.5" />}
           </button>
         </div>
 
-        {/* Left Side (RTL): Close (X) & Minimize button */}
+        {/* Left Side (RTL): Solo Live Video, Share, Minimize & Close (X) */}
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setIsSoloLiveMode(true)}
+            className="px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-700 to-emerald-800 text-amber-100 border border-amber-400 text-[10px] font-black transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+            title="وضع البث المباشر الفردي للشاشة الكاملة (TikTok Full Screen Solo Live)"
+          >
+            <Video className="w-3 h-3 text-amber-300" />
+            <span className="hidden xs:inline">بث فردي</span>
+          </button>
+
+          <button
+            onClick={() => handleShareApp()}
+            className="p-1 rounded-full bg-[#fffbeb] hover:bg-amber-100 text-amber-950 border border-amber-600/60 transition-all active:scale-95 cursor-pointer shadow-sm"
+            title="مشاركة التطبيق لدعوة الأصدقاء"
+          >
+            <Share2 className="w-3.5 h-3.5 text-amber-800" />
+          </button>
+
           {onMinimizeRoom && (
             <button
               onClick={onMinimizeRoom}
-              className="p-1 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-all active:scale-95 cursor-pointer"
+              className="p-1 rounded-full bg-[#fffbeb] hover:bg-amber-100 text-amber-950 border border-amber-600/60 transition-all active:scale-95 cursor-pointer shadow-sm"
               title="تصغير الغرفة"
             >
               <Minimize2 className="w-3.5 h-3.5" />
@@ -1031,7 +1244,7 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
           <button
             onClick={() => setShowExitConfirmDialog(true)}
-            className="p-1 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
+            className="p-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white border border-amber-300 font-black transition-all active:scale-95 cursor-pointer shadow-md"
             title="خروج من الغرفة"
           >
             <X className="w-3.5 h-3.5" />
@@ -1041,15 +1254,15 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
       {/* Host Controls Dropdown Sheet */}
       {isHostControlsOpen && (isHost || isModerator) && (
-        <div className="bg-slate-900 border-b border-purple-500/30 p-2.5 flex flex-wrap items-center justify-between gap-2 z-20 animate-in slide-in-from-top duration-150">
+        <div className="bg-[#fffbeb] border-b-2 border-amber-600/80 p-2.5 flex flex-wrap items-center justify-between gap-2 z-20 animate-in slide-in-from-top duration-150 text-amber-950 shadow-xl">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-purple-400" />
-            <span className="text-xs font-bold text-purple-200">إدارة الغرفة والمايكات</span>
+            <Shield className="w-4 h-4 text-emerald-800" />
+            <span className="text-xs font-black text-amber-950">إدارة الغرفة والمايكات</span>
           </div>
 
           <div className="flex items-center gap-1.5 flex-wrap">
-            <label className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold cursor-pointer transition-colors active:scale-95">
-              <ImageIcon className="w-3 h-3 text-emerald-400" />
+            <label className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-amber-100 border border-amber-300 text-[11px] font-bold cursor-pointer transition-colors active:scale-95 shadow-sm">
+              <ImageIcon className="w-3 h-3 text-amber-300" />
               <span>تعديل غلاف الغرفة</span>
               <input
                 type="file"
@@ -1065,25 +1278,25 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
                 setIsRoomSettingsOpen(true);
                 setIsHostControlsOpen(false);
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-950 border border-amber-600 text-[11px] font-bold shadow-sm"
             >
-              <Settings className="w-3 h-3 text-amber-400" />
+              <Settings className="w-3 h-3 text-amber-800" />
               <span>إعدادات الغرفة</span>
             </button>
 
             <button
               onClick={() => socketService.hostControl(room.id, 'mute_all')}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-950 border border-amber-600 text-[11px] font-bold shadow-sm"
             >
-              <VolumeX className="w-3 h-3 text-amber-400" />
+              <VolumeX className="w-3 h-3 text-amber-800" />
               <span>كتم الكل</span>
             </button>
 
             <button
               onClick={() => socketService.hostControl(room.id, 'unmute_all')}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-amber-100 border border-amber-300 text-[11px] font-bold shadow-sm"
             >
-              <Volume2 className="w-3 h-3 text-emerald-400" />
+              <Volume2 className="w-3 h-3 text-amber-300" />
               <span>فتح الكل</span>
             </button>
 
@@ -1098,7 +1311,7 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
                   handleSafeLeave();
                 }
               }}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-700/50 text-[11px] font-bold cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white border border-amber-300 text-[11px] font-bold cursor-pointer shadow-sm"
             >
               <Trash2 className="w-3 h-3" />
               <span>حذف الغرفة</span>
@@ -1189,14 +1402,14 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
 
       {/* 2. REAL-TIME FLOATING LIVE STREAM CHAT AREA (Sleek floating chat directly under 17 mics stage) */}
       <div className="w-full max-w-lg mx-auto px-3 shrink-0 my-1 z-20">
-        <div className="h-[70px] xs:h-[80px] sm:h-[90px] max-h-[90px] overflow-y-auto rounded-2xl bg-slate-950/25 backdrop-blur-xs p-1 flex flex-col gap-1 custom-scrollbar">
+        <div className="h-[70px] xs:h-[80px] sm:h-[90px] max-h-[90px] overflow-y-auto rounded-2xl bg-amber-100/90 border-2 border-amber-600/60 backdrop-blur-md p-1.5 flex flex-col gap-1 custom-scrollbar shadow-md">
           {messages.map(msg => (
             <div
               key={msg.id}
               className={`inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-xl transition-colors self-start max-w-[95%] ${
                 msg.giftData
-                  ? 'bg-amber-500/20 border border-amber-500/30'
-                  : 'bg-slate-900/60 border border-slate-800/50 hover:bg-slate-900/80'
+                  ? 'bg-amber-300/90 border border-amber-600/80 text-amber-950 font-black'
+                  : 'bg-[#fffbeb] border border-amber-400/80 text-amber-950 font-bold'
               }`}
             >
               <img
@@ -1208,7 +1421,7 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
                     setIsProfileOpen(true);
                   }
                 }}
-                className="w-3.5 h-3.5 rounded-full object-cover mt-0.5 cursor-pointer hover:opacity-80 shrink-0"
+                className="w-3.5 h-3.5 rounded-full object-cover mt-0.5 cursor-pointer hover:opacity-80 shrink-0 border border-amber-500"
                 referrerPolicy="no-referrer"
               />
               <div className="leading-tight min-w-0">
@@ -1220,11 +1433,11 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
                       setIsProfileOpen(true);
                     }
                   }}
-                  className="font-black text-amber-300 ml-1 hover:underline cursor-pointer text-right inline"
+                  className="font-black text-emerald-800 ml-1 hover:underline cursor-pointer text-right inline"
                 >
                   {msg.userName}:
                 </button>
-                <span className={msg.giftData ? 'font-bold text-amber-200' : 'text-slate-100 font-medium'}>
+                <span className={msg.giftData ? 'font-black text-amber-950' : 'text-amber-900 font-bold'}>
                   {msg.text}
                 </span>
               </div>
@@ -1235,21 +1448,22 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
       </div>
 
       {/* 4. COMPACT FLOATING BOTTOM CONTROLS BAR */}
-      <div className="shrink-0 z-30 pb-2 px-3 pt-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
-        <div className="max-w-md mx-auto flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-slate-800/90 shadow-2xl">
+      <div className="shrink-0 z-30 pb-2 px-3 pt-0 bg-gradient-to-t from-amber-300/80 via-amber-200/50 to-transparent">
+        <div className="max-w-md mx-auto flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-2xl bg-gradient-to-r from-[#fffbeb] via-[#fef3c7] to-[#fde68a] backdrop-blur-xl border-2 border-amber-600/80 shadow-2xl shadow-amber-600/20">
           {/* Quick Chat Input Field */}
-          <form onSubmit={handleSendMessage} className="flex-1 min-w-0 flex items-center gap-1 bg-slate-950/70 rounded-xl px-2.5 py-1 border border-slate-800 focus-within:border-amber-400">
+          <form onSubmit={handleSendMessage} className={`flex-1 min-w-0 flex items-center gap-1 bg-amber-50/90 rounded-xl px-2.5 py-1 border ${activePenalty ? 'border-rose-500/50 opacity-60' : 'border-amber-500/60 focus-within:border-emerald-700'}`}>
             <input
               type="text"
-              placeholder="اكتب رسالة..."
+              disabled={Boolean(activePenalty)}
+              placeholder={activePenalty ? 'تم تعليق المحادثة لمخالفة القواعد 🚫' : 'اكتب رسالة...'}
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              className="w-full bg-transparent text-slate-100 text-xs focus:outline-none placeholder:text-slate-500"
+              className="w-full bg-transparent text-amber-950 font-bold text-xs focus:outline-none placeholder:text-amber-800/70 disabled:cursor-not-allowed"
             />
             <button
               type="submit"
-              disabled={!chatInput.trim()}
-              className="p-1 text-amber-400 hover:text-amber-300 disabled:text-slate-600 cursor-pointer"
+              disabled={!chatInput.trim() || Boolean(activePenalty)}
+              className="p-1 text-emerald-800 hover:text-emerald-900 disabled:text-amber-400 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5 rotate-180" />
             </button>
@@ -1260,23 +1474,47 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
             {/* 1. الرسائل (Messages) */}
             <button
               onClick={() => setIsMessagesDrawerOpen(true)}
-              className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-slate-200 hover:text-amber-300 border border-slate-700/80 active:scale-95 transition-all cursor-pointer relative"
+              className="p-2 rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-800 text-amber-100 border border-amber-300 active:scale-95 transition-all cursor-pointer relative shadow-sm"
               title="الرسائل والمحادثات الخاصة"
             >
-              <MessageSquare className="w-4 h-4 text-amber-400" />
+              <MessageSquare className="w-4 h-4 text-amber-200" />
             </button>
 
             {/* 2. الهدايا الذهبية (Golden Gifts Box) */}
             <button
               id="bottom-gift-btn"
               onClick={() => setIsGiftsOpen(true)}
-              className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-black shadow-md shadow-amber-500/20 active:scale-95 transition-all cursor-pointer"
+              className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-amber-950 font-black shadow-md border border-amber-600 active:scale-95 transition-all cursor-pointer"
               title="صندوق الهدايا الذهبي"
             >
               <GiftIcon className="w-4 h-4 animate-bounce" />
             </button>
 
-            {/* 3. المايك (Mic) */}
+            {/* Lucky Farm Game Button (مزرعة الحظ 🌾) */}
+            <button
+              onClick={() => setIsLuckyFarmModalOpen(true)}
+              className="p-2 rounded-xl bg-gradient-to-tr from-emerald-600 to-amber-500 hover:from-emerald-500 hover:to-amber-400 text-slate-950 font-black shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+              title="لعبة مزرعة الحظ (فواكه ولحوم) 🌾"
+            >
+              <span className="text-base leading-none">🌾</span>
+            </button>
+
+            {/* 3. المايك والكاميرا (Mic & Camera) */}
+            {(isSeated || isHost) && (
+              <button
+                id="bottom-seated-camera-btn"
+                onClick={handleToggleCamera}
+                className={`p-2 rounded-xl transition-all cursor-pointer ${
+                  isCameraActive
+                    ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30 font-black'
+                    : 'bg-slate-800 text-slate-300 border border-slate-700/60 hover:text-cyan-400'
+                }`}
+                title={isCameraActive ? 'إيقاف الكاميرا' : 'تشغيل كاميرا الفيديو المباشرة'}
+              >
+                {isCameraActive ? <Video className="w-4 h-4 animate-pulse" /> : <VideoOff className="w-4 h-4" />}
+              </button>
+            )}
+
             {isSeated || isHost ? (
               <button
                 id="bottom-seated-mic-btn"
@@ -1296,23 +1534,47 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
               <button
                 id="bottom-mic-pending-btn"
                 onClick={() => setIsUserMicRequestModalOpen(true)}
-                className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-400/80 transition-all shadow-md animate-pulse cursor-pointer"
-                title="طلبك قيد الانتظار"
+                className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/25 to-yellow-500/25 hover:from-amber-500/35 hover:to-yellow-500/35 text-amber-950 border-2 border-amber-600 transition-all shadow-md animate-pulse cursor-pointer flex items-center gap-1.5"
+                title="انقر لعرض حالة الطلب أو الإلغاء"
               >
-                <Hand className="w-4 h-4 text-amber-400" />
+                <Hand className="w-4 h-4 text-amber-800 shrink-0" />
+                <span className="text-[11px] font-black text-amber-950 truncate max-w-[130px] sm:max-w-none">
+                  تم إرسال الطلب... بانتظار المالك
+                </span>
               </button>
             ) : (
               <button
                 id="bottom-request-mic-btn"
                 onClick={() => handleOpenUserMicModal(undefined)}
-                className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-amber-400 border border-amber-500/30 transition-all cursor-pointer"
+                className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-amber-400 border border-amber-500/30 transition-all cursor-pointer flex items-center gap-1"
                 title="طلب الصعود للمايك"
               >
                 <Hand className="w-4 h-4" />
+                <span className="text-[11px] font-bold text-amber-300 hidden sm:inline">طلب المايك</span>
               </button>
             )}
 
-            {/* 4. المزيد / الإعدادات (More / Shield) */}
+            {/* 4. Host / Moderator Mic Requests Queue Button (Raised Hands ✋) */}
+            {(isHost || isModerator) && (
+              <button
+                id="bottom-host-mic-requests-btn"
+                onClick={() => setIsHostMicRequestsModalOpen(true)}
+                className="p-2 rounded-xl bg-gradient-to-r from-amber-500/30 to-yellow-500/30 hover:from-amber-500/40 hover:to-yellow-500/40 text-amber-950 border-2 border-amber-600 transition-all cursor-pointer relative font-black shadow-sm active:scale-95 flex items-center gap-1"
+                title="لوحة طلبات المايك"
+              >
+                <Hand className="w-4 h-4 text-amber-800 shrink-0" />
+                <span className="text-[11px] font-black text-amber-950 hidden xs:inline">الطلبات</span>
+                {pendingMicRequests.length > 0 ? (
+                  <span className="absolute -top-2 -right-2 px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black border-2 border-amber-100 shadow-md animate-bounce">
+                    {pendingMicRequests.length}
+                  </span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 absolute top-1 right-1" />
+                )}
+              </button>
+            )}
+
+            {/* 5. المزيد / الإعدادات (More / Shield) */}
             {(isHost || isModerator) && (
               <button
                 onClick={() => setIsHostControlsOpen(!isHostControlsOpen)}
@@ -1429,6 +1691,21 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Expanded Video Seat Modal */}
+      {expandedVideoSeat && (
+        <ExpandedVideoSeatModal
+          isOpen={isExpandedVideoSeatOpen}
+          onClose={() => setIsExpandedVideoSeatOpen(false)}
+          seat={expandedVideoSeat}
+          currentUser={currentUser}
+          onSendGiftClick={() => {
+            setSelectedGiftReceiverId(expandedVideoSeat.userId || currentRoom.hostId);
+            setIsGiftsOpen(true);
+          }}
+          localStream={expandedVideoSeat.userId === currentUser.id ? mediaStreamService.getLocalVideoStream() : null}
+        />
       )}
 
       {/* Gifts Drawer Modal */}
@@ -1559,9 +1836,26 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
                       </div>
                     </div>
 
-                    <button className="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 text-[11px] font-bold border border-slate-700 hover:border-amber-400">
-                      عرض الملف
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {(isHost || isModerator) && !memberSeat && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsMembersOpen(false);
+                            handlePullUserToMic(member.userId);
+                          }}
+                          className="px-2.5 py-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] font-black border border-amber-300 shadow-md active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                          title="سحب المستمع فوراً إلى المايك"
+                        >
+                          <Mic className="w-3 h-3" />
+                          <span>سحب للمايك</span>
+                        </button>
+                      )}
+                      <button className="px-2.5 py-1 rounded-xl bg-slate-800 text-slate-300 text-[11px] font-bold border border-slate-700 hover:border-amber-400">
+                        عرض الملف
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -1577,6 +1871,7 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
         userId={selectedProfileUserId}
         currentUser={currentUser}
         roomId={currentRoom.id}
+        currentRoom={currentRoom}
         roomSeats={seats}
         isCurrentHost={isHost || isModerator}
         onSendGiftToUser={(targetUid) => {
@@ -1630,6 +1925,19 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
         onReject={handleRejectMicRequest}
       />
 
+      {/* Host Pull Listener to Mic Modal */}
+      <HostPullUserModal
+        isOpen={isHostPullUserModalOpen}
+        onClose={() => setIsHostPullUserModalOpen(false)}
+        roomSeats={seats}
+        roomMembers={members}
+        targetSeatIndex={pullTargetSeatIndex}
+        onPullUser={handlePullUserToMic}
+        onTakeSeatMyself={(seatIdx) => {
+          socketService.takeSeat(room.id, seatIdx, currentUser.id);
+        }}
+      />
+
       {/* User Request Mic Modal (Seat picker, active status, cancel) */}
       <UserRequestMicModal
         isOpen={isUserMicRequestModalOpen}
@@ -1659,6 +1967,88 @@ export const LiveRoomView: React.FC<LiveRoomViewProps> = ({
           socketService.triggerEntrance(currentRoom.id, currentUser.id, entranceId);
         }}
       />
+
+      {/* Moderation Penalty & Suspension Banner/Modal Card with Live Countdown */}
+      {activePenalty && (
+        <div className="fixed inset-x-3 top-16 z-[95] max-w-md mx-auto animate-in slide-in-from-top duration-300">
+          <div className="p-4 rounded-3xl bg-slate-950/95 border-2 border-rose-500/80 shadow-2xl shadow-rose-900/60 backdrop-blur-2xl flex flex-col gap-3 text-slate-100">
+            <div className="flex items-center justify-between border-b border-rose-500/30 pb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse">
+                  <ShieldAlert className="w-5 h-5 text-rose-400" />
+                </div>
+                <div>
+                  <h3 className="font-black text-xs text-rose-200">تنبيه عقوبة رقابة سلوكية</h3>
+                  <p className="text-[10px] text-rose-300/80">تم إيقاف صلاحيات التحدث والمشاركة مؤقتاً</p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 font-black text-xs border border-rose-500/40">
+                {activePenalty.durationLabel}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col gap-1 text-center">
+              <p className="text-xs font-bold text-slate-200">
+                ⚠️ <span className="text-rose-300">{activePenalty.reason || 'تم تعليق حسابك لمخالفة قواعد الغرفة'}</span>
+              </p>
+            </div>
+
+            {/* Live Countdown Timer */}
+            <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-r from-rose-950/80 via-slate-900 to-rose-950/80 border border-rose-500/40 gap-1">
+              <span className="text-[10px] text-slate-400 font-bold">الوقت المتبقي لرفع الحظر تلقائياً:</span>
+              <div className="text-2xl font-black font-mono text-amber-300 tracking-widest flex items-center gap-1.5">
+                <Clock className="w-5 h-5 text-amber-400 animate-spin" style={{ animationDuration: '3s' }} />
+                <span>{formatCountdown(remainingPenaltySeconds)}</span>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+              عند انتهاء العداد التنازلي سيتم فتح الحظر واستعادة صلاحيات التحدث والمشاركة تلقائياً.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Global Winner Ticker Banner Overlay inside Room */}
+      {globalGameBanner && (
+        <div className="fixed top-16 inset-x-3 z-50 max-w-lg mx-auto overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/90 via-yellow-400 to-amber-500 text-slate-950 p-2.5 flex items-center gap-3 shadow-2xl border-2 border-amber-300 animate-in slide-in-from-top duration-300">
+          <div className="w-8 h-8 rounded-xl bg-slate-950 text-amber-400 flex items-center justify-center font-black text-lg shrink-0 shadow-md">
+            🏆
+          </div>
+          <div className="text-xs font-black truncate flex-1 flex items-center gap-1.5">
+            <span>🎉 مبروك للاعب</span>
+            <span className="underline decoration-slate-950 underline-offset-2">{globalGameBanner.userName}</span>
+            <span>فاز بـ</span>
+            <span className="bg-slate-950 text-amber-300 px-2 py-0.5 rounded-lg text-xs font-black shadow-inner">
+              {globalGameBanner.winAmount.toLocaleString()} 💎
+            </span>
+            <span>في مزرعة الحظ ({globalGameBanner.itemIcon} {globalGameBanner.itemName})!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Lucky Farm Overlay Modal Drawer */}
+      {isLuckyFarmModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-lg flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="bg-slate-950 border-t-2 sm:border-2 border-amber-500/60 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-2 sm:p-4 shadow-2xl relative">
+            <div className="sticky top-0 right-0 z-20 flex justify-end pb-2">
+              <button
+                onClick={() => setIsLuckyFarmModalOpen(false)}
+                className="p-2 rounded-full bg-slate-800/90 text-slate-300 hover:text-white border border-slate-700 cursor-pointer active:scale-90 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <LuckyFarmArena
+              currentUser={currentUser}
+              onUserUpdated={onUserUpdated || (() => {})}
+              onOpenWallet={onOpenWallet}
+              onExitGame={() => setIsLuckyFarmModalOpen(false)}
+              isEmbeddedInRoom={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

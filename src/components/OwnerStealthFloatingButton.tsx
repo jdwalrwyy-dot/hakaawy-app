@@ -200,7 +200,7 @@ export const OwnerStealthFloatingButton: React.FC<OwnerStealthFloatingButtonProp
       >
         {/* Expanded Info Tooltip */}
         {isExpanded && (
-          <div className="bg-slate-950/95 border border-slate-800 backdrop-blur-xl p-3 rounded-2xl shadow-2xl max-w-xs text-right text-slate-200 text-xs flex flex-col gap-1.5 animate-fadeIn">
+          <div className="bg-slate-950/95 border border-slate-800 backdrop-blur-xl p-3 rounded-2xl shadow-2xl max-w-xs text-right text-slate-200 text-xs flex flex-col gap-1.5 animate-fadeIn mb-1">
             <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-1.5">
               <span className="font-bold text-amber-400 flex items-center gap-1">
                 <Crown className="w-3.5 h-3.5" /> وضع المالك الخفي
@@ -223,43 +223,30 @@ export const OwnerStealthFloatingButton: React.FC<OwnerStealthFloatingButtonProp
           </div>
         )}
 
-        {/* Main Floating Toggle Bar */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-xl border border-amber-500/30 p-1.5 pl-3 rounded-full shadow-2xl hover:border-amber-500/60 transition-all cursor-grab active:cursor-grabbing">
-          <button
-            onClick={handleExpandClick}
-            title="معلومات وضع التخفي"
-            className="p-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-amber-400 transition-colors cursor-pointer"
-          >
-            <Crown className="w-3.5 h-3.5" />
-          </button>
-
-          <span className="text-[11px] font-bold text-slate-200 hidden sm:inline">
-            وضع التخفي:
-          </span>
-
-          <button
-            onClick={handleToggle}
-            disabled={isUpdating}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer shadow-md active:scale-95 ${
-              isStealthMode
-                ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 text-white shadow-purple-900/50 border border-purple-400/40'
-                : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
-            }`}
-          >
-            {isStealthMode ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
-                <span>مخفي (ON)</span>
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping inline-block" />
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5 text-slate-400" />
-                <span>عادي (OFF)</span>
-              </>
-            )}
-          </button>
-        </div>
+        {/* Main Floating Compact Toggle Button */}
+        <button
+          onClick={handleToggle}
+          disabled={isUpdating}
+          title={isStealthMode ? 'وضع التخفي (ON) - انقر للتغيير' : 'الوضع العادي (OFF) - انقر للتخفي'}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-full font-bold text-xs shadow-xl backdrop-blur-md transition-all active:scale-95 cursor-grab active:cursor-grabbing select-none ${
+            isStealthMode
+              ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-500 hover:to-indigo-500 text-white border border-purple-400/40 shadow-purple-600/30'
+              : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80 shadow-slate-950/50'
+          }`}
+        >
+          {isStealthMode ? (
+            <>
+              <EyeOff className="w-4 h-4 text-purple-300 animate-pulse shrink-0" />
+              <span>مخفي (ON)</span>
+              <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping inline-block shrink-0" />
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4 text-slate-400 shrink-0" />
+              <span>عادي (OFF)</span>
+            </>
+          )}
+        </button>
       </div>
     </>
   );

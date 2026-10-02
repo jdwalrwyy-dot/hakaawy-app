@@ -4,6 +4,8 @@ import { API } from '../services/api';
 import { RoleBadge, UserRoleBadges } from './RoleBadge';
 import { AdminAgencyHostManagement } from './AdminAgencyHostManagement';
 import { AdminGiftTierSettings } from './AdminGiftTierSettings';
+import { AdminWithdrawalManagement } from './AdminWithdrawalManagement';
+import { AdminVerifiedUsersManagement } from './AdminVerifiedUsersManagement';
 import { OwnerFreeRechargeModal } from './OwnerFreeRechargeModal';
 import {
   Shield,
@@ -27,14 +29,16 @@ import {
   AlertOctagon,
   Crown,
   Briefcase,
-  Zap
+  Zap,
+  CreditCard,
+  ShieldCheck
 } from 'lucide-react';
 
 interface AdminDashboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: User;
-  initialTab?: 'overview' | 'gift_tiers' | 'agency_host' | 'moderation' | 'users' | 'rooms' | 'reports' | 'logs' | 'roles_and_king';
+  initialTab?: 'overview' | 'verified_users' | 'withdrawals' | 'gift_tiers' | 'agency_host' | 'moderation' | 'users' | 'rooms' | 'reports' | 'logs' | 'roles_and_king';
   onJoinRoom?: (room: Room) => void;
 }
 
@@ -45,7 +49,7 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   initialTab = 'overview',
   onJoinRoom
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'gift_tiers' | 'agency_host' | 'moderation' | 'users' | 'rooms' | 'reports' | 'logs' | 'roles_and_king'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'verified_users' | 'withdrawals' | 'gift_tiers' | 'agency_host' | 'moderation' | 'users' | 'rooms' | 'reports' | 'logs' | 'roles_and_king'>(initialTab);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -53,6 +57,14 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [rechargeLogs, setRechargeLogs] = useState<ShippingRechargeLog[]>([]);
   const [moderationIncidents, setModerationIncidents] = useState<ModerationIncident[]>([]);
+  const [violatingUsers, setViolatingUsers] = useState<{
+    user: User;
+    violationCount: number;
+    banStepLabel: string;
+    isPendingReview: boolean;
+    remainingSeconds: number;
+    incidents: ModerationIncident[];
+  }[]>([]);
   const [userSearch, setUserSearch] = useState('');
   const [banReason, setBanReason] = useState('مخالفة سياسة المحتوى والآداب العامة');
   const [selectedUserToBan, setSelectedUserToBan] = useState<User | null>(null);
@@ -127,6 +139,17 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
     API.getAuditLogs(currentUser.id).then(setAuditLogs).catch(() => {});
     API.getAdminRechargeLogs(currentUser.id).then(setRechargeLogs).catch(() => {});
     API.getAdminModerationIncidents(currentUser.id).then(setModerationIncidents).catch(() => {});
+    API.getGraduatedViolatingUsers(currentUser.id).then(setViolatingUsers).catch(() => {});
+  };
+
+  const handleGraduatedBanAction = async (targetUserId: string, action: 'PERMANENT_BAN_FREEZE' | 'LIFT_BAN_RESET') => {
+    try {
+      const res = await API.resolveGraduatedModerationAction(currentUser.id, targetUserId, action);
+      alert(res.message);
+      loadData();
+    } catch (err: any) {
+      alert(err.message || 'فشلت معالجة إجراء العقوبة الإدارية');
+    }
   };
 
   useEffect(() => {
@@ -305,6 +328,8 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-slate-800/60 p-1.5 rounded-2xl border border-slate-700/60">
           {[
             { id: 'overview' as const, label: 'الإحصائيات', icon: TrendingUp },
+            { id: 'verified_users' as const, label: '🛡️ سجل الموثقين الجدد', icon: ShieldCheck },
+            { id: 'withdrawals' as const, label: '💸 طلبات السحب والتحويلات', icon: CreditCard },
             { id: 'gift_tiers' as const, label: '🎁 فئات وأصوات الهدايا', icon: Sparkles },
             { id: 'agency_host' as const, label: '🏢 الوكلاء والمضيفين والتارجت', icon: Briefcase },
             { id: 'moderation' as const, label: 'الرقابة والحشمة الآلية', icon: AlertOctagon, badge: pendingIncidentsCount },
@@ -337,6 +362,20 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
             );
           })}
         </div>
+
+        {/* TAB: VERIFIED USERS MODERATION LOG */}
+        {activeTab === 'verified_users' && (
+          <div className="animate-in fade-in duration-200">
+            <AdminVerifiedUsersManagement currentUser={currentUser} />
+          </div>
+        )}
+
+        {/* TAB: WITHDRAWAL REQUESTS MANAGEMENT */}
+        {activeTab === 'withdrawals' && (
+          <div className="animate-in fade-in duration-200">
+            <AdminWithdrawalManagement currentUser={currentUser} />
+          </div>
+        )}
 
         {/* TAB: GIFT TIERS & SOUND SETTINGS */}
         {activeTab === 'gift_tiers' && (
@@ -636,6 +675,15 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                         <Crown className="w-3 h-3 text-amber-400" />
                         <span>ID مميز</span>
                       </button>
+
+                      <button
+                        onClick={() => handleAssignKingFrame(u.id)}
+                        className="px-2 py-1 rounded-xl text-xs font-bold flex items-center gap-1 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border border-amber-500/40 hover:from-amber-500/30 hover:to-yellow-500/30 transition-all cursor-pointer"
+                        title="منح وتفعيل إطار المالك الحصري لهذا الحساب"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        <span>إطار المالك</span>
+                      </button>
                       {isOwner && (
                         <button
                           onClick={() => handleToggleShippingAgent(u.id, !u.isShippingAgent)}
@@ -700,22 +748,60 @@ export const AdminDashboardModal: React.FC<AdminDashboardModalProps> = ({
                     <p className="text-xs text-slate-200">السبب: {rep.reason}</p>
                     {rep.details && <p className="text-[11px] text-slate-400">تفاصيل: {rep.details}</p>}
 
-                    {rep.status === 'PENDING' && (
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-700">
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-700/80 flex-wrap">
+                      {/* Direct Jump to Room */}
+                      {rep.roomId && onJoinRoom ? (
                         <button
-                          onClick={() => handleResolveReport(rep.id, 'DISMISSED')}
-                          className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-xl"
+                          type="button"
+                          onClick={() => {
+                            const targetRoom = rooms.find(r => r.id === rep.roomId) || { id: rep.roomId, title: rep.targetName || 'غرفة البلاغ' } as any;
+                            onClose();
+                            onJoinRoom(targetRoom);
+                          }}
+                          className="px-2.5 py-1 bg-purple-600/90 hover:bg-purple-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-purple-600/20"
                         >
-                          تجاهل
+                          <Radio className="w-3.5 h-3.5" />
+                          <span>انتقال مباشر للغرفة ↗</span>
                         </button>
-                        <button
-                          onClick={() => handleResolveReport(rep.id, 'RESOLVED')}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl"
-                        >
-                          حل البلاغ
-                        </button>
+                      ) : (
+                        <span className="text-[10px] text-slate-500">ملاحظة: بلاغ مباشر على المستخدم</span>
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        {/* Owner-Exclusive Permanent Ban Button */}
+                        {isOwner && rep.reportedUserId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const targetUser = users.find(u => u.id === rep.reportedUserId || u.numericId === rep.reportedUserId) || { id: rep.reportedUserId, name: rep.targetName || 'مستخدم' } as any;
+                              setSelectedUserToBan(targetUser);
+                            }}
+                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black rounded-xl flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-rose-600/30"
+                            title="صلاحية حظر الحساب محصورة بالمالك العام حصرياً"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            <span>حظر نهائي للحساب ⛔</span>
+                          </button>
+                        )}
+
+                        {rep.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => handleResolveReport(rep.id, 'DISMISSED')}
+                              className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-xl cursor-pointer"
+                            >
+                              تجاهل
+                            </button>
+                            <button
+                              onClick={() => handleResolveReport(rep.id, 'RESOLVED')}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl cursor-pointer"
+                            >
+                              حل البلاغ
+                            </button>
+                          </>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 ))
               )}

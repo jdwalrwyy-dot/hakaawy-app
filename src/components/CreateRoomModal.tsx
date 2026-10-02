@@ -8,6 +8,7 @@ interface CreateRoomModalProps {
   onClose: () => void;
   currentUser: User;
   onRoomCreated: (room: Room) => void;
+  defaultMode?: 'audio' | 'video';
 }
 
 const PRESET_COVERS = [
@@ -21,32 +22,44 @@ const PRESET_COVERS = [
 const CATEGORIES = ['سوالف', 'شعر وموسيقى', 'تقنية', 'ألعاب ومسابقات', 'ثقافة وتطوير', 'عام'];
 
 const LAYOUT_OPTIONS: { id: MicLayoutType; label: string; desc: string; icon: string; count: number }[] = [
-  { id: '2+10', label: '12 مايك (2 VIP + 5+5)', desc: 'صف علوي VIP لمضيفين + صفين 5 مايكات', icon: '👑', count: 12 },
-  { id: '2+15', label: '17 مايك (2 VIP + 5+5+5)', desc: 'صف علوي VIP + 3 صفوف 5 مايكات', icon: '🌟', count: 17 },
-  { id: '10', label: '10 مايكات (5 + 5)', desc: 'تخطيط متوازن صفين 5 مايكات', icon: '🎙️', count: 10 },
-  { id: '15', label: '15 مايك (5 + 5 + 5)', desc: 'مساحة ضخمة 3 صفوف متوازنة', icon: '💎', count: 15 },
-  { id: '5', label: '5 مايكات (صف واحد)', desc: 'جلسة سريعة وخفيفة', icon: '⚡', count: 5 },
-  { id: '8', label: '8 مايكات كلاسيكي (4 + 4)', desc: 'التخطيط الكلاسيكي 4 في كل صف', icon: '📻', count: 8 }
+  { id: '5', label: '5 مايكات', desc: 'جلسة سريعة (صف واحد 5 مايكات)', icon: '⚡', count: 5 },
+  { id: '10', label: '10 مايكات', desc: 'تخطيط متوازن (صفين 5 مايكات)', icon: '🎙️', count: 10 },
+  { id: '15', label: '15 مايك', desc: 'مساحة واسعة (3 صفوف 5 مايكات)', icon: '💎', count: 15 },
+  { id: '2+15', label: '17 مايك', desc: 'صف علوي VIP + 3 صفوف 5 مايكات', icon: '🌟', count: 17 },
+  { id: '2+20', label: '22 مايك', desc: 'صف علوي VIP + 4 صفوف 5 مايكات', icon: '👑', count: 22 },
+  { id: '2+25', label: '27 مايك', desc: 'صف علوي VIP + 5 صفوف 5 مايكات', icon: '🚀', count: 27 }
 ];
 
 export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   isOpen,
   onClose,
   currentUser,
-  onRoomCreated
+  onRoomCreated,
+  defaultMode = 'audio'
 }) => {
+  const isVideoMode = defaultMode === 'video';
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState(PRESET_COVERS[0]);
   const [micLayout, setMicLayout] = useState<MicLayoutType>('2+15');
   const [type, setType] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
   const [password, setPassword] = useState('');
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState(isVideoMode ? 'بث فيديو مباشر 🎥 (Solo Live)' : 'سوالف');
   const [allowAudio, setAllowAudio] = useState(true);
-  const [allowVideo, setAllowVideo] = useState(true);
-  const [tagsInput, setTagsInput] = useState('حكاوي, لايف, سوالف');
+  const [allowVideo, setAllowVideo] = useState(isVideoMode);
+  const [tagsInput, setTagsInput] = useState(isVideoMode ? 'لايف, بث, فيديو' : 'حكاوي, صوت, سوالف');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      const isVideo = defaultMode === 'video';
+      setAllowVideo(isVideo);
+      setAllowAudio(true);
+      setCategory(isVideo ? 'بث فيديو مباشر 🎥 (Solo Live)' : 'سوالف');
+      setTagsInput(isVideo ? 'لايف, بث, فيديو' : 'حكاوي, صوت, سوالف');
+    }
+  }, [isOpen, defaultMode]);
 
   if (!isOpen) return null;
 
@@ -102,12 +115,16 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Radio className="w-5 h-5" />
+            <div className={`p-2 rounded-xl ${defaultMode === 'video' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+              {defaultMode === 'video' ? <Video className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </div>
             <div>
-              <h2 className="font-bold text-base text-slate-100">إنشاء غرفة صوتية / بث</h2>
-              <p className="text-[11px] text-slate-400">ابدأ مساحتك واستضف 8 متحدثين على المايكات</p>
+              <h2 className="font-bold text-base text-slate-100">
+                {defaultMode === 'video' ? 'بدء بث مباشر مرئي 📹' : 'إنشاء غرفة صوتية جديدة 🎙️'}
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                {defaultMode === 'video' ? 'افتح الكاميرا وابدأ بثك المباشر للجمهور' : 'أنشئ مساحتك واستضف متحدثين على المايكات'}
+              </p>
             </div>
           </div>
           <button

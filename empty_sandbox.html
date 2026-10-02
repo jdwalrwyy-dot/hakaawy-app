@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بيئة الاختبار والتصميم المستقلة — Hekawy Luxury Sandbox</title>
+  
+  <!-- Tailwind CSS CDN for instant standalone styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Cairo for crisp Arabic typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900;1000&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            gold: {
+              300: '#fef08a',
+              400: '#facc15',
+              500: '#eab308',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#78350f',
+              900: '#451a03',
+            },
+            emerald: {
+              900: '#045227',
+              950: '#012210',
+            },
+            royal: {
+              velvet: '#4A0E17',
+              bronze: '#3E2723',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background-color: #030712;
+      color: #f8fafc;
+    }
+    
+    /* Custom Scrollbar for Sandbox */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #d97706;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start p-2 sm:p-6 selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- ==================== HEADER BAR ==================== -->
+  <header className="w-full max-w-4xl bg-slate-900/80 border border-amber-500/40 rounded-2xl p-4 mb-6 backdrop-blur-md shadow-xl flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-200 text-slate-950 flex items-center justify-center font-black text-xl shadow-md border border-yellow-100">
+        👑
+      </div>
+      <div>
+        <h1 className="font-black text-lg text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500">
+          صفحة تجريبية فارغة ومستقلة (Sandbox View)
+        </h1>
+        <p className="text-xs text-amber-200/70 font-semibold">
+          بيئة عمل معزولة لاختبار وتصميم المكونات الملكية 3D قطعة تلو الأخرى
+        </p>
+      </div>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1">
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        مستقلة وخالية 100%
+      </span>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN TESTING CONTAINER ==================== -->
+  <main className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-6">
+
+    <!-- LEFT PANEL: CONTROLS & COMPONENT LIST -->
+    <aside className="md:col-span-4 bg-slate-900/60 border border-slate-800 rounded-3xl p-4 flex flex-col gap-4 shadow-lg">
+      <div className="pb-2 border-b border-slate-800 flex items-center justify-between">
+        <h2 className="font-black text-sm text-amber-300 flex items-center gap-1.5">
+          <span>🛠️ أدوات الاختبار المباشر</span>
+        </h2>
+        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">v1.0.0</span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <button onclick="setStage('header')" className="w-full text-right p-3 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-400 text-xs font-bold text-slate-200 hover:text-amber-300 transition-all cursor-pointer flex items-center justify-between">
+          <span>1. الهيدر العلوي (10%)</span>
+          <span className="text-[10px] text-amber-400">01</span>
+        </button>
+
+        <button onclick="setStage('hero')" className="w-full text-right p-3 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-400 text-xs font-bold text-slate-200 hover:text-amber-300 transition-all cursor-pointer flex items-center justify-between">
+          <span>2. المسرح البانر الرئيسي (35%)</span>
+          <span className="text-[10px] text-amber-400">02</span>
+        </button>
+
+        <button onclick="setStage('buttons')" className="w-full text-right p-3 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-400 text-xs font-bold text-slate-200 hover:text-amber-300 transition-all cursor-pointer flex items-center justify-between">
+          <span>3. صفوف الأزرار الملتصقة (25%)</span>
+          <span className="text-[10px] text-amber-400">03</span>
+        </button>
+
+        <button onclick="setStage('nav')" className="w-full text-right p-3 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-400 text-xs font-bold text-slate-200 hover:text-amber-300 transition-all cursor-pointer flex items-center justify-between">
+          <span>4. شريط التنقل السفلي (15%)</span>
+          <span className="text-[10px] text-amber-400">04</span>
+        </button>
+      </div>
+
+      <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200/90 leading-relaxed space-y-1 mt-auto">
+        <span className="font-bold text-amber-300 block">💡 ملاحظة تطويرية:</span>
+        <p className="text-[11px] text-amber-100/80">
+          هذا الملف مستقل تماماً ولا يؤثر على الشاشة الرئيسية أو ملفات التطبيق الحالية. يمكنك كتابة وتعديل الشفرات بداخل المنصة أدناه بكل أريحية.
+        </p>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: 9:16 MOBILE CANVAS CANVAS PREVIEW -->
+    <section className="md:col-span-8 flex flex-col items-center justify-start">
+      <div className="w-full flex items-center justify-between mb-2 px-1">
+        <span className="text-xs font-bold text-slate-400 flex items-center gap-1">
+          📱 معاينة الهاتف 9:16 (360px × 740px)
+        </span>
+        <button onclick="clearSandbox()" className="text-xs text-rose-400 hover:underline cursor-pointer">
+          إعادة تعيين المحتوى 🔄
+        </button>
+      </div>
+
+      <!-- Mobile Canvas Frame -->
+      <div className="w-full max-w-[380px] h-[720px] rounded-[2.5rem] border-4 border-amber-500/60 shadow-[0_0_50px_rgba(217,119,6,0.3)] bg-gradient-to-b from-[#fffbeb] via-[#fef3c7] to-[#fde68a] relative p-3 overflow-y-auto overflow-x-hidden flex flex-col justify-between" id="sandbox-canvas">
+        
+        <!-- Placeholder Content in Canvas -->
+        <div id="stage-content" class="w-full h-full flex flex-col items-center justify-center text-center p-4 text-slate-800 gap-3">
+          <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500 text-amber-800 flex items-center justify-center font-black text-2xl">
+            🏰
+          </div>
+          <h3 className="font-black text-base text-amber-950">منطقة التصميم والتجربة الفارغة</h3>
+          <p className="text-xs text-amber-900/80 max-w-xs">
+            اختر عنصراً من القائمة الجانبية أو ابدأ بإضافة الكود المخصص لمعاينته مباشرة بداخل الهاتف.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== INTERACTIVE SCRIPT ==================== -->
+  <script>
+    function setStage(type) {
+      const container = document.getElementById('stage-content');
+      if (type === 'header') {
+        container.innerHTML = `
+          <div class="w-full p-2 bg-gradient-to-r from-[#6b2c05] via-[#4a1d03] to-[#361301] border-2 border-[#fbbf24] rounded-2xl flex items-center justify-between text-white shadow-lg animate-in fade-in">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-black text-xs text-[#fef08a]">999,999</span>
+              <div class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center">+</div>
+            </div>
+            <div class="text-center">
+              <h1 class="font-black text-xs text-amber-200">حكاوي 3D</h1>
+              <span class="text-[8px] text-emerald-400 block">غرف صوتية</span>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-amber-500 border border-white"></div>
+          </div>
+        `;
+      } else if (type === 'hero') {
+        container.innerHTML = `
+          <div class="w-full h-[320px] rounded-3xl bg-gradient-to-b from-[#180a03] via-[#082a17] to-[#03150b] border-3 border-[#facc15] shadow-xl p-4 flex flex-col items-center justify-center text-white animate-in zoom-in-95">
+            <div class="w-20 h-20 rounded-2xl bg-amber-500/20 border-2 border-amber-300 flex items-center justify-center text-3xl mb-3">
+              🎙️
+            </div>
+            <h2 class="font-black text-lg text-amber-300">إدارة حكاوي</h2>
+            <p class="text-xs text-amber-100/80 mt-1">غرف صوتية وتفاعلية</p>
+          </div>
+        `;
+      } else if (type === 'buttons') {
+        container.innerHTML = `
+          <div class="w-full flex flex-col gap-2 animate-in slide-in-from-bottom duration-200">
+            <button class="w-full py-3 bg-gradient-to-r from-[#023318] to-[#045227] border-2 border-[#facc15] rounded-2xl text-amber-100 font-black text-xs shadow-md">
+              🎁 المكافآت اليومية
+            </button>
+            <button class="w-full py-3 bg-gradient-to-r from-[#fbbf24] to-[#d97706] border-2 border-[#fef08a] text-amber-950 font-black text-xs shadow-md">
+              🎙️ إنشاء غرفة صوتية جديدة
+            </button>
+          </div>
+        `;
+      } else if (type === 'nav') {
+        container.innerHTML = `
+          <div class="w-full py-3 px-2 bg-gradient-to-r from-[#180a03] via-[#082a17] to-[#03150b] border-2 border-[#facc15] rounded-2xl flex items-center justify-around text-amber-200 text-[10px] font-black animate-in fade-in">
+            <span>🏰 حسابي</span>
+            <span>🎮 الألعاب</span>
+            <span>🧭 الرسائل</span>
+            <span>📜 البث</span>
+            <span class="text-amber-400">👑 الرئيسية</span>
+          </div>
+        `;
+      }
+    }
+
+    function clearSandbox() {
+      document.getElementById('stage-content').innerHTML = `
+        <div class="w-full h-full flex flex-col items-center justify-center text-center p-4 text-slate-800 gap-3">
+          <div class="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500 text-amber-800 flex items-center justify-center font-black text-2xl">
+            🏰
+          </div>
+          <h3 class="font-black text-base text-amber-950">منطقة التصميم والتجربة الفارغة</h3>
+          <p class="text-xs text-amber-900/80 max-w-xs">
+            اختر عنصراً من القائمة الجانبية أو ابدأ بإضافة الكود المخصص لمعاينته مباشرة بداخل الهاتف.
+          </p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

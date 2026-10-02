@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DailyTask, User, ReferralStats } from '../types';
 import { API } from '../services/api';
 import { soundEffects } from '../services/soundEffects';
+import { handleShareApp, APP_SHARE_MESSAGE, APK_DOWNLOAD_URL } from '../utils/shareUtils';
 import confetti from 'canvas-confetti';
 import {
   Sparkles,
@@ -55,35 +56,20 @@ export const DailyTasksModal: React.FC<DailyTasksModalProps> = ({
   if (!isOpen) return null;
 
   const baseReferralCode = currentUser.referralCode || referralStats?.referralCode || 'HKW100';
-  const shareBaseUrl = 'https://service-rooms.ai.studio/';
-  const fullShareUrl = `${shareBaseUrl}?ref=${encodeURIComponent(baseReferralCode)}`;
-  const shareMessageText = `جرّب حكاوي - غرف صوتية وبث مباشر 🎙️🎁\nانضم للغرف الصوتية والبث المباشر والدردشة والهدايا:\n${fullShareUrl}`;
+  const fullShareUrl = APK_DOWNLOAD_URL;
+  const shareMessageText = APP_SHARE_MESSAGE;
 
   const handleShareNow = async () => {
     soundEffects.playJoinRoom();
-
-    // Check if real Android / Web Share Sheet is available
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'تطبيق حكاوي - غرف صوتية وبث مباشر',
-          text: `جرّب حكاوي - غرف صوتية وبث مباشر 🎙️🎁\nانضم للغرف الصوتية والبث المباشر والدردشة والهدايا:\n${fullShareUrl}`,
-          url: fullShareUrl
-        });
-        return;
-      } catch (err: any) {
-        // If user cancelled or share failed, fallback to show share options sheet
-        if (err.name !== 'AbortError') {
-          setShowShareOptions(true);
-        }
-      }
-    } else {
-      setShowShareOptions(true);
+    const res = await handleShareApp();
+    if (res.copied) {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
     }
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(fullShareUrl);
+    navigator.clipboard.writeText(APP_SHARE_MESSAGE);
     setCopiedLink(true);
     soundEffects.playCoinSound();
     setTimeout(() => setCopiedLink(false), 2500);

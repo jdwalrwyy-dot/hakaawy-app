@@ -49,7 +49,9 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
   // Determine effective layout mode (defaulting to 2+15 for 17 seats)
   let effectiveMode: MicLayoutType = (layoutMode as MicLayoutType) || '2+15';
   if (effectiveMode === 'auto' || !effectiveMode) {
-    if (seats.length >= 17) effectiveMode = '2+15';
+    if (seats.length >= 27) effectiveMode = '2+25';
+    else if (seats.length >= 22) effectiveMode = '2+20';
+    else if (seats.length >= 17) effectiveMode = '2+15';
     else if (seats.length >= 12) effectiveMode = '2+10';
     else if (seats.length === 15) effectiveMode = '15';
     else if (seats.length === 10) effectiveMode = '10';
@@ -62,6 +64,8 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
   // Normalize seats array to ensure required count of seats exist
   const normalizedSeats: RoomSeat[] = [...seats];
   const requiredCount =
+    effectiveMode === '2+25' || effectiveMode === '27' ? 27 :
+    effectiveMode === '2+20' || effectiveMode === '22' ? 22 :
     effectiveMode === '2+15' ? 17 :
     effectiveMode === '2+10' || effectiveMode === '12' ? 12 :
     effectiveMode === '15' ? 15 :
@@ -71,7 +75,7 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
 
   while (normalizedSeats.length < requiredCount) {
     const idx = normalizedSeats.length;
-    const isVipLayout = effectiveMode === '2+15' || effectiveMode === '2+10' || effectiveMode === '12';
+    const isVipLayout = effectiveMode === '2+25' || effectiveMode === '27' || effectiveMode === '2+20' || effectiveMode === '22' || effectiveMode === '2+15' || effectiveMode === '2+10' || effectiveMode === '12';
     const displayIndex = isVipLayout ? (idx === 1 ? 'VIP' : idx - 1) : idx + 1;
     
     normalizedSeats.push({
@@ -111,11 +115,11 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
   const occupiedSeatsCount = normalizedSeats.filter(s => s.userId).length;
 
   return (
-    <div className="w-full bg-slate-900/75 sm:bg-slate-900/65 backdrop-blur-md rounded-2xl sm:rounded-3xl p-1.5 xs:p-2 sm:p-2.5 border border-blue-500/30 shadow-2xl shadow-blue-950/20 flex flex-col gap-0.5 xs:gap-1 sm:gap-1.5 transition-all">
+    <div className="w-full bg-gradient-to-b from-[#fffbeb]/95 via-[#fef3c7]/95 to-[#fde68a]/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-1.5 xs:p-2 sm:p-2.5 border-2 border-amber-600/80 shadow-2xl shadow-amber-600/30 flex flex-col gap-0.5 xs:gap-1 sm:gap-1.5 transition-all text-amber-950">
       {/* --- SEATS RENDERING BY LAYOUT MODE --- */}
 
-      {/* CASE 1: 2 VIP TOP ROW + 3 ROWS OF 5 MICS (17 Seats Total) OR 2+10 (12 Seats) */}
-      {(effectiveMode === '2+10' || effectiveMode === '12' || effectiveMode === '2+15') && (
+      {/* CASE 1: 2 VIP TOP ROW + 5-COL ROWS (12, 17, 22, 27 Seats Total) */}
+      {(effectiveMode === '2+10' || effectiveMode === '12' || effectiveMode === '2+15' || effectiveMode === '2+20' || effectiveMode === '22' || effectiveMode === '2+25' || effectiveMode === '27') && (
         <div className="flex flex-col gap-0.5 xs:gap-1 sm:gap-1.5 w-full">
           {/* VIP Top Row: Pure 2 VIP Mics without side control icons */}
           <div className="flex items-center justify-center gap-3 sm:gap-6 w-full py-0.5">
@@ -134,9 +138,23 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
           </div>
 
           {/* Row 3 of 5 (Seats 12 to 16 -> مايك 11 إلى مايك 15) */}
-          {effectiveMode === '2+15' && (
+          {(effectiveMode === '2+15' || effectiveMode === '2+20' || effectiveMode === '22' || effectiveMode === '2+25' || effectiveMode === '27') && (
             <div className="grid grid-cols-5 gap-0.5 xs:gap-1 sm:gap-1.5 justify-items-center items-start w-full">
               {normalizedSeats.slice(12, 17).map(seat => renderSeat(seat, 'compact'))}
+            </div>
+          )}
+
+          {/* Row 4 of 5 (Seats 17 to 21 -> مايك 16 إلى مايك 20) */}
+          {(effectiveMode === '2+20' || effectiveMode === '22' || effectiveMode === '2+25' || effectiveMode === '27') && (
+            <div className="grid grid-cols-5 gap-0.5 xs:gap-1 sm:gap-1.5 justify-items-center items-start w-full">
+              {normalizedSeats.slice(17, 22).map(seat => renderSeat(seat, 'compact'))}
+            </div>
+          )}
+
+          {/* Row 5 of 5 (Seats 22 to 26 -> مايك 21 إلى مايك 25) */}
+          {(effectiveMode === '2+25' || effectiveMode === '27') && (
+            <div className="grid grid-cols-5 gap-0.5 xs:gap-1 sm:gap-1.5 justify-items-center items-start w-full">
+              {normalizedSeats.slice(22, 27).map(seat => renderSeat(seat, 'compact'))}
             </div>
           )}
         </div>
@@ -162,17 +180,17 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
         <div className="flex flex-col gap-2 sm:gap-2.5 w-full">
           {/* Row 1 (Seats 0 to 4) */}
           <div className="grid grid-cols-5 gap-1 xs:gap-1.5 sm:gap-2.5 justify-items-center items-start w-full">
-            {seats.slice(0, 5).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(0, 5).map(seat => renderSeat(seat, 'standard'))}
           </div>
 
           {/* Row 2 (Seats 5 to 9) */}
           <div className="grid grid-cols-5 gap-1 xs:gap-1.5 sm:gap-2.5 justify-items-center items-start w-full">
-            {seats.slice(5, 10).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(5, 10).map(seat => renderSeat(seat, 'standard'))}
           </div>
 
           {/* Row 3 (Seats 10 to 14) */}
           <div className="grid grid-cols-5 gap-1 xs:gap-1.5 sm:gap-2.5 justify-items-center items-start w-full">
-            {seats.slice(10, 15).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(10, 15).map(seat => renderSeat(seat, 'standard'))}
           </div>
         </div>
       )}
@@ -181,7 +199,7 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
       {effectiveMode === '5' && (
         <div className="py-1 w-full">
           <div className="grid grid-cols-5 gap-1 xs:gap-1.5 sm:gap-2.5 justify-items-center items-start w-full">
-            {seats.slice(0, 5).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(0, 5).map(seat => renderSeat(seat, 'standard'))}
           </div>
         </div>
       )}
@@ -191,12 +209,12 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
         <div className="flex flex-col gap-2 sm:gap-3 w-full">
           {/* Row 1 (Seats 0 to 3) */}
           <div className="grid grid-cols-4 gap-2 sm:gap-3 justify-items-center items-start w-full">
-            {seats.slice(0, 4).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(0, 4).map(seat => renderSeat(seat, 'standard'))}
           </div>
 
           {/* Row 2 (Seats 4 to 7) */}
           <div className="grid grid-cols-4 gap-2 sm:gap-3 justify-items-center items-start w-full">
-            {seats.slice(4, 8).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(4, 8).map(seat => renderSeat(seat, 'standard'))}
           </div>
         </div>
       )}
@@ -205,7 +223,7 @@ export const MicStageLayout: React.FC<MicStageLayoutProps> = ({
       {effectiveMode === '4' && (
         <div className="py-1 w-full">
           <div className="grid grid-cols-4 gap-2 sm:gap-3 justify-items-center items-start w-full">
-            {seats.slice(0, 4).map(seat => renderSeat(seat, 'standard'))}
+            {normalizedSeats.slice(0, 4).map(seat => renderSeat(seat, 'standard'))}
           </div>
         </div>
       )}

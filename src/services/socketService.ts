@@ -118,6 +118,10 @@ class SocketService {
     this.send({ type: 'resolve_mic_request', requestId, status, targetSeatIndex });
   }
 
+  pullToMic(roomId: string, hostId: string, targetUserId: string, seatIndex?: number) {
+    this.send({ type: 'pull_to_mic', roomId, hostId, targetUserId, seatIndex });
+  }
+
   takeSeat(roomId: string, seatIndex: number, userId: string) {
     this.send({ type: 'take_seat', roomId, seatIndex, userId });
   }
@@ -144,6 +148,7 @@ class SocketService {
     description?: string;
     micLayout?: string;
     tags?: string[];
+    requireHostApproval?: boolean;
   }) {
     this.send({ type: 'update_room_settings', roomId, userId, ...settings });
   }
@@ -181,6 +186,22 @@ class SocketService {
       userId,
       effectId,
       userName
+    });
+  }
+
+  emitUserPenalty(payload: {
+    roomId: string;
+    issuerId: string;
+    targetUserId: string;
+    targetUserName?: string;
+    penaltyType: '15m' | '1h' | '24h' | 'perm';
+    durationLabel: string;
+    bannedUntil: number | null;
+    reason: string;
+  }) {
+    this.send({
+      type: 'issue_user_penalty',
+      ...payload
     });
   }
 

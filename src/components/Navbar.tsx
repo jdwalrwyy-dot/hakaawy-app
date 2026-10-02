@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, isUserOwner } from '../types';
-import { Sparkles, Coins, Gem, Bell, Shield, Radio, Search } from 'lucide-react';
+import { Sparkles, Coins, Gem, Bell, Shield, Crown, Search } from 'lucide-react';
 import { UserRoleBadges } from './RoleBadge';
 
 interface NavbarProps {
@@ -13,6 +13,7 @@ interface NavbarProps {
   onOpenAdmin: () => void;
   onOpenTasks: () => void;
   onOpenShippingAgent?: () => void;
+  onGoToHome?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,7 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSearch,
   onOpenAdmin,
   onOpenTasks,
-  onOpenShippingAgent
+  onOpenShippingAgent,
+  onGoToHome
 }) => {
   const isOwner = isUserOwner(currentUser);
   const isAdminOrOwner = currentUser?.role === 'ADMIN' || isOwner;
@@ -32,11 +34,22 @@ export const Navbar: React.FC<NavbarProps> = ({
   const showShippingAgent = Boolean((isOwner || currentUser?.isShippingAgent === true || currentUser?.role === 'AGENT') && onOpenShippingAgent);
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5 transition-all">
+    <header className="sticky top-0 z-40 bg-gradient-to-r from-[#fffbeb]/95 via-[#fef3c7]/95 to-[#fde68a]/95 backdrop-blur-md border-b-2 border-amber-600/70 px-4 py-2.5 transition-all text-amber-950 shadow-md">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-        {/* Brand Logo & Live Badge */}
+        {/* Brand Logo & Return to Royal Home Button */}
         <div className="flex items-center gap-2.5">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-amber-500/20 to-purple-500/20 border border-amber-500/40 shadow-lg shadow-amber-500/20">
+          {onGoToHome && (
+            <button
+              onClick={onGoToHome}
+              title="العودة للرئيسية الملكية"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-800 hover:from-emerald-600 hover:to-emerald-700 text-amber-100 font-black text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0 border border-amber-300"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-300 fill-current" />
+              <span>الرئيسية الملكية</span>
+            </button>
+          )}
+
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-amber-400 to-emerald-700 border-2 border-amber-500 shadow-md">
             <img
               src="/hekawy_cover.svg"
               alt="شعار حكاوي"
@@ -44,26 +57,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="w-full h-full object-cover"
             />
           </div>
-          <div>
+          <div className="hidden sm:block">
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-amber-400 via-amber-200 to-yellow-400 bg-clip-text text-transparent">
+              <span className="font-black text-xl tracking-tight text-amber-950">
                 حكاوي
               </span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+              <span className="text-[10px] font-black px-1.5 py-0.5 bg-emerald-700 text-amber-100 border border-amber-400 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping"></span>
                 مباشر
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">غرف صوتية وبث تفاعلي</p>
+            <p className="text-[11px] text-amber-900 font-bold">غرف صوتية وبث تفاعلي</p>
           </div>
         </div>
 
         {/* Search trigger */}
         <button
           onClick={onOpenSearch}
-          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 text-xs border border-slate-700/60 transition-colors"
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#fffbeb] hover:bg-amber-100 text-amber-950 text-xs font-bold border border-amber-600/60 transition-colors shadow-sm"
         >
-          <Search className="w-3.5 h-3.5 text-slate-400" />
+          <Search className="w-3.5 h-3.5 text-emerald-800" />
           <span>بحث عن غرفة أو مضيف...</span>
         </button>
 
@@ -75,9 +88,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenTasks}
                 title="المهام اليومية والمكافآت"
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-700 text-amber-100 border border-amber-400 text-xs font-black transition-all shadow-sm"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span className="hidden md:inline">المهام</span>
               </button>
 
@@ -85,9 +98,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenWallet}
                 title="رصيد الكونز"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-950/60 hover:bg-amber-900/60 border border-amber-600/40 text-amber-300 text-xs font-bold transition-all active:scale-95"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#fffbeb] border-2 border-amber-600/70 text-amber-950 text-xs font-black transition-all active:scale-95 shadow-sm"
               >
-                <Coins className="w-3.5 h-3.5 text-amber-400" />
+                <Coins className="w-3.5 h-3.5 text-amber-600" />
                 <span>{currentUser.coins.toLocaleString('ar-EG')}</span>
               </button>
 

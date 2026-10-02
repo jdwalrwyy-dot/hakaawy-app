@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Room, User, MicLayoutType } from '../types';
 import { API } from '../services/api';
 import { socketService } from '../services/socketService';
@@ -25,6 +25,10 @@ import {
   Zap,
   Flame,
   Shield,
+  ShieldAlert,
+  ShieldCheck,
+  Ban,
+  UserX,
   Trash2
 } from 'lucide-react';
 
@@ -72,12 +76,12 @@ const PRESET_BACKGROUNDS = [
 ];
 
 const LAYOUT_OPTIONS: { id: MicLayoutType; label: string; desc: string; icon: string; count: number; rows: string }[] = [
-  { id: '4', label: '4 مايكات', desc: 'صف واحد مدمج (4 مقاعد)', icon: '⚡', count: 4, rows: '4' },
-  { id: '8', label: '8 مايكات', desc: 'صفين كلاسيكيين (4 + 4)', icon: '📻', count: 8, rows: '4 + 4' },
+  { id: '5', label: '5 مايكات', desc: 'صف واحد مدمج (5 مايكات)', icon: '⚡', count: 5, rows: '5' },
   { id: '10', label: '10 مايكات', desc: 'صفين متوازيين (5 + 5)', icon: '🎙️', count: 10, rows: '5 + 5' },
-  { id: '2+10', label: '12 مايك', desc: 'مضيف ونائب VIP + 10 مايكات', icon: '👑', count: 12, rows: '2 + 5 + 5' },
   { id: '15', label: '15 مايك', desc: '3 صفوف متوازية (5 + 5 + 5)', icon: '💎', count: 15, rows: '5 + 5 + 5' },
-  { id: '2+15', label: '17 مايك', desc: 'مضيف ونائب VIP + 15 مايك', icon: '🌟', count: 17, rows: '2 + 5 + 5 + 5' }
+  { id: '2+15', label: '17 مايك', desc: 'مضيف ونائب VIP + 15 مايك', icon: '🌟', count: 17, rows: '2 + 5 + 5 + 5' },
+  { id: '2+20', label: '22 مايك', desc: 'مضيف ونائب VIP + 20 مايك', icon: '👑', count: 22, rows: '2 + 5 + 5 + 5 + 5' },
+  { id: '2+25', label: '27 مايك', desc: 'مضيف ونائب VIP + 25 مايك', icon: '🚀', count: 27, rows: '2 + 5 + 5 + 5 + 5 + 5' }
 ];
 
 const SOUNDBOARD_EFFECTS = [
@@ -151,16 +155,22 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   onOpenEntrancesShop,
   onTriggerLiveEntrance
 }) => {
-  const isHost = room.hostId === currentUser.id || currentUser.role === 'ADMIN' || currentUser.role === 'OWNER';
+  const isHost = room.hostId === currentUser.id || currentUser.role === 'ADMIN' || currentUser.role === 'OWNER' || currentUser.role === 'MODERATOR';
 
-  // Primary navigation tab inside "الضبط": "التأثيرات" | "الطراج" | "إعدادات الغرفة"
-  const [activeTab, setActiveTab] = useState<'effects' | 'garage' | 'room'>('effects');
+  // Primary navigation tab inside "الضبط": "التأثيرات" | "الطراج" | "إعدادات الغرفة" | "البلاغات"
+  const [activeTab, setActiveTab] = useState<'effects' | 'garage' | 'room' | 'reports'>('effects');
+
+  // Reports state
+  const [reportsList, setReportsList] = useState<any[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsNotice, setReportsNotice] = useState<string | null>(null);
 
   // Room host settings
   const [title, setTitle] = useState(room.title);
   const [description, setDescription] = useState(room.description || '');
   const [coverImage, setCoverImage] = useState(room.coverImage);
   const [micLayout, setMicLayout] = useState<MicLayoutType>(room.micLayout || '2+10');
+  const [requireHostApproval, setRequireHostApproval] = useState<boolean>(room.requireHostApproval !== false);
   const [customImageError, setCustomImageError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -179,6 +189,23 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   const [midLevel, setMidLevel] = useState<number>(50);
   const [trebleLevel, setTrebleLevel] = useState<number>(60);
   const [actionNotice, setActionNotice] = useState<string>('');
+
+  useEffect(() => {
+    if (activeTab === 'reports' && isOpen) {
+      setReportsLoading(true);
+      API.getAdminModerationIncidents(currentUser.id)
+        .then(incidents => setReportsList(incidents || []))
+        .catch(() => {
+          fetch('/api/admin/moderation/incidents', {
+            headers: { 'x-admin-id': currentUser.id }
+          })
+            .then(r => r.json())
+            .then(d => setReportsList(d.incidents || d.reports || []))
+            .catch(() => setReportsList([]));
+        })
+        .finally(() => setReportsLoading(false));
+    }
+  }, [activeTab, isOpen, currentUser.id]);
 
   if (!isOpen) return null;
 
@@ -235,14 +262,16 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
         title: title.trim(),
         coverImage,
         description: description.trim(),
-        micLayout
+        micLayout,
+        requireHostApproval
       });
 
       const result = await API.updateRoomSettings(room.id, currentUser.id, {
         title: title.trim(),
         coverImage,
         description: description.trim(),
-        micLayout
+        micLayout,
+        requireHostApproval
       });
 
       setSuccessMessage('تم حفظ وتطبيق إعدادات الغرفة مباشرة!');
@@ -292,7 +321,7 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full sm:max-w-xl max-h-[90vh] bg-slate-900 border border-slate-700/80 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-right"
+        className="w-full sm:max-w-xl max-h-[90vh] bg-slate-900 border-2 border-amber-500/40 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-amber-500/10 flex flex-col overflow-hidden text-right"
         dir="rtl"
       >
         {/* Modal Header */}
@@ -322,21 +351,21 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
           </button>
         </div>
 
-        {/* Primary Selection Options: "التأثيرات" | "الطراج" */}
+        {/* Primary Selection Options: "التأثيرات" | "الطراج" | "البلاغات الواردة" */}
         <div className="p-3 bg-slate-950/70 border-b border-slate-800/80 shrink-0">
-          <div className="grid grid-cols-2 gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner">
+          <div className="grid grid-cols-3 gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 shadow-inner">
             {/* Option 1: التأثيرات */}
             <button
               type="button"
               id="tab-effects-btn"
               onClick={() => setActiveTab('effects')}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-black text-xs transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-black text-xs transition-all cursor-pointer ${
                 activeTab === 'effects'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25 scale-[1.02]'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
               }`}
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-3.5 h-3.5" />
               <span>التأثيرات</span>
             </button>
 
@@ -345,14 +374,29 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
               type="button"
               id="tab-garage-btn"
               onClick={() => setActiveTab('garage')}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl font-black text-xs transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-black text-xs transition-all cursor-pointer ${
                 activeTab === 'garage'
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25 scale-[1.02]'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
               }`}
             >
-              <Car className="w-4 h-4" />
+              <Car className="w-3.5 h-3.5" />
               <span>الطراج</span>
+            </button>
+
+            {/* Option 3: البلاغات الواردة */}
+            <button
+              type="button"
+              id="tab-reports-btn"
+              onClick={() => setActiveTab('reports')}
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                activeTab === 'reports'
+                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white shadow-md shadow-rose-600/25 scale-[1.02]'
+                  : 'text-rose-400 hover:text-rose-300 hover:bg-slate-800/70'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+              <span>البلاغات الواردة</span>
             </button>
           </div>
 
@@ -796,6 +840,48 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                 />
               </div>
 
+              {/* Toggle Switch: Require Host Approval to Speak */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-800/90 via-slate-800/60 to-slate-800/90 border border-slate-700/80 shadow-md space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-2 rounded-xl border transition-colors ${
+                      requireHostApproval
+                        ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                        : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                    }`}>
+                      <Mic className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-black text-slate-100 block">
+                        طلب إذن للصعود إلى المايك
+                      </span>
+                      <span className={`text-[10px] font-bold ${requireHostApproval ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        {requireHostApproval ? 'وضع موافقة المالك (مُفَعَّل 🔒)' : 'الوضع المفتوح للجميع (مُعَطَّل 🔓)'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={!isHost}
+                    onClick={() => setRequireHostApproval(!requireHostApproval)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 disabled:opacity-50 ${
+                      requireHostApproval ? 'bg-amber-500' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-slate-950 shadow-lg transition duration-200 ${
+                        requireHostApproval ? 'translate-x-0' : '-translate-x-5'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <p className="text-[11px] text-slate-400 leading-relaxed pt-1.5 border-t border-slate-700/40">
+                  عند التفعيل، يحتاج المستمعون لموافقتك للصعود. عند الإيقاف، يمكن لأي مستمع الجلوس على المقاعد المتاحة فوراً والتحدث بحرية.
+                </p>
+              </div>
+
               {/* Room Background */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -980,6 +1066,121 @@ export const RoomSettingsModal: React.FC<RoomSettingsModalProps> = ({
                 </div>
               )}
             </form>
+          )}
+
+          {/* TAB 4: INCOMING REPORTS FOR HOST & MODERATORS */}
+          {activeTab === 'reports' && (
+            <div className="flex flex-col gap-3.5 p-4 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                    <ShieldAlert className="w-5 h-5 text-rose-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-xs text-rose-200">سجل البلاغات والمخالفات الواردة</h4>
+                    <p className="text-[10px] text-rose-300/80">مراجعة البلاغات فوراً لاتخاذ إجراءات الرقابة (كتم / طرد / حظر)</p>
+                  </div>
+                </div>
+                <span className="text-xs font-black bg-rose-500/20 text-rose-300 px-2.5 py-1 rounded-full border border-rose-500/40">
+                  {reportsList.length} بلاغ
+                </span>
+              </div>
+
+              {reportsNotice && (
+                <div className="p-2.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center animate-in fade-in">
+                  ✓ {reportsNotice}
+                </div>
+              )}
+
+              {reportsLoading ? (
+                <div className="text-center py-12 text-xs text-slate-400 font-bold">جاري تحميل البلاغات الواردة...</div>
+              ) : reportsList.length === 0 ? (
+                <div className="text-center py-12 bg-slate-950/40 rounded-2xl border border-slate-800 text-slate-400 flex flex-col items-center justify-center gap-2">
+                  <ShieldCheck className="w-10 h-10 text-emerald-400 opacity-90 animate-pulse" />
+                  <p className="text-xs font-bold text-slate-200">لا توجد بلاغات مخالفة حالياً</p>
+                  <p className="text-[11px] text-slate-400">جميع المحادثات والغرفة خالية من البلاغات النشطة.</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                  {reportsList.map((rpt, idx) => (
+                    <div key={rpt.id || idx} className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col gap-2.5 shadow-lg">
+                      <div className="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-black">
+                            ⚠️ {rpt.reason || 'مخالفة سلوكية'}
+                          </span>
+                          <span className="text-xs font-bold text-slate-200">
+                            المُبَلَّغ عنه: <b className="text-amber-300">{rpt.userName || rpt.targetName || rpt.reportedUserId || rpt.userId}</b>
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {rpt.createdAt ? new Date(rpt.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : 'الآن'}
+                        </span>
+                      </div>
+
+                      {rpt.details && (
+                        <p className="text-xs text-slate-300 bg-slate-900/70 p-2.5 rounded-xl border border-slate-800 italic leading-relaxed">
+                          "{rpt.details}"
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-end gap-2 pt-1 flex-wrap">
+                        {/* Action 1: Ban */}
+                        <button
+                          onClick={async () => {
+                            try {
+                              await API.resolveModerationIncident(currentUser.id, rpt.id, 'CONFIRM_BAN');
+                              setReportsNotice('تم حظر الحساب بنجاح وإغلاق البلاغ');
+                              setReportsList(prev => prev.filter(item => item.id !== rpt.id));
+                              setTimeout(() => setReportsNotice(null), 2500);
+                            } catch {
+                              setReportsNotice('تم تنفيذ الحظر');
+                              setReportsList(prev => prev.filter(item => item.id !== rpt.id));
+                              setTimeout(() => setReportsNotice(null), 2500);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs flex items-center gap-1 shadow cursor-pointer active:scale-95 transition-all"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>حظر نهائي ⛔</span>
+                        </button>
+
+                        {/* Action 2: Kick */}
+                        <button
+                          onClick={() => {
+                            socketService.hostControl(room.id, 'kick_user', rpt.userId || rpt.reportedUserId);
+                            setReportsNotice('تم إنزال/طرد المستخدم من الغرفة');
+                            setTimeout(() => setReportsNotice(null), 2500);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1 shadow cursor-pointer active:scale-95 transition-all"
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                          <span>طرد من الغرفة 🚪</span>
+                        </button>
+
+                        {/* Action 3: Dismiss */}
+                        <button
+                          onClick={async () => {
+                            try {
+                              await API.resolveModerationIncident(currentUser.id, rpt.id, 'DISMISS');
+                              setReportsNotice('تم تجاهل البلاغ وإغلاقه');
+                              setReportsList(prev => prev.filter(item => item.id !== rpt.id));
+                              setTimeout(() => setReportsNotice(null), 2500);
+                            } catch {
+                              setReportsList(prev => prev.filter(item => item.id !== rpt.id));
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold text-xs flex items-center gap-1 cursor-pointer transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-slate-400" />
+                          <span>تجاهل</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
